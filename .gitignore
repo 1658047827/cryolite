@@ -1,3 +1,9 @@
+# VSCode
+.vscode
+
+# bin
+cryolith
+
 # Prerequisites
 *.d
 
