@@ -166,9 +166,74 @@ void Lexer::Lex(TokenSequence &ts) {
                 ts.EmplaceBack(TokenKind::TK_SLASH, curLoc);
             }
         } break;
-        case '\\':
-
-            break;
+        case '%': {
+            if (LookAhead() == '=') {
+                ts.EmplaceBack(TokenKind::TK_PERCENTEQUAL, curLoc);
+                Next(); // Consume the '='.
+            } else {
+                ts.EmplaceBack(TokenKind::TK_PERCENT, curLoc);
+            }
+        } break;
+        case '<': {
+            char peekc = LookAhead();
+            if (peekc == '<' && LookAhead(2) == '=') {
+                ts.EmplaceBack(TokenKind::TK_LESSLESSEQUAL, curLoc);
+                Next(); // Consume the "<=".
+                Next();
+            } else if (peekc == '<') {
+                ts.EmplaceBack(TokenKind::TK_LESSLESS, curLoc);
+                Next(); // Consume the '<'.
+            } else if (peekc == '=') {
+                ts.EmplaceBack(TokenKind::TK_LESSEQUAL, curLoc);
+                Next(); // Consume the '='.
+            } else {
+                ts.EmplaceBack(TokenKind::TK_LESS, curLoc);
+            }
+        } break;
+        case '>': {
+            char peekc = LookAhead();
+            if (peekc == '=') {
+                ts.EmplaceBack(TokenKind::TK_GREATEREQUAL, curLoc);
+                Next(); // Consume the '='.
+            } else if (peekc == '>' && LookAhead(2) == '=') {
+                ts.EmplaceBack(TokenKind::TK_GREATERGREATEREQUAL, curLoc);
+                Next(); // Consume the ">=".
+                Next();
+            } else if (peekc == '>') {
+                ts.EmplaceBack(TokenKind::TK_GREATERGREATER, curLoc);
+                Next(); // Consume the '>'.
+            } else {
+                ts.EmplaceBack(TokenKind::TK_GREATER, curLoc);
+            }
+        } break;
+        case '^': {
+            if (LookAhead() == '=') {
+                ts.EmplaceBack(TokenKind::TK_CARETEQUAL, curLoc);
+                Next(); // Consume the '='.
+            } else {
+                ts.EmplaceBack(TokenKind::TK_CARET, curLoc);
+            }
+        } break;
+        case '|': {
+            char peekc = LookAhead();
+            if (peekc == '=') {
+                ts.EmplaceBack(TokenKind::TK_PIPEEQUAL, curLoc);
+                Next(); // Consume the '='.
+            } else if (peekc == '|') {
+                ts.EmplaceBack(TokenKind::TK_PIPEPIPE, curLoc);
+                Next(); // Consume the '|'.
+            } else {
+                ts.EmplaceBack(TokenKind::TK_PIPE, curLoc);
+            }
+        } break;
+        case '#': {
+            if (LookAhead() == '#') {
+                ts.EmplaceBack(TokenKind::TK_HASHHASH, curLoc);
+                Next(); // Consume the '#'.
+            } else {
+                ts.EmplaceBack(TokenKind::TK_HASH, curLoc);
+            }
+        } break;
         case '\'': {
             Token tk = LexCharConstant();
             ts.PushBack(tk);
