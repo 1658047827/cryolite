@@ -156,7 +156,7 @@ bool Lexer::NextIs(char c) {
 }
 
 bool Lexer::Try(char c) {
-    if (LookAhead(1) == c) {
+    if (LookAhead() == c) {
         Next();
         return true;
     } else {
@@ -206,6 +206,21 @@ Token Lexer::LexCharConstant() {
 }
 
 Token Lexer::LexStringLiteral() {
+    size_t begin = p;
+    SourceLocation loc = curLoc;
+    char c = Next();
+    while (c != '\"') {
+        // Skip escaped characters.
+        if (c == '\\') {
+            Next();
+        } else if (c == '\n' || c == 0) {
+            Error(loc, "unterminated string literal");
+            return Token(TokenKind::TK_UNKNOWN, loc);
+        }
+        c = Next();
+    }
+    std::string tkStr(buffer.begin() + begin, buffer.begin() + p + 1);
+    return Token(TokenKind::TK_STRING_LITERAL, loc, tkStr);
 }
 
 Token Lexer::LexIdentifier() {
