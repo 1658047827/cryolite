@@ -1,10 +1,9 @@
+#include "lexer.h"
+#include "feedback.h"
 #include <fstream>
 #include <iostream>
 #include <unordered_map>
 #include <vector>
-
-#include "feedback.h"
-#include "lexer.h"
 
 static const std::unordered_map<std::string, TokenKind> keyword2TokenKind{
     {"break", TK_BREAK},

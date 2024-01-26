@@ -2,6 +2,7 @@
 #define _CRYOLITH_LEXER_H_
 
 #include "token.h"
+#include <vector>
 
 class Lexer {
 public:

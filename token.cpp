@@ -1,8 +1,7 @@
+#include "token.h"
 #include <algorithm>
 #include <iostream>
 #include <unordered_map>
-
-#include "token.h"
 
 static const std::unordered_map<TokenKind, std::string> tokenKind2Str{
     // Punctuators

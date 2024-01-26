@@ -1,11 +1,9 @@
 #ifndef _CRYOLITH_PREPROCESS_H_
 #define _CRYOLITH_PREPROCESS_H_
 
-#include <map>
-#include <string>
-#include <vector>
-
 #include "lexer.h"
+#include <map>
+#include <vector>
 
 class Macro {
 public:
