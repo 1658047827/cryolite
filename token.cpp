@@ -13,7 +13,7 @@ static const std::unordered_map<TokenKind, std::string> tokenKind2Str{
     {TK_LBRACE, "{"},
     {TK_RBRACE, "}"},
     {TK_DOT, "."},
-    {TK_ellipsis, "..."},
+    {TK_ELLIPSIS, "..."},
     {TK_AMP, "&"},
     {TK_AMPAMP, "&&"},
     {TK_AMPEQUAL, "&="},

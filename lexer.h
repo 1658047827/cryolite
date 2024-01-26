@@ -15,7 +15,7 @@ public:
 private:
     char CurChar();
     char Next();
-    char LookAhead(size_t n);
+    char LookAhead(size_t n = 1);
     bool NextIs(char c);
     bool Try(char c);
 

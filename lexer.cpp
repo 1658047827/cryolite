@@ -81,8 +81,9 @@ void Lexer::Lex(TokenSequence &ts) {
             ts.EmplaceBack(TokenKind::TK_COLON, curLoc);
             break;
         case '=': {
-            if (Try('=')) {
+            if (NextIs('=')) {
                 ts.EmplaceBack(TokenKind::TK_EQUALEQUAL, curLoc);
+                Next(); // Consume the '='.
             } else {
                 ts.EmplaceBack(TokenKind::TK_EQUAL, curLoc);
             }
@@ -103,8 +104,9 @@ void Lexer::Lex(TokenSequence &ts) {
         case '/': {
             if (NextIs('/') || NextIs('*')) {
                 SkipComment();
-            } else if (Try('=')) {
+            } else if (NextIs('=')) {
                 ts.EmplaceBack(TokenKind::TK_SLASHEQUAL, curLoc);
+                Next(); // Consume the '='.
             } else {
                 ts.EmplaceBack(TokenKind::TK_SLASH, curLoc);
             }
@@ -166,7 +168,7 @@ char Lexer::Next() {
     return buffer[p];
 }
 
-char Lexer::LookAhead(size_t n = 1) {
+char Lexer::LookAhead(size_t n) {
     if (p + n >= buffer.size())
         return 0;
     return buffer[p + n];
@@ -240,6 +242,7 @@ Token Lexer::LexCharConstant() {
     }
     char c = Next();
     while (c != '\'' && c != '\n' && c != 0) {
+        // Skip escaped characters.
         if (c == '\\') {
             Next();
         }
