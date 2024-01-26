@@ -39,6 +39,10 @@ static const std::unordered_map<std::string, TokenKind> keyword2TokenKind{
     {"while", TK_WHILE},
 };
 
+static inline bool IsNumberBody(char c) {
+    return std::isdigit(c) || std::isalpha(c) || c == '.';
+}
+
 void Lexer::Lex(TokenSequence &ts) {
     char c = CurChar();
     while (c != 0) {
@@ -113,6 +117,10 @@ void Lexer::Lex(TokenSequence &ts) {
             Token tk = LexIdentifier();
             ts.PushBack(tk);
         } break;
+        case '0' ... '9': {
+            Token tk = LexNumericConstant();
+            ts.PushBack(tk);
+        } break;
         default:
             std::cout << c << std::endl;
         }
@@ -181,6 +189,33 @@ void Lexer::SkipComment() {
         }
         Error(loc, "unterminated block comment");
     }
+}
+
+Token Lexer::LexNumericConstant() {
+    size_t begin = p;
+    SourceLocation loc = curLoc;
+    char c = LookAhead();
+    char prevCh = 0;
+    while (IsNumberBody(c)) {
+        Next();
+        prevCh = c;
+        c = LookAhead();
+    }
+
+    // If we fell out, check for a sign, due to 1e+12. If we have one, continue.
+    if ((c == '-' || c == '+') && (prevCh == 'E' || prevCh == 'e')) {
+        Next();
+        LexNumericConstant();
+    }
+
+    // If we have a hex FP constant, continue.
+    if ((c == '-' || c == '+') && (prevCh == 'P' || prevCh == 'p')) {
+        Next();
+        LexNumericConstant();
+    }
+
+    std::string tkStr(buffer.begin() + begin, buffer.begin() + p + 1);
+    return Token(TokenKind::TK_NUMERIC_CONSTANT, loc, tkStr);
 }
 
 Token Lexer::LexCharConstant() {

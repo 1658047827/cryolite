@@ -20,9 +20,10 @@ private:
     bool Try(char c);
 
     void SkipComment();
+    Token LexNumericConstant();
     Token LexCharConstant();
     Token LexStringLiteral();
-    // Lex identifier and C keyword
+    // LexIdentifier - Lex identifier and C keyword.
     Token LexIdentifier();
 
     SourceLocation curLoc;
