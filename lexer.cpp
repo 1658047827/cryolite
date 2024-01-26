@@ -101,6 +101,61 @@ void Lexer::Lex(TokenSequence &ts) {
                 ts.EmplaceBack(TokenKind::TK_DOT, curLoc);
             }
         } break;
+        case '&': {
+            char peekc = LookAhead();
+            if (peekc == '&') {
+                ts.EmplaceBack(TokenKind::TK_AMPAMP, curLoc);
+                Next(); // Consume the '&'.
+            } else if (peekc == '=') {
+                ts.EmplaceBack(TokenKind::TK_AMPEQUAL, curLoc);
+                Next(); // Consume thr '='.
+            } else {
+                ts.EmplaceBack(TokenKind::TK_AMP, curLoc);
+            }
+        } break;
+        case '*': {
+            if (LookAhead() == '=') {
+                ts.EmplaceBack(TokenKind::TK_STAREQUAL, curLoc);
+                Next(); // Consume the '='.
+            } else {
+                ts.EmplaceBack(TokenKind::TK_STAR, curLoc);
+            }
+        } break;
+        case '+': {
+            char peekc = LookAhead();
+            if (peekc == '+') {
+                ts.EmplaceBack(TokenKind::TK_PLUSPLUS, curLoc);
+                Next(); // Consume the '+'.
+            } else if (peekc == '=') {
+                ts.EmplaceBack(TokenKind::TK_PLUSEQUAL, curLoc);
+                Next(); // Consume the '='.
+            } else {
+                ts.EmplaceBack(TokenKind::TK_PLUS, curLoc);
+            }
+        } break;
+        case '-': {
+            char peekc = LookAhead();
+            if (peekc == '-') {
+                ts.EmplaceBack(TokenKind::TK_MINUSMINUS, curLoc);
+                Next(); // Consume the '-'.
+            } else if (peekc == '>') {
+                ts.EmplaceBack(TokenKind::TK_ARROW, curLoc);
+                Next(); // Consume the '>'.
+            } else if (peekc == '=') {
+                ts.EmplaceBack(TokenKind::TK_MINUSEQUAL, curLoc);
+                Next(); // Consume the '='.
+            } else {
+                ts.EmplaceBack(TokenKind::TK_MINUS, curLoc);
+            }
+        } break;
+        case '!': {
+            if (NextIs('=')) {
+                ts.EmplaceBack(TokenKind::TK_EXCLAIMEQUAL, curLoc);
+                Next(); // Consume the '='.
+            } else {
+                ts.EmplaceBack(TokenKind::TK_EXCLAIM, curLoc);
+            }
+        } break;
         case '/': {
             if (NextIs('/') || NextIs('*')) {
                 SkipComment();
@@ -125,7 +180,7 @@ void Lexer::Lex(TokenSequence &ts) {
         case ' ':
         case '\t':
         case '\n':
-            break;
+            break; // Skip the whitespace.
         case 'A' ... 'Z':
         case 'a' ... 'z':
         case '_': {
