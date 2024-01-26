@@ -5,117 +5,101 @@
 #include "token.h"
 
 static const std::unordered_map<TokenKind, std::string> tokenKind2Str{
-    //     {TokenKind::TK_UNKNOWN, ""},
-    //     {TokenKind::TK_EOF,     ""},
-    //     {TokenKind::TK_EOM,     ""},
-
-    //     // Identifier
-    //     {TokenKind::TK_IDENTIFIER, ""},
-
-    //     // Constants
-    //     {TK_NUMERIC_CONSTANT, ""},
-    //     {TK_CHAR_CONSTANT,    ""},
-
-    //     // String Literal
-    //     {TK_STRING_LITERAL, ""},
-
-    //     // Punctuators
-    //     TK_LPAR,                // (
-    //     TK_RPAR,                // )
-    //     TK_LSQB,                // [
-    //     TK_RSQB,                // ]
-    //     TK_LBRACE,              // {
-    //     TK_RBRACE,              // }
-    //     TK_DOT,                 // .
-    //     TK_ellipsis,            // ...
-    //     TK_AMP,                 // &
-    //     TK_AMPAMP,              // &&
-    //     TK_AMPEQUAL,            // &=
-    //     TK_STAR,                // *
-    //     TK_STAREQUAL,           // *=
-    //     TK_PLUS,                // +
-    //     TK_PLUSPLUS,            // ++
-    //     TK_PLUSEQUAL,           // +=
-    //     TK_MINUS,               // -
-    //     TK_ARROW,               // ->
-    //     TK_MINUSMINUS,          // --
-    //     TK_MINUSEQUAL,          // -=
-    //     TK_TILDE,               // ~
-    //     TK_EXCLAIM,             // !
-    //     TK_EXCLAIMEQUAL,        // !=
-    //     TK_SLASH,               // /
-    //     TK_SLASHEQUAL,          // /=
-    //     TK_PERCENT,             // %
-    //     TK_PERCENTEQUAL,        // %=
-    //     TK_LESS,                // <
-    //     TK_LESSLESS,            // <<
-    //     TK_LESSEQUAL,           // <=
-    //     TK_LESSLESSEQUAL,       // <<=
-    //     TK_GREATER,             // >
-    //     TK_GREATERGREATER,      // >>
-    //     TK_GREATEREQUAL,        // >=
-    //     TK_GREATERGREATEREQUAL, // >>=
-    //     TK_CARET,               // ^
-    //     TK_CARETEQUAL,          // ^=
-    //     TK_PIPE,                // |
-    //     TK_PIPEPIPE,            // ||
-    //     TK_PIPEEQUAL,           // |=
-    //     TK_QUESTION,            // ?
-    //     TK_COLON,               // :
+    // Punctuators
+    {TK_LPAR, "("},
+    {TK_RPAR, ")"},
+    {TK_LSQB, "["},
+    {TK_RSQB, "]"},
+    {TK_LBRACE, "{"},
+    {TK_RBRACE, "}"},
+    {TK_DOT, "."},
+    {TK_ellipsis, "..."},
+    {TK_AMP, "&"},
+    {TK_AMPAMP, "&&"},
+    {TK_AMPEQUAL, "&="},
+    {TK_STAR, "*"},
+    {TK_STAREQUAL, "*="},
+    {TK_PLUS, "+"},
+    {TK_PLUSPLUS, "++"},
+    {TK_PLUSEQUAL, "+="},
+    {TK_MINUS, "-"},
+    {TK_ARROW, "->"},
+    {TK_MINUSMINUS, "--"},
+    {TK_MINUSEQUAL, "-="},
+    {TK_TILDE, "~"},
+    {TK_EXCLAIM, "!"},
+    {TK_EXCLAIMEQUAL, "!="},
+    {TK_SLASH, "/"},
+    {TK_SLASHEQUAL, "/="},
+    {TK_PERCENT, "%"},
+    {TK_PERCENTEQUAL, "%="},
+    {TK_LESS, "<"},
+    {TK_LESSLESS, "<<"},
+    {TK_LESSEQUAL, "<="},
+    {TK_LESSLESSEQUAL, "<<="},
+    {TK_GREATER, ">"},
+    {TK_GREATERGREATER, ">>"},
+    {TK_GREATEREQUAL, ">="},
+    {TK_GREATERGREATEREQUAL, ">>="},
+    {TK_CARET, "^"},
+    {TK_CARETEQUAL, "^="},
+    {TK_PIPE, "|"},
+    {TK_PIPEPIPE, "||"},
+    {TK_PIPEEQUAL, "|="},
+    {TK_QUESTION, "?"},
+    {TK_COLON, ":"},
     {TK_SEMI, ";"},
     {TK_EQUAL, "="},
-    //     TK_EQUALEQUAL,          // ==
-    //     TK_COMMA,               // ,
-    //     TK_HASH,                // #
-    //     TK_HASHHASH,            // ##
+    {TK_EQUALEQUAL, "=="},
+    {TK_COMMA, ","},
+    {TK_HASH, "#"},
+    {TK_HASHHASH, "##"},
 
-    //     // C Keywords
-    //     TK_BREAK,
+    // C Keywords
+    {TK_BREAK, "break"},
     {TK_CASE, "case"},
     {TK_CHAR, "char"},
-    //     TK_CONST,
-    //     TK_CONTINUE,
-    //     TK_DEFAULT,
-    //     TK_DO,
-    //     TK_DOUBLE,
-    //     TK_ELSE,
-    //     TK_ENUM,
-    //     TK_EXTERN,
-    //     TK_FLOAT,
-    //     TK_FOR,
-    //     TK_GOTO,
-    //     TK_IF,
-    //     TK_INLINE,
-    //     TK_INT,
-    //     TK_LONG,
-    //     TK_RETURN,
-    //     TK_SHORT,
-    //     TK_SIGNED,
-    //     TK_SIZEOF,
-    //     TK_STATIC,
-    //     TK_STRUCT,
-    //     TK_SWITCH,
-    //     TK_TYPEDEF,
-    //     TK_UNION,
-    //     TK_UNSIGNED,
-    //     TK_VOID,
-    //     TK_WHILE,
+    {TK_CONST, "const"},
+    {TK_CONTINUE, "continue"},
+    {TK_DEFAULT, "default"},
+    {TK_DO, "do"},
+    {TK_DOUBLE, "double"},
+    {TK_ELSE, "else"},
+    {TK_ENUM, "enum"},
+    {TK_EXTERN, "extern"},
+    {TK_FLOAT, "float"},
+    {TK_FOR, "for"},
+    {TK_GOTO, "goto"},
+    {TK_IF, "if"},
+    {TK_INLINE, "inline"},
+    {TK_INT, "int"},
+    {TK_LONG, "long"},
+    {TK_RETURN, "return"},
+    {TK_SHORT, "short"},
+    {TK_SIGNED, "signed"},
+    {TK_SIZEOF, "sizeof"},
+    {TK_STATIC, "static"},
+    {TK_STRUCT, "struct"},
+    {TK_SWITCH, "switch"},
+    {TK_TYPEDEF, "typedef"},
+    {TK_UNION, "union"},
+    {TK_UNSIGNED, "unsigned"},
+    {TK_VOID, "void"},
+    {TK_WHILE, "while"},
 
-    //     // For preprocessor
-    //     PP_IF,
-    //     PP_IFDEF,
-    //     PP_IFNDEF,
-    //     PP_ELIF,
-    //     PP_ELSE,
-    //     PP_ENDIF,
-    //     PP_INCLUDE,
-    //     PP_DEFINE,
-    //     PP_UNDEF,
-    //     PP_LINE,
-    //     PP_ERROR,
-    //     PP_PRAGMA,
-    //     PP_NONE,
-    //     PP_EMPTY,
+    // For preprocessor
+    {PP_IF, "if"},
+    {PP_IFDEF, "ifdef"},
+    {PP_IFNDEF, "ifndef"},
+    {PP_ELIF, "elif"},
+    {PP_ELSE, "else"},
+    {PP_ENDIF, "endif"},
+    {PP_INCLUDE, "include"},
+    {PP_DEFINE, "define"},
+    {PP_UNDEF, "undef"},
+    {PP_LINE, "line"},
+    {PP_ERROR, "error"},
+    {PP_PRAGMA, "pragma"},
 };
 
 std::string SrcLocToString(SourceLocation &loc) {
