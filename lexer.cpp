@@ -87,6 +87,19 @@ void Lexer::Lex(TokenSequence &ts) {
                 ts.EmplaceBack(TokenKind::TK_EQUAL, curLoc);
             }
         } break;
+        case '.': {
+            char peekc = LookAhead();
+            if (std::isdigit(peekc)) {
+                Token tk = LexNumericConstant();
+                ts.PushBack(tk);
+            } else if (peekc == '.' && LookAhead(2) == '.') {
+                ts.EmplaceBack(TokenKind::TK_ELLIPSIS, curLoc);
+                Next(); // Consume the two dots.
+                Next();
+            } else {
+                ts.EmplaceBack(TokenKind::TK_DOT, curLoc);
+            }
+        } break;
         case '/': {
             if (NextIs('/') || NextIs('*')) {
                 SkipComment();
