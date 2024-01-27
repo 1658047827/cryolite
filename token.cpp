@@ -55,6 +55,7 @@ static const std::unordered_map<TokenKind, std::string> tokenKind2Str{
     {TK_HASHHASH, "##"},
 
     // C Keywords
+    {TK_AUTO, "auto"},
     {TK_BREAK, "break"},
     {TK_CASE, "case"},
     {TK_CHAR, "char"},
@@ -73,6 +74,8 @@ static const std::unordered_map<TokenKind, std::string> tokenKind2Str{
     {TK_INLINE, "inline"},
     {TK_INT, "int"},
     {TK_LONG, "long"},
+    {TK_REGISTER, "register"},
+    {TK_RESTRICT, "restrict"},
     {TK_RETURN, "return"},
     {TK_SHORT, "short"},
     {TK_SIGNED, "signed"},
@@ -84,6 +87,7 @@ static const std::unordered_map<TokenKind, std::string> tokenKind2Str{
     {TK_UNION, "union"},
     {TK_UNSIGNED, "unsigned"},
     {TK_VOID, "void"},
+    {TK_VOLATILE, "volatile"},
     {TK_WHILE, "while"},
 
     // For preprocessor
@@ -159,4 +163,7 @@ void TokenSequence::Print(std::ostream &out) {
         out << tkp->ToString() << ' ';
     }
     out << std::endl;
+}
+
+NumericLiteralParser::NumericLiteralParser(const std::string &str, SourceLocation Loc) {
 }

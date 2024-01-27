@@ -6,6 +6,7 @@
 #include <vector>
 
 static const std::unordered_map<std::string, TokenKind> keyword2TokenKind{
+    {"auto", TK_AUTO},
     {"break", TK_BREAK},
     {"case", TK_CASE},
     {"char", TK_CHAR},
@@ -24,6 +25,8 @@ static const std::unordered_map<std::string, TokenKind> keyword2TokenKind{
     {"inline", TK_INLINE},
     {"int", TK_INT},
     {"long", TK_LONG},
+    {"register", TK_REGISTER},
+    {"restrict", TK_RESTRICT},
     {"return", TK_RETURN},
     {"short", TK_SHORT},
     {"signed", TK_SIGNED},
@@ -35,6 +38,7 @@ static const std::unordered_map<std::string, TokenKind> keyword2TokenKind{
     {"union", TK_UNION},
     {"unsigned", TK_UNSIGNED},
     {"void", TK_VOID},
+    {"volatile", TK_VOLATILE},
     {"while", TK_WHILE},
 };
 
@@ -243,7 +247,9 @@ void Lexer::Lex(TokenSequence &ts) {
         } break;
         case ' ':
         case '\t':
+        case '\v':
         case '\n':
+        case '\f':
             break; // Skip the whitespace.
         case 'A' ... 'Z':
         case 'a' ... 'z':

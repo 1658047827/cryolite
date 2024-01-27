@@ -82,6 +82,7 @@ enum TokenKind {
     TK_HASHHASH,            // ##
 
     // C Keywords
+    TK_AUTO,
     TK_BREAK,
     TK_CASE,
     TK_CHAR,
@@ -100,6 +101,8 @@ enum TokenKind {
     TK_INLINE,
     TK_INT,
     TK_LONG,
+    TK_REGISTER,
+    TK_RESTRICT,
     TK_RETURN,
     TK_SHORT,
     TK_SIGNED,
@@ -111,6 +114,7 @@ enum TokenKind {
     TK_UNION,
     TK_UNSIGNED,
     TK_VOID,
+    TK_VOLATILE,
     TK_WHILE,
 
     // For preprocessor
@@ -170,6 +174,14 @@ public:
 
 private:
     std::list<std::unique_ptr<Token>> tokenList;
+};
+
+// NumericLiteralParser - Analysis and classify a string as either integer, floating, or erroneous.
+class NumericLiteralParser {
+public:
+    NumericLiteralParser(const std::string &str, SourceLocation Loc);
+
+private:
 };
 
 #endif
