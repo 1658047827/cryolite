@@ -1,2 +1,2 @@
-# CryoLith
+# cryolite
 C language compiler
