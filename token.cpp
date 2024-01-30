@@ -165,5 +165,21 @@ void TokenSequence::Print(std::ostream &out) {
     out << std::endl;
 }
 
+std::list<std::unique_ptr<Token>>::iterator TokenSequence::Begin() {
+    return tokenList.begin();
+}
+
+std::list<std::unique_ptr<Token>>::iterator TokenSequence::End() {
+    return tokenList.end();
+}
+
+std::list<std::unique_ptr<Token>>::const_iterator TokenSequence::CBegin() {
+    return tokenList.cbegin();
+}
+
+std::list<std::unique_ptr<Token>>::const_iterator TokenSequence::CEnd() {
+    return tokenList.cend();
+}
+
 NumericLiteralParser::NumericLiteralParser(const std::string &str, SourceLocation Loc) {
 }

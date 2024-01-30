@@ -10,5 +10,7 @@ int main(int argc, char *argv[]) {
     TokenSequence ts;
     lexer.Lex(ts);
     ts.Print(std::cout);
+    Parser parser(ts);
+    TranslationUnit *root = parser.ParseTranslationUnit();
     return 0;
 }

@@ -171,6 +171,10 @@ public:
     }
     void PushBack(Token &token);
     void Print(std::ostream &out);
+    std::list<std::unique_ptr<Token>>::iterator Begin();
+    std::list<std::unique_ptr<Token>>::iterator End();
+    std::list<std::unique_ptr<Token>>::const_iterator CBegin();
+    std::list<std::unique_ptr<Token>>::const_iterator CEnd();
 
 private:
     std::list<std::unique_ptr<Token>> tokenList;
