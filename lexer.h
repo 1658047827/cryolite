@@ -1,5 +1,5 @@
-#ifndef _CRYOLITH_LEXER_H_
-#define _CRYOLITH_LEXER_H_
+#ifndef _CRYOLITE_LEXER_H_
+#define _CRYOLITE_LEXER_H_
 
 #include "token.h"
 #include <vector>

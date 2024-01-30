@@ -2,8 +2,8 @@
  * https://www.quut.com/c/ANSI-C-grammar-y-1999.html
  */
 
-#ifndef _CRYOLITH_SYNTAX_H_
-#define _CRYOLITH_SYNTAX_H_
+#ifndef _CRYOLITE_SYNTAX_H_
+#define _CRYOLITE_SYNTAX_H_
 
 #include <optional>
 #include <variant>

@@ -1,5 +1,5 @@
-#ifndef _CRYOLITH_PREPROCESS_H_
-#define _CRYOLITH_PREPROCESS_H_
+#ifndef _CRYOLITE_PREPROCESS_H_
+#define _CRYOLITE_PREPROCESS_H_
 
 #include "lexer.h"
 #include <map>

@@ -1,8 +1,8 @@
 CXX = clang++
 CXXFLAGS = -std=c++17 -g
-TARGET = cryolith
+TARGET = cryolite
 
-cryolith: diagnostic.o token.o lexer.o syntax.o main.o
+cryolite: diagnostic.o token.o lexer.o syntax.o main.o
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $^
 
 diagnostic.o: diagnostic.cpp diagnostic.h
@@ -21,4 +21,4 @@ main.o: main.cpp lexer.h
 	$(CXX) $(CXXFLAGS) -c $<
 
 clean:
-	rm -f *.o cryolith
+	rm -f *.o cryolite

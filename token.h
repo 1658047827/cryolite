@@ -1,5 +1,5 @@
-#ifndef _CRYOLITH_TOKEN_H_
-#define _CRYOLITH_TOKEN_H_
+#ifndef _CRYOLITE_TOKEN_H_
+#define _CRYOLITE_TOKEN_H_
 
 #include <list>
 #include <memory>
