@@ -42,6 +42,10 @@ class FuncSpecifier;
 class StructOrUnionSpecifier;
 class EnumSpecifier;
 class Pointer;
+class ParamTypeList;
+class ParamDeclaration;
+class AbstractDeclarator;
+class DirectAbstractDeclarator;
 
 // DirectDeclarator
 class DirectDeclarator;
@@ -51,11 +55,6 @@ class DirectDeclaratorNoStaticOrAsterisk;
 class DirectDeclaratorStatic;
 class DirectDeclaratorAsterisk;
 class DirectDeclaratorParamTypeList;
-
-class ParamTypeList;
-class ParamDeclaration;
-class AbstractDeclarator;
-class DirectAbstractDeclarator;
 
 // DirectAbstractDeclarator
 class DirectAbstractDeclaratorParentheses;
@@ -1239,6 +1238,8 @@ public:
  * translation_unit:
  *     external_declaration
  *     translation_unit external_declaration
+ *
+ * The entry of the syntax tree.
  */
 class TranslationUnit {
 public:

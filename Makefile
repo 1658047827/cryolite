@@ -2,16 +2,16 @@ CXX = clang++
 CXXFLAGS = -std=c++17 -g
 TARGET = cryolith
 
-cryolith: feedback.o token.o lexer.o syntax.o main.o
+cryolith: diagnostic.o token.o lexer.o syntax.o main.o
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $^
 
-feedback.o: feedback.cpp feedback.h
+diagnostic.o: diagnostic.cpp diagnostic.h
 	$(CXX) $(CXXFLAGS) -c $<
 
 token.o: token.cpp token.h
 	$(CXX) $(CXXFLAGS) -c $<
 
-lexer.o: lexer.cpp lexer.h token.h feedback.h
+lexer.o: lexer.cpp lexer.h token.h diagnostic.h
 	$(CXX) $(CXXFLAGS) -c $<
 
 syntax.o: syntax.cpp syntax.h

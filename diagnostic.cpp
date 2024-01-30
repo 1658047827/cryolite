@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "feedback.h"
+#include "diagnostic.h"
 
 void Error(SourceLocation &loc, const std::string &msg) {
     std::cerr << SrcLocToString(loc) << ANSI_COLOR_RED << "error: ";

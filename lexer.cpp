@@ -1,5 +1,5 @@
 #include "lexer.h"
-#include "feedback.h"
+#include "diagnostic.h"
 #include <fstream>
 #include <iostream>
 #include <unordered_map>
