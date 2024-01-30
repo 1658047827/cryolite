@@ -145,6 +145,7 @@ public:
 
     TokenKind GetKind();
     SourceLocation GetLoc();
+    std::string GetStr();
     std::string ToString();
     void HideSetAdd(std::string &tokenStr);
     bool HideSetHas(std::string &tokenStr);

@@ -2,7 +2,7 @@ CXX = clang++
 CXXFLAGS = -std=c++17 -g
 TARGET = cryolite
 
-cryolite: diagnostic.o token.o lexer.o syntax.o main.o
+cryolite: diagnostic.o token.o lexer.o syntax.o parser.o main.o
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $^
 
 diagnostic.o: diagnostic.cpp diagnostic.h
@@ -15,6 +15,9 @@ lexer.o: lexer.cpp lexer.h token.h diagnostic.h
 	$(CXX) $(CXXFLAGS) -c $<
 
 syntax.o: syntax.cpp syntax.h
+	$(CXX) $(CXXFLAGS) -c $<
+
+parser.o: parser.cpp parser.h token.h syntax.h
 	$(CXX) $(CXXFLAGS) -c $<
 
 main.o: main.cpp lexer.h

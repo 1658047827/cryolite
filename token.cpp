@@ -123,6 +123,10 @@ SourceLocation Token::GetLoc() {
     return loc;
 }
 
+std::string Token::GetStr() {
+    return str;
+}
+
 std::string Token::ToString() {
     if (str.empty()) {
         auto iter = tokenKind2Str.find(kind);

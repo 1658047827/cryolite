@@ -11,6 +11,10 @@ public:
 
     TranslationUnit *ParseTranslationUnit();
     ExternalDeclaration *ParseExternalDeclaration();
+    DeclSpecifiers *ParseDeclarationSpecifiers();
+    Declarator* ParseDeclarator();
+    StructOrUnionSpecifier* ParseStructOrUnionSpecifier();
+    EnumSpecifier* ParseEnumSpecifier();
 
 private:
     TokenSequence &tksq;

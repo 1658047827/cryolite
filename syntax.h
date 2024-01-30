@@ -542,6 +542,9 @@ public:
  */
 class Declaration {
 public:
+    Declaration(DeclSpecifiers *declSpecs)
+        : declSpecs(declSpecs) {}
+
     DeclSpecifiers *declSpecs;
     std::vector<InitDeclarator *> initDecls;
 };
@@ -559,6 +562,15 @@ public:
  */
 class DeclSpecifier {
 public:
+    DeclSpecifier(StorageClassSpecifier *storageClassSpec)
+        : var(storageClassSpec) {}
+    DeclSpecifier(TypeSpecifier *typeSpec)
+        : var(typeSpec) {}
+    DeclSpecifier(TypeQualifier *typeQual)
+        : var(typeQual) {}
+    DeclSpecifier(FuncSpecifier *funcSpec)
+        : var(funcSpec) {}
+
     std::variant<StorageClassSpecifier *,
                  TypeSpecifier *,
                  TypeQualifier *,
@@ -568,6 +580,11 @@ public:
 
 class DeclSpecifiers {
 public:
+    void AddStorageClassSpecifier(StorageClassSpecifier *storageClassSpec);
+    void AddTypeSpecifier(TypeSpecifier *typeSpec);
+    void AddTypeQualifier(TypeQualifier *typeQual);
+    void AddFuncSpecifier(FuncSpecifier *funcSpec);
+
     std::vector<DeclSpecifier *> specs;
 };
 
@@ -599,6 +616,10 @@ public:
         AUTO,
         REGISTER
     };
+
+    StorageClassSpecifier(Specifier spec)
+        : spec(spec) {}
+
     Specifier spec;
 };
 
@@ -632,6 +653,16 @@ public:
         SIGNED,
         UNSIGNED
     };
+
+    TypeSpecifier(PrimTypeKind typeKind)
+        : var(typeKind) {}
+    TypeSpecifier(StructOrUnionSpecifier *sOrUSpec)
+        : var(sOrUSpec) {}
+    TypeSpecifier(EnumSpecifier *enumSpec)
+        : var(enumSpec) {}
+    TypeSpecifier(std::string ident)
+        : var(ident) {}
+
     std::variant<PrimTypeKind,
                  StructOrUnionSpecifier *,
                  EnumSpecifier *,
@@ -682,6 +713,10 @@ public:
  *     struct_or_union IDENTIFIER { struct_declaration_list }
  *     struct_or_union { struct_declaration_list }
  *     struct_or_union IDENTIFIER
+ *
+ * struct_or_union:
+ *     STRUCT
+ *     UNION
  *
  * struct_declaration_list:
  *     struct_declaration
@@ -736,6 +771,10 @@ public:
         RESTRICT,
         VOLATILE
     };
+
+    TypeQualifier(TypeQual typeQual)
+        : typeQual(typeQual) {}
+
     TypeQual typeQual;
 };
 
@@ -748,6 +787,10 @@ public:
     enum FuncSpec {
         INLINE
     };
+
+    FuncSpecifier(FuncSpec funcSpec)
+        : funcSpec(funcSpec) {}
+
     FuncSpec funcSpec;
 };
 
@@ -1231,6 +1274,12 @@ public:
  */
 class ExternalDeclaration {
 public:
+    ExternalDeclaration() = default;
+    ExternalDeclaration(Declaration *decl)
+        : var(decl) {}
+    ExternalDeclaration(FunctionDefinition *funcDef)
+        : var(funcDef) {}
+
     std::variant<Declaration *, FunctionDefinition *> var;
 };
 
