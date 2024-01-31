@@ -8,10 +8,10 @@ cryolite: diagnostic.o token.o lexer.o syntax.o parser.o main.o
 diagnostic.o: diagnostic.cpp diagnostic.h
 	$(CXX) $(CXXFLAGS) -c $<
 
-token.o: token.cpp token.h
+token.o: token.cpp token.h tokenkind.def
 	$(CXX) $(CXXFLAGS) -c $<
 
-lexer.o: lexer.cpp lexer.h token.h diagnostic.h
+lexer.o: lexer.cpp lexer.h token.h diagnostic.h tokenkind.def
 	$(CXX) $(CXXFLAGS) -c $<
 
 syntax.o: syntax.cpp syntax.h

@@ -6,40 +6,8 @@
 #include <vector>
 
 static const std::unordered_map<std::string, TokenKind> keyword2TokenKind{
-    {"auto", TK_AUTO},
-    {"break", TK_BREAK},
-    {"case", TK_CASE},
-    {"char", TK_CHAR},
-    {"const", TK_CONST},
-    {"continue", TK_CONTINUE},
-    {"default", TK_DEFAULT},
-    {"do", TK_DO},
-    {"double", TK_DOUBLE},
-    {"else", TK_ELSE},
-    {"enum", TK_ENUM},
-    {"extern", TK_EXTERN},
-    {"float", TK_FLOAT},
-    {"for", TK_FOR},
-    {"goto", TK_GOTO},
-    {"if", TK_IF},
-    {"inline", TK_INLINE},
-    {"int", TK_INT},
-    {"long", TK_LONG},
-    {"register", TK_REGISTER},
-    {"restrict", TK_RESTRICT},
-    {"return", TK_RETURN},
-    {"short", TK_SHORT},
-    {"signed", TK_SIGNED},
-    {"sizeof", TK_SIZEOF},
-    {"static", TK_STATIC},
-    {"struct", TK_STRUCT},
-    {"switch", TK_SWITCH},
-    {"typedef", TK_TYPEDEF},
-    {"union", TK_UNION},
-    {"unsigned", TK_UNSIGNED},
-    {"void", TK_VOID},
-    {"volatile", TK_VOLATILE},
-    {"while", TK_WHILE},
+#define KEYWORD(X, Y) {Y, TK_ ## X},
+#include "tokenkind.def"
 };
 
 static inline bool IsNumberBody(char c) {

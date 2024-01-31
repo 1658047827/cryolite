@@ -1,0 +1,138 @@
+#ifndef TOK
+#define TOK(X)
+#endif
+
+#ifndef PUNCTUATOR
+#define PUNCTUATOR(X, Y) TOK(X)
+#endif
+
+#ifndef KEYWORD
+#define KEYWORD(X, Y) TOK(X)
+#endif
+
+#ifndef PPKEYWORD
+#define PPKEYWORD(X)
+#endif
+
+TOK(UNKNOWN) // Not a token.
+TOK(EOF)     // End of file.
+TOK(EOM)     // End of macro (end of line inside a macro).
+
+// Identifier
+TOK(IDENTIFIER) // abcde123
+
+// Constants
+TOK(NUMERIC_CONSTANT) // 0x123   3.14
+TOK(CHAR_CONSTANT)    // 'a'
+
+// String Literal
+TOK(STRING_LITERAL) // "foo"
+
+// Punctuators
+PUNCTUATOR(LPAR,                "(")
+PUNCTUATOR(RPAR,                ")")
+PUNCTUATOR(LSQB,                "[")
+PUNCTUATOR(RSQB,                "]")
+PUNCTUATOR(LBRACE,              "{")
+PUNCTUATOR(RBRACE,              "}")
+PUNCTUATOR(DOT,                 ".")
+PUNCTUATOR(ELLIPSIS,            "...")
+PUNCTUATOR(AMP,                 "&")
+PUNCTUATOR(AMPAMP,              "&&")
+PUNCTUATOR(AMPEQUAL,            "&=")
+PUNCTUATOR(STAR,                "*")
+PUNCTUATOR(STAREQUAL,           "*=")
+PUNCTUATOR(PLUS,                "+")
+PUNCTUATOR(PLUSPLUS,            "++")
+PUNCTUATOR(PLUSEQUAL,           "+=")
+PUNCTUATOR(MINUS,               "-")
+PUNCTUATOR(ARROW,               "->")
+PUNCTUATOR(MINUSMINUS,          "--")
+PUNCTUATOR(MINUSEQUAL,          "-=")
+PUNCTUATOR(TILDE,               "~")
+PUNCTUATOR(EXCLAIM,             "!")
+PUNCTUATOR(EXCLAIMEQUAL,        "!=")
+PUNCTUATOR(SLASH,               "/")
+PUNCTUATOR(SLASHEQUAL,          "/=")
+PUNCTUATOR(PERCENT,             "%")
+PUNCTUATOR(PERCENTEQUAL,        "%=")
+PUNCTUATOR(LESS,                "<")
+PUNCTUATOR(LESSLESS,            "<<")
+PUNCTUATOR(LESSEQUAL,           "<=")
+PUNCTUATOR(LESSLESSEQUAL,       "<<=")
+PUNCTUATOR(GREATER,             ">")
+PUNCTUATOR(GREATERGREATER,      ">>")
+PUNCTUATOR(GREATEREQUAL,        ">=")
+PUNCTUATOR(GREATERGREATEREQUAL, ">>=")
+PUNCTUATOR(CARET,               "^")
+PUNCTUATOR(CARETEQUAL,          "^=")
+PUNCTUATOR(PIPE,                "|")
+PUNCTUATOR(PIPEPIPE,            "||")
+PUNCTUATOR(PIPEEQUAL,           "|=")
+PUNCTUATOR(QUESTION,            "?")
+PUNCTUATOR(COLON,               ":")
+PUNCTUATOR(SEMI,                ";")
+PUNCTUATOR(EQUAL,               "=")
+PUNCTUATOR(EQUALEQUAL,          "==")
+PUNCTUATOR(COMMA,               ",")
+PUNCTUATOR(HASH,                "#")
+PUNCTUATOR(HASHHASH,            "##")
+
+// C Keywords
+KEYWORD(AUTO,     "auto")
+KEYWORD(BREAK,    "break")
+KEYWORD(CASE,     "case")
+KEYWORD(CHAR,     "char")
+KEYWORD(CONST,    "const")
+KEYWORD(CONTINUE, "continue")
+KEYWORD(DEFAULT,  "default")
+KEYWORD(DO,       "do")
+KEYWORD(DOUBLE,   "double")
+KEYWORD(ELSE,     "else")
+KEYWORD(ENUM,     "enum")
+KEYWORD(EXTERN,   "extern")
+KEYWORD(FLOAT,    "float")
+KEYWORD(FOR,      "for")
+KEYWORD(GOTO,     "goto")
+KEYWORD(IF,       "if")
+KEYWORD(INLINE,   "inline")
+KEYWORD(INT,      "int")
+KEYWORD(LONG,     "long")
+KEYWORD(REGISTER, "register")
+KEYWORD(RESTRICT, "restrict")
+KEYWORD(RETURN,   "return")
+KEYWORD(SHORT,    "short")
+KEYWORD(SIGNED,   "signed")
+KEYWORD(SIZEOF,   "sizeof")
+KEYWORD(STATIC,   "static")
+KEYWORD(STRUCT,   "struct")
+KEYWORD(SWITCH,   "switch")
+KEYWORD(TYPEDEF,  "typedef")
+KEYWORD(UNION,    "union")
+KEYWORD(UNSIGNED, "unsigned")
+KEYWORD(VOID,     "void")
+KEYWORD(VOLATILE, "volatile")
+KEYWORD(WHILE,    "while")
+
+// For preprocessor
+/*
+IF,
+IFDEF,
+IFNDEF,
+ELIF,
+ELSE,
+ENDIF,
+INCLUDE,
+DEFINE,
+UNDEF,
+LINE,
+ERROR,
+PRAGMA,
+NONE,
+EMPTY,
+*/
+
+#undef PPKEYWORD
+#undef KEYWORD
+#undef PUNCTUATOR
+#undef TOK
