@@ -14,10 +14,10 @@ struct SourceLocation {
     unsigned int column;
 };
 
-std::string SrcLocToString(SourceLocation &loc);
+std::string SrcLocToString(const SourceLocation &loc);
 
 enum TokenKind {
-#define TOK(X) TK_ ## X,
+#define TOK(X) TK_##X,
 #include "tokenkind.def"
     NUM_TOKENS
 };
@@ -48,6 +48,9 @@ private:
 HideSet HideSetIntersection(HideSet &lhs, HideSet &rhs);
 HideSet HideSetUnion(HideSet &lhs, HideSet &rhs);
 
+using TokenSeqIter = std::list<std::unique_ptr<Token>>::iterator;
+using TokenSeqConstIter = std::list<std::unique_ptr<Token>>::const_iterator;
+
 class TokenSequence {
 public:
     TokenSequence() = default;
@@ -60,10 +63,10 @@ public:
     }
     void PushBack(Token &token);
     void Print(std::ostream &out);
-    std::list<std::unique_ptr<Token>>::iterator Begin();
-    std::list<std::unique_ptr<Token>>::iterator End();
-    std::list<std::unique_ptr<Token>>::const_iterator CBegin();
-    std::list<std::unique_ptr<Token>>::const_iterator CEnd();
+    TokenSeqIter Begin();
+    TokenSeqIter End();
+    TokenSeqConstIter CBegin();
+    TokenSeqConstIter CEnd();
 
 private:
     std::list<std::unique_ptr<Token>> tokenList;

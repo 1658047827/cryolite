@@ -4,12 +4,12 @@
 #include <unordered_map>
 
 static const std::unordered_map<TokenKind, std::string> tokenKind2Str{
-#define PUNCTUATOR(X, Y) {TK_ ## X, Y},
-#define KEYWORD(X, Y) {TK_ ## X, Y},
+#define PUNCTUATOR(X, Y) {TK_##X, Y},
+#define KEYWORD(X, Y) {TK_##X, Y},
 #include "tokenkind.def"
 };
 
-std::string SrcLocToString(SourceLocation &loc) {
+std::string SrcLocToString(const SourceLocation &loc) {
     std::string s(*loc.filename);
     s += ":";
     s += std::to_string(loc.line);
@@ -73,19 +73,19 @@ void TokenSequence::Print(std::ostream &out) {
     out << std::endl;
 }
 
-std::list<std::unique_ptr<Token>>::iterator TokenSequence::Begin() {
+TokenSeqIter TokenSequence::Begin() {
     return tokenList.begin();
 }
 
-std::list<std::unique_ptr<Token>>::iterator TokenSequence::End() {
+TokenSeqIter TokenSequence::End() {
     return tokenList.end();
 }
 
-std::list<std::unique_ptr<Token>>::const_iterator TokenSequence::CBegin() {
+TokenSeqConstIter TokenSequence::CBegin() {
     return tokenList.cbegin();
 }
 
-std::list<std::unique_ptr<Token>>::const_iterator TokenSequence::CEnd() {
+TokenSeqConstIter TokenSequence::CEnd() {
     return tokenList.cend();
 }
 

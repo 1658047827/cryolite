@@ -6,7 +6,7 @@
 #include <vector>
 
 static const std::unordered_map<std::string, TokenKind> keyword2TokenKind{
-#define KEYWORD(X, Y) {Y, TK_ ## X},
+#define KEYWORD(X, Y) {Y, TK_##X},
 #include "tokenkind.def"
 };
 

@@ -3,22 +3,35 @@
 
 #include "syntax.h"
 #include "token.h"
+#include <bitset>
+
+using TokenBitSet = std::bitset<TokenKind::NUM_TOKENS>;
 
 class Parser {
 public:
     Parser(TokenSequence &ts)
-        : tksq(ts), cursor(ts.CBegin()) {}
+        : tksq(ts), cursor(ts.CBegin()) { InitBitSet(); }
 
     TranslationUnit *ParseTranslationUnit();
     ExternalDeclaration *ParseExternalDeclaration();
     DeclSpecifiers *ParseDeclarationSpecifiers();
-    Declarator* ParseDeclarator();
-    StructOrUnionSpecifier* ParseStructOrUnionSpecifier();
-    EnumSpecifier* ParseEnumSpecifier();
+    Declarator *ParseDeclarator();
+    StructOrUnionSpecifier *ParseStructOrUnionSpecifier();
+    EnumSpecifier *ParseEnumSpecifier();
+    StructDeclaration *ParseStructDeclaration();
 
 private:
+    void InitBitSet();
+    template <typename... Args>
+    void SetBitSet(TokenBitSet &bitset, Args... values) {
+        (bitset.set(values), ...);
+    }
+    bool IsInBitSet(TokenBitSet &bitset, TokenSeqConstIter &iter);
+
     TokenSequence &tksq;
-    std::list<std::unique_ptr<Token>>::const_iterator cursor;
+    TokenSeqConstIter cursor;
+
+    TokenBitSet firstOfSpecifierQualifier;
 };
 
 #endif

@@ -1,4 +1,32 @@
 #include "parser.h"
+#include "diagnostic.h"
+#include <cassert>
+
+void Parser::InitBitSet() {
+    SetBitSet(firstOfSpecifierQualifier,
+              // TypeQualifier
+              TokenKind::TK_CONST,
+              TokenKind::TK_RESTRICT,
+              TokenKind::TK_VOLATILE,
+              // TypeSpecifier
+              TokenKind::TK_VOID,
+              TokenKind::TK_CHAR,
+              TokenKind::TK_SHORT,
+              TokenKind::TK_INT,
+              TokenKind::TK_LONG,
+              TokenKind::TK_FLOAT,
+              TokenKind::TK_DOUBLE,
+              TokenKind::TK_SIGNED,
+              TokenKind::TK_UNSIGNED,
+              TokenKind::TK_STRUCT,
+              TokenKind::TK_UNION,
+              TokenKind::TK_ENUM,
+              TokenKind::TK_IDENTIFIER);
+}
+
+bool Parser::IsInBitSet(TokenBitSet &bitset, TokenSeqConstIter &iter) {
+    return bitset[(*iter)->GetKind()];
+}
 
 TranslationUnit *Parser::ParseTranslationUnit() {
     auto begin = cursor;
@@ -33,9 +61,7 @@ ExternalDeclaration *Parser::ParseExternalDeclaration() {
 
 DeclSpecifiers *Parser::ParseDeclarationSpecifiers() {
     DeclSpecifiers *declSpecs = new DeclSpecifiers;
-    DeclSpecifier *spec;
     while (true) {
-
         switch ((*cursor)->GetKind()) {
         case TokenKind::TK_TYPEDEF:
             declSpecs->AddStorageClassSpecifier(new StorageClassSpecifier(StorageClassSpecifier::TYPEDEF));
@@ -136,7 +162,35 @@ Declarator *Parser::ParseDeclarator() {
 }
 
 StructOrUnionSpecifier *Parser::ParseStructOrUnionSpecifier() {
+    auto begin = cursor;
+    StructOrUnionSpecifier *structUnionSpec = new StructOrUnionSpecifier;
+    structUnionSpec->isUnion = (*cursor)->GetKind() == TokenKind::TK_UNION;
+    ++cursor; // Consume STRUCT or UNION.
+    switch ((*cursor)->GetKind()) {
+    case TokenKind::TK_IDENTIFIER:
+        structUnionSpec->ident = (*cursor)->GetStr();
+        if ((*cursor)->GetKind() != TokenKind::TK_LBRACE) {
+            return structUnionSpec;
+        }
+    case TokenKind::TK_LBRACE:
+        ++cursor; // Consume the '{'.
+        while (IsInBitSet(firstOfSpecifierQualifier, cursor)) {
+            auto structDecl = ParseStructDeclaration();
+            if (structDecl) {
+                structUnionSpec->structDeclList.push_back(structDecl);
+            }
+        }
+        assert((*cursor)->GetKind() == TokenKind::TK_RBRACE);
+        ++cursor; // Consume the '}'.
+        return structUnionSpec;
+    default:
+        Error((*cursor)->GetLoc(), "parse struct_or_union_specifier error");
+        return nullptr;
+    }
 }
 
 EnumSpecifier *Parser::ParseEnumSpecifier() {
+}
+
+StructDeclaration *Parser::ParseStructDeclaration() {
 }
