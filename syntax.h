@@ -528,6 +528,9 @@ public:
  */
 class ConstantExpr {
 public:
+    ConstantExpr(ConditionalExpr *condExpr)
+        : condExpr(condExpr) {}
+
     ConditionalExpr *condExpr;
 };
 

@@ -19,6 +19,9 @@ public:
     StructOrUnionSpecifier *ParseStructOrUnionSpecifier();
     EnumSpecifier *ParseEnumSpecifier();
     StructDeclaration *ParseStructDeclaration();
+    SpecifierQualifier *ParseSpecifierQualifier();
+    StructDeclarator *ParseStructDeclarator();
+    ConditionalExpr* ParseConditionalExpr();
 
 private:
     void InitBitSet();
@@ -32,6 +35,7 @@ private:
     TokenSeqConstIter cursor;
 
     TokenBitSet firstOfSpecifierQualifier;
+    TokenBitSet firstOfDeclarator;
 };
 
 #endif
