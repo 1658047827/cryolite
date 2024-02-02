@@ -8,6 +8,6 @@ void error(const SourceLocation &loc, const std::string &msg) {
 }
 
 void warning(const SourceLocation &loc, const std::string &msg) {
-    std::cerr << srcLocToString(loc) << ANSI_COLOR_YELLOW << "warning: ";
+    std::cerr << srcLocToString(loc) << ANSI_COLOR_MAGENTA << "warning: ";
     std::cerr << ANSI_COLOR_RESET << msg << std::endl;
 }

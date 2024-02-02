@@ -1,8 +1,14 @@
 CXX = clang++
-CXXFLAGS = -std=c++17 -g
-TARGET = cryolite
+CXXFLAGS = -std=c++17
+ifeq ($(OS), Windows_NT)
+	TARGET = cryolite.exe
+	RM = del /q
+else
+	TARGET = cryolite
+	RM = rm -f
+endif
 
-cryolite: diagnostic.o token.o lexer.o syntax.o parser.o main.o
+$(TARGET): diagnostic.o token.o lexer.o syntax.o parser.o main.o
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $^
 
 diagnostic.o: diagnostic.cpp diagnostic.h
@@ -24,4 +30,4 @@ main.o: main.cpp lexer.h
 	$(CXX) $(CXXFLAGS) -c $<
 
 clean:
-	rm -f *.o cryolite
+	$(RM) *.o $(TARGET)
