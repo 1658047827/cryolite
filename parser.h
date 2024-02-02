@@ -21,7 +21,7 @@ public:
     StructDeclaration *parseStructDeclaration();
     SpecifierQualifier *parseSpecifierQualifier();
     StructDeclarator *parseStructDeclarator();
-    ConditionalExpr* parseConditionalExpr();
+    ConditionalExpr *parseConditionalExpr();
 
 private:
     void initBitSet();

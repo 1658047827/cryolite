@@ -6,6 +6,7 @@
 #define _CRYOLITE_SYNTAX_H_
 
 #include <optional>
+#include <string>
 #include <variant>
 #include <vector>
 
