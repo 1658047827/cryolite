@@ -10,26 +10,26 @@ using TokenBitSet = std::bitset<TokenKind::NUM_TOKENS>;
 class Parser {
 public:
     Parser(TokenSequence &ts)
-        : tksq(ts), cursor(ts.CBegin()) { InitBitSet(); }
+        : tksq(ts), cursor(ts.cBegin()) { initBitSet(); }
 
-    TranslationUnit *ParseTranslationUnit();
-    ExternalDeclaration *ParseExternalDeclaration();
-    DeclSpecifiers *ParseDeclarationSpecifiers();
-    Declarator *ParseDeclarator();
-    StructOrUnionSpecifier *ParseStructOrUnionSpecifier();
-    EnumSpecifier *ParseEnumSpecifier();
-    StructDeclaration *ParseStructDeclaration();
-    SpecifierQualifier *ParseSpecifierQualifier();
-    StructDeclarator *ParseStructDeclarator();
-    ConditionalExpr* ParseConditionalExpr();
+    TranslationUnit *parseTranslationUnit();
+    ExternalDeclaration *parseExternalDeclaration();
+    DeclSpecifiers *parseDeclarationSpecifiers();
+    Declarator *parseDeclarator();
+    StructOrUnionSpecifier *parseStructOrUnionSpecifier();
+    EnumSpecifier *parseEnumSpecifier();
+    StructDeclaration *parseStructDeclaration();
+    SpecifierQualifier *parseSpecifierQualifier();
+    StructDeclarator *parseStructDeclarator();
+    ConditionalExpr* parseConditionalExpr();
 
 private:
-    void InitBitSet();
+    void initBitSet();
     template <typename... Args>
-    void SetBitSet(TokenBitSet &bitset, Args... values) {
+    void setBitSet(TokenBitSet &bitset, Args... values) {
         (bitset.set(values), ...);
     }
-    bool IsInBitSet(TokenBitSet &bitset, TokenSeqConstIter &iter);
+    bool isInBitSet(TokenBitSet &bitset, TokenSeqConstIter &iter);
 
     TokenSequence &tksq;
     TokenSeqConstIter cursor;

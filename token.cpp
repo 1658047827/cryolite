@@ -9,7 +9,7 @@ static const std::unordered_map<TokenKind, std::string> tokenKind2Str{
 #include "tokenkind.def"
 };
 
-std::string SrcLocToString(const SourceLocation &loc) {
+std::string srcLocToString(const SourceLocation &loc) {
     std::string s(*loc.filename);
     s += ":";
     s += std::to_string(loc.line);
@@ -19,19 +19,19 @@ std::string SrcLocToString(const SourceLocation &loc) {
     return s;
 }
 
-TokenKind Token::GetKind() {
+TokenKind Token::getKind() {
     return kind;
 }
 
-SourceLocation Token::GetLoc() {
+SourceLocation Token::getLoc() {
     return loc;
 }
 
-std::string Token::GetStr() {
+std::string Token::getStr() {
     return str;
 }
 
-std::string Token::ToString() {
+std::string Token::toString() {
     if (str.empty()) {
         auto iter = tokenKind2Str.find(kind);
         if (iter != tokenKind2Str.cend())
@@ -42,50 +42,50 @@ std::string Token::ToString() {
     }
 }
 
-void Token::HideSetAdd(std::string &tokenStr) {
+void Token::hideSetAdd(std::string &tokenStr) {
     hideSet.insert(tokenStr);
 }
 
-bool Token::HideSetHas(std::string &tokenStr) {
+bool Token::hideSetHas(std::string &tokenStr) {
     return hideSet.count(tokenStr) == 1;
 }
 
-HideSet HideSetIntersection(HideSet &lhs, HideSet &rhs) {
+HideSet hideSetIntersection(HideSet &lhs, HideSet &rhs) {
     HideSet hs;
     std::set_intersection(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend(), std::inserter(hs, hs.begin()));
     return hs;
 }
 
-HideSet HideSetUnion(HideSet &lhs, HideSet &rhs) {
+HideSet hideSetUnion(HideSet &lhs, HideSet &rhs) {
     HideSet hs;
     std::set_union(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend(), std::inserter(hs, hs.begin()));
     return hs;
 }
 
-void TokenSequence::PushBack(Token &token) {
+void TokenSequence::pushBack(Token &token) {
     tokenList.push_back(std::make_unique<Token>(token));
 }
 
-void TokenSequence::Print(std::ostream &out) {
+void TokenSequence::print(std::ostream &out) {
     for (auto &tkp : tokenList) {
-        out << tkp->ToString() << ' ';
+        out << tkp->toString() << ' ';
     }
     out << std::endl;
 }
 
-TokenSeqIter TokenSequence::Begin() {
+TokenSeqIter TokenSequence::begin() {
     return tokenList.begin();
 }
 
-TokenSeqIter TokenSequence::End() {
+TokenSeqIter TokenSequence::end() {
     return tokenList.end();
 }
 
-TokenSeqConstIter TokenSequence::CBegin() {
+TokenSeqConstIter TokenSequence::cBegin() {
     return tokenList.cbegin();
 }
 
-TokenSeqConstIter TokenSequence::CEnd() {
+TokenSeqConstIter TokenSequence::cEnd() {
     return tokenList.cend();
 }
 

@@ -583,10 +583,10 @@ public:
 
 class DeclSpecifiers {
 public:
-    void AddStorageClassSpecifier(StorageClassSpecifier *storageClassSpec);
-    void AddTypeSpecifier(TypeSpecifier *typeSpec);
-    void AddTypeQualifier(TypeQualifier *typeQual);
-    void AddFuncSpecifier(FuncSpecifier *funcSpec);
+    void addStorageClassSpecifier(StorageClassSpecifier *storageClassSpec);
+    void addTypeSpecifier(TypeSpecifier *typeSpec);
+    void addTypeQualifier(TypeQualifier *typeQual);
+    void addFuncSpecifier(FuncSpecifier *funcSpec);
 
     std::vector<DeclSpecifier *> specs;
 };

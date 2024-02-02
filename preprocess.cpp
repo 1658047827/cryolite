@@ -1,10 +1,10 @@
 #include "preprocess.h"
 
-void Preprocessor::HandleIfdef() {
+void Preprocessor::handleIfdef() {
 }
 
-void Preprocessor::HandleIf() {
+void Preprocessor::handleIf() {
 }
 
-void Preprocessor::HandleError() {
+void Preprocessor::handleError() {
 }

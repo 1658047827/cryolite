@@ -17,10 +17,10 @@ public:
 
     ~Macro() = default;
 
-    bool IsObjLike() { return objLike; }
-    bool IsFuncLike() { return !objLike; }
-    bool IsVariadic() { return variadic; }
-    std::vector<std::string> &Params() { return params; }
+    bool isObjLike() { return objLike; }
+    bool isFuncLike() { return !objLike; }
+    bool isVariadic() { return variadic; }
+    std::vector<std::string> &getParams() { return params; }
 
 private:
     bool objLike;
@@ -39,9 +39,9 @@ class Preprocessor {
 public:
     ~Preprocessor() = default;
 
-    void HandleIfdef();
-    void HandleIf();
-    void HandleError();
+    void handleIfdef();
+    void handleIf();
+    void handleError();
 
 private:
     std::map<std::string, Macro> macroMap;

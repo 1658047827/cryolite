@@ -10,208 +10,208 @@ static const std::unordered_map<std::string, TokenKind> keyword2TokenKind{
 #include "tokenkind.def"
 };
 
-static inline bool IsNumberBody(char c) {
+static inline bool isNumberBody(char c) {
     return std::isdigit(c) || std::isalpha(c) || c == '.';
 }
 
-void Lexer::Lex(TokenSequence &ts) {
-    char c = CurChar();
+void Lexer::lex(TokenSequence &ts) {
+    char c = curChar();
     while (c != 0) {
         switch (c) {
         case '?':
-            ts.EmplaceBack(TokenKind::TK_QUESTION, curLoc);
+            ts.emplaceBack(TokenKind::TK_QUESTION, curLoc);
             break;
         case '(':
-            ts.EmplaceBack(TokenKind::TK_LPAR, curLoc);
+            ts.emplaceBack(TokenKind::TK_LPAR, curLoc);
             break;
         case ')':
-            ts.EmplaceBack(TokenKind::TK_RPAR, curLoc);
+            ts.emplaceBack(TokenKind::TK_RPAR, curLoc);
             break;
         case '[':
-            ts.EmplaceBack(TokenKind::TK_LSQB, curLoc);
+            ts.emplaceBack(TokenKind::TK_LSQB, curLoc);
             break;
         case ']':
-            ts.EmplaceBack(TokenKind::TK_RSQB, curLoc);
+            ts.emplaceBack(TokenKind::TK_RSQB, curLoc);
             break;
         case '{':
-            ts.EmplaceBack(TokenKind::TK_LBRACE, curLoc);
+            ts.emplaceBack(TokenKind::TK_LBRACE, curLoc);
             break;
         case '}':
-            ts.EmplaceBack(TokenKind::TK_RBRACE, curLoc);
+            ts.emplaceBack(TokenKind::TK_RBRACE, curLoc);
             break;
         case '~':
-            ts.EmplaceBack(TokenKind::TK_TILDE, curLoc);
+            ts.emplaceBack(TokenKind::TK_TILDE, curLoc);
             break;
         case ';':
-            ts.EmplaceBack(TokenKind::TK_SEMI, curLoc);
+            ts.emplaceBack(TokenKind::TK_SEMI, curLoc);
             break;
         case ',':
-            ts.EmplaceBack(TokenKind::TK_COMMA, curLoc);
+            ts.emplaceBack(TokenKind::TK_COMMA, curLoc);
             break;
         case ':':
-            ts.EmplaceBack(TokenKind::TK_COLON, curLoc);
+            ts.emplaceBack(TokenKind::TK_COLON, curLoc);
             break;
         case '=': {
-            if (NextIs('=')) {
-                ts.EmplaceBack(TokenKind::TK_EQUALEQUAL, curLoc);
-                Next(); // Consume the '='.
+            if (nextIs('=')) {
+                ts.emplaceBack(TokenKind::TK_EQUALEQUAL, curLoc);
+                next(); // Consume the '='.
             } else {
-                ts.EmplaceBack(TokenKind::TK_EQUAL, curLoc);
+                ts.emplaceBack(TokenKind::TK_EQUAL, curLoc);
             }
         } break;
         case '.': {
-            char peekc = LookAhead();
+            char peekc = lookAhead();
             if (std::isdigit(peekc)) {
-                Token tk = LexNumericConstant();
-                ts.PushBack(tk);
-            } else if (peekc == '.' && LookAhead(2) == '.') {
-                ts.EmplaceBack(TokenKind::TK_ELLIPSIS, curLoc);
-                Next(); // Consume the two dots.
-                Next();
+                Token tk = lexNumericConstant();
+                ts.pushBack(tk);
+            } else if (peekc == '.' && lookAhead(2) == '.') {
+                ts.emplaceBack(TokenKind::TK_ELLIPSIS, curLoc);
+                next(); // Consume the two dots.
+                next();
             } else {
-                ts.EmplaceBack(TokenKind::TK_DOT, curLoc);
+                ts.emplaceBack(TokenKind::TK_DOT, curLoc);
             }
         } break;
         case '&': {
-            char peekc = LookAhead();
+            char peekc = lookAhead();
             if (peekc == '&') {
-                ts.EmplaceBack(TokenKind::TK_AMPAMP, curLoc);
-                Next(); // Consume the '&'.
+                ts.emplaceBack(TokenKind::TK_AMPAMP, curLoc);
+                next(); // Consume the '&'.
             } else if (peekc == '=') {
-                ts.EmplaceBack(TokenKind::TK_AMPEQUAL, curLoc);
-                Next(); // Consume thr '='.
+                ts.emplaceBack(TokenKind::TK_AMPEQUAL, curLoc);
+                next(); // Consume thr '='.
             } else {
-                ts.EmplaceBack(TokenKind::TK_AMP, curLoc);
+                ts.emplaceBack(TokenKind::TK_AMP, curLoc);
             }
         } break;
         case '*': {
-            if (LookAhead() == '=') {
-                ts.EmplaceBack(TokenKind::TK_STAREQUAL, curLoc);
-                Next(); // Consume the '='.
+            if (lookAhead() == '=') {
+                ts.emplaceBack(TokenKind::TK_STAREQUAL, curLoc);
+                next(); // Consume the '='.
             } else {
-                ts.EmplaceBack(TokenKind::TK_STAR, curLoc);
+                ts.emplaceBack(TokenKind::TK_STAR, curLoc);
             }
         } break;
         case '+': {
-            char peekc = LookAhead();
+            char peekc = lookAhead();
             if (peekc == '+') {
-                ts.EmplaceBack(TokenKind::TK_PLUSPLUS, curLoc);
-                Next(); // Consume the '+'.
+                ts.emplaceBack(TokenKind::TK_PLUSPLUS, curLoc);
+                next(); // Consume the '+'.
             } else if (peekc == '=') {
-                ts.EmplaceBack(TokenKind::TK_PLUSEQUAL, curLoc);
-                Next(); // Consume the '='.
+                ts.emplaceBack(TokenKind::TK_PLUSEQUAL, curLoc);
+                next(); // Consume the '='.
             } else {
-                ts.EmplaceBack(TokenKind::TK_PLUS, curLoc);
+                ts.emplaceBack(TokenKind::TK_PLUS, curLoc);
             }
         } break;
         case '-': {
-            char peekc = LookAhead();
+            char peekc = lookAhead();
             if (peekc == '-') {
-                ts.EmplaceBack(TokenKind::TK_MINUSMINUS, curLoc);
-                Next(); // Consume the '-'.
+                ts.emplaceBack(TokenKind::TK_MINUSMINUS, curLoc);
+                next(); // Consume the '-'.
             } else if (peekc == '>') {
-                ts.EmplaceBack(TokenKind::TK_ARROW, curLoc);
-                Next(); // Consume the '>'.
+                ts.emplaceBack(TokenKind::TK_ARROW, curLoc);
+                next(); // Consume the '>'.
             } else if (peekc == '=') {
-                ts.EmplaceBack(TokenKind::TK_MINUSEQUAL, curLoc);
-                Next(); // Consume the '='.
+                ts.emplaceBack(TokenKind::TK_MINUSEQUAL, curLoc);
+                next(); // Consume the '='.
             } else {
-                ts.EmplaceBack(TokenKind::TK_MINUS, curLoc);
+                ts.emplaceBack(TokenKind::TK_MINUS, curLoc);
             }
         } break;
         case '!': {
-            if (NextIs('=')) {
-                ts.EmplaceBack(TokenKind::TK_EXCLAIMEQUAL, curLoc);
-                Next(); // Consume the '='.
+            if (nextIs('=')) {
+                ts.emplaceBack(TokenKind::TK_EXCLAIMEQUAL, curLoc);
+                next(); // Consume the '='.
             } else {
-                ts.EmplaceBack(TokenKind::TK_EXCLAIM, curLoc);
+                ts.emplaceBack(TokenKind::TK_EXCLAIM, curLoc);
             }
         } break;
         case '/': {
-            if (NextIs('/') || NextIs('*')) {
-                SkipComment();
-            } else if (NextIs('=')) {
-                ts.EmplaceBack(TokenKind::TK_SLASHEQUAL, curLoc);
-                Next(); // Consume the '='.
+            if (nextIs('/') || nextIs('*')) {
+                skipComment();
+            } else if (nextIs('=')) {
+                ts.emplaceBack(TokenKind::TK_SLASHEQUAL, curLoc);
+                next(); // Consume the '='.
             } else {
-                ts.EmplaceBack(TokenKind::TK_SLASH, curLoc);
+                ts.emplaceBack(TokenKind::TK_SLASH, curLoc);
             }
         } break;
         case '%': {
-            if (LookAhead() == '=') {
-                ts.EmplaceBack(TokenKind::TK_PERCENTEQUAL, curLoc);
-                Next(); // Consume the '='.
+            if (lookAhead() == '=') {
+                ts.emplaceBack(TokenKind::TK_PERCENTEQUAL, curLoc);
+                next(); // Consume the '='.
             } else {
-                ts.EmplaceBack(TokenKind::TK_PERCENT, curLoc);
+                ts.emplaceBack(TokenKind::TK_PERCENT, curLoc);
             }
         } break;
         case '<': {
-            char peekc = LookAhead();
-            if (peekc == '<' && LookAhead(2) == '=') {
-                ts.EmplaceBack(TokenKind::TK_LESSLESSEQUAL, curLoc);
-                Next(); // Consume the "<=".
-                Next();
+            char peekc = lookAhead();
+            if (peekc == '<' && lookAhead(2) == '=') {
+                ts.emplaceBack(TokenKind::TK_LESSLESSEQUAL, curLoc);
+                next(); // Consume the "<=".
+                next();
             } else if (peekc == '<') {
-                ts.EmplaceBack(TokenKind::TK_LESSLESS, curLoc);
-                Next(); // Consume the '<'.
+                ts.emplaceBack(TokenKind::TK_LESSLESS, curLoc);
+                next(); // Consume the '<'.
             } else if (peekc == '=') {
-                ts.EmplaceBack(TokenKind::TK_LESSEQUAL, curLoc);
-                Next(); // Consume the '='.
+                ts.emplaceBack(TokenKind::TK_LESSEQUAL, curLoc);
+                next(); // Consume the '='.
             } else {
-                ts.EmplaceBack(TokenKind::TK_LESS, curLoc);
+                ts.emplaceBack(TokenKind::TK_LESS, curLoc);
             }
         } break;
         case '>': {
-            char peekc = LookAhead();
+            char peekc = lookAhead();
             if (peekc == '=') {
-                ts.EmplaceBack(TokenKind::TK_GREATEREQUAL, curLoc);
-                Next(); // Consume the '='.
-            } else if (peekc == '>' && LookAhead(2) == '=') {
-                ts.EmplaceBack(TokenKind::TK_GREATERGREATEREQUAL, curLoc);
-                Next(); // Consume the ">=".
-                Next();
+                ts.emplaceBack(TokenKind::TK_GREATEREQUAL, curLoc);
+                next(); // Consume the '='.
+            } else if (peekc == '>' && lookAhead(2) == '=') {
+                ts.emplaceBack(TokenKind::TK_GREATERGREATEREQUAL, curLoc);
+                next(); // Consume the ">=".
+                next();
             } else if (peekc == '>') {
-                ts.EmplaceBack(TokenKind::TK_GREATERGREATER, curLoc);
-                Next(); // Consume the '>'.
+                ts.emplaceBack(TokenKind::TK_GREATERGREATER, curLoc);
+                next(); // Consume the '>'.
             } else {
-                ts.EmplaceBack(TokenKind::TK_GREATER, curLoc);
+                ts.emplaceBack(TokenKind::TK_GREATER, curLoc);
             }
         } break;
         case '^': {
-            if (LookAhead() == '=') {
-                ts.EmplaceBack(TokenKind::TK_CARETEQUAL, curLoc);
-                Next(); // Consume the '='.
+            if (lookAhead() == '=') {
+                ts.emplaceBack(TokenKind::TK_CARETEQUAL, curLoc);
+                next(); // Consume the '='.
             } else {
-                ts.EmplaceBack(TokenKind::TK_CARET, curLoc);
+                ts.emplaceBack(TokenKind::TK_CARET, curLoc);
             }
         } break;
         case '|': {
-            char peekc = LookAhead();
+            char peekc = lookAhead();
             if (peekc == '=') {
-                ts.EmplaceBack(TokenKind::TK_PIPEEQUAL, curLoc);
-                Next(); // Consume the '='.
+                ts.emplaceBack(TokenKind::TK_PIPEEQUAL, curLoc);
+                next(); // Consume the '='.
             } else if (peekc == '|') {
-                ts.EmplaceBack(TokenKind::TK_PIPEPIPE, curLoc);
-                Next(); // Consume the '|'.
+                ts.emplaceBack(TokenKind::TK_PIPEPIPE, curLoc);
+                next(); // Consume the '|'.
             } else {
-                ts.EmplaceBack(TokenKind::TK_PIPE, curLoc);
+                ts.emplaceBack(TokenKind::TK_PIPE, curLoc);
             }
         } break;
         case '#': {
-            if (LookAhead() == '#') {
-                ts.EmplaceBack(TokenKind::TK_HASHHASH, curLoc);
-                Next(); // Consume the '#'.
+            if (lookAhead() == '#') {
+                ts.emplaceBack(TokenKind::TK_HASHHASH, curLoc);
+                next(); // Consume the '#'.
             } else {
-                ts.EmplaceBack(TokenKind::TK_HASH, curLoc);
+                ts.emplaceBack(TokenKind::TK_HASH, curLoc);
             }
         } break;
         case '\'': {
-            Token tk = LexCharConstant();
-            ts.PushBack(tk);
+            Token tk = lexCharConstant();
+            ts.pushBack(tk);
         } break;
         case '\"': {
-            Token tk = LexStringLiteral();
-            ts.PushBack(tk);
+            Token tk = lexStringLiteral();
+            ts.pushBack(tk);
         } break;
         case ' ':
         case '\t':
@@ -222,31 +222,31 @@ void Lexer::Lex(TokenSequence &ts) {
         case 'A' ... 'Z':
         case 'a' ... 'z':
         case '_': {
-            Token tk = LexIdentifier();
-            ts.PushBack(tk);
+            Token tk = lexIdentifier();
+            ts.pushBack(tk);
         } break;
         case '0' ... '9': {
-            Token tk = LexNumericConstant();
-            ts.PushBack(tk);
+            Token tk = lexNumericConstant();
+            ts.pushBack(tk);
         } break;
         default:
             std::cout << c << std::endl;
         }
-        c = Next();
+        c = next();
     }
 
-    ts.EmplaceBack(TokenKind::TK_EOF, curLoc);
+    ts.emplaceBack(TokenKind::TK_EOF, curLoc);
 }
 
-char Lexer::CurChar() {
+char Lexer::curChar() {
     if (p < buffer.size())
         return buffer[p];
     else
         return 0;
 }
 
-char Lexer::Next() {
-    char c = CurChar();
+char Lexer::next() {
+    char c = curChar();
     if (c == 0)
         return 0;
     if (c == '\n') {
@@ -261,121 +261,121 @@ char Lexer::Next() {
     return buffer[p];
 }
 
-char Lexer::LookAhead(size_t n) {
+char Lexer::lookAhead(size_t n) {
     if (p + n >= buffer.size())
         return 0;
     return buffer[p + n];
 }
 
-bool Lexer::NextIs(char c) {
-    return LookAhead(1) == c;
+bool Lexer::nextIs(char c) {
+    return lookAhead(1) == c;
 }
 
-bool Lexer::Try(char c) {
-    if (LookAhead() == c) {
-        Next();
+bool Lexer::tryNext(char c) {
+    if (lookAhead() == c) {
+        next();
         return true;
     } else {
         return false;
     }
 }
 
-void Lexer::SkipComment() {
+void Lexer::skipComment() {
     char c = '/';
     SourceLocation loc = curLoc;
-    if (Try('/')) {
-        while (!NextIs(0) && c != '\n') {
-            c = Next();
+    if (tryNext('/')) {
+        while (!nextIs(0) && c != '\n') {
+            c = next();
         }
-    } else if (Try('*')) {
-        while (!NextIs(0)) {
-            c = Next();
-            if (c == '*' && NextIs('/')) {
-                Next();
+    } else if (tryNext('*')) {
+        while (!nextIs(0)) {
+            c = next();
+            if (c == '*' && nextIs('/')) {
+                next();
                 return;
             }
         }
-        Error(loc, "unterminated block comment");
+        error(loc, "unterminated block comment");
     }
 }
 
-Token Lexer::LexNumericConstant() {
+Token Lexer::lexNumericConstant() {
     size_t begin = p;
     SourceLocation loc = curLoc;
-    char c = LookAhead();
+    char c = lookAhead();
     char prevCh = 0;
-    while (IsNumberBody(c)) {
-        Next();
+    while (isNumberBody(c)) {
+        next();
         prevCh = c;
-        c = LookAhead();
+        c = lookAhead();
     }
 
     // If we fell out, check for a sign, due to 1e+12. If we have one, continue.
     if ((c == '-' || c == '+') && (prevCh == 'E' || prevCh == 'e')) {
-        Next();
-        LexNumericConstant();
+        next();
+        lexNumericConstant();
     }
 
     // If we have a hex FP constant, continue.
     if ((c == '-' || c == '+') && (prevCh == 'P' || prevCh == 'p')) {
-        Next();
-        LexNumericConstant();
+        next();
+        lexNumericConstant();
     }
 
     std::string tkStr(buffer.begin() + begin, buffer.begin() + p + 1);
     return Token(TokenKind::TK_NUMERIC_CONSTANT, loc, tkStr);
 }
 
-Token Lexer::LexCharConstant() {
+Token Lexer::lexCharConstant() {
     size_t begin = p;
     SourceLocation loc = curLoc;
-    if (Try('\'')) {
-        Error(loc, "empty character constant");
+    if (tryNext('\'')) {
+        error(loc, "empty character constant");
         return Token(TokenKind::TK_UNKNOWN, loc);
     }
-    char c = Next();
+    char c = next();
     while (c != '\'' && c != '\n' && c != 0) {
         // Skip escaped characters.
         if (c == '\\') {
-            Next();
+            next();
         }
-        c = Next();
+        c = next();
     }
     if (c != '\'') {
-        Error(loc, "unterminated character constant");
+        error(loc, "unterminated character constant");
         return Token(TokenKind::TK_UNKNOWN, loc);
     }
     std::string tkStr(buffer.begin() + begin, buffer.begin() + p + 1);
     return Token(TokenKind::TK_CHAR_CONSTANT, loc, tkStr);
 }
 
-Token Lexer::LexStringLiteral() {
+Token Lexer::lexStringLiteral() {
     size_t begin = p;
     SourceLocation loc = curLoc;
-    char c = Next();
+    char c = next();
     while (c != '\"') {
         // Skip escaped characters.
         if (c == '\\') {
-            Next();
+            next();
         } else if (c == '\n' || c == 0) {
-            Error(loc, "unterminated string literal");
+            error(loc, "unterminated string literal");
             return Token(TokenKind::TK_UNKNOWN, loc);
         }
-        c = Next();
+        c = next();
     }
     std::string tkStr(buffer.begin() + begin, buffer.begin() + p + 1);
     return Token(TokenKind::TK_STRING_LITERAL, loc, tkStr);
 }
 
-Token Lexer::LexIdentifier() {
+Token Lexer::lexIdentifier() {
     size_t begin = p;
     SourceLocation loc = curLoc;
-    char c = LookAhead();
+    char c = lookAhead();
     while (c != 0) {
         if (!std::isalpha(c) && !std::isdigit(c) && c != '_')
             break;
-        Next();
-        c = LookAhead();
+        next();
+        c = lookAhead();
     }
     std::string tkStr(buffer.begin() + begin, buffer.begin() + p + 1);
     auto iter = keyword2TokenKind.find(tkStr);
@@ -385,7 +385,7 @@ Token Lexer::LexIdentifier() {
     return Token(TokenKind::TK_IDENTIFIER, loc, tkStr);
 }
 
-int ReadFile(std::string &filename, std::vector<char> &buffer) {
+int readFile(std::string &filename, std::vector<char> &buffer) {
     std::ifstream infile(filename);
     if (!infile.is_open()) {
         std::cerr << "Failed to open file: " << filename << std::endl;

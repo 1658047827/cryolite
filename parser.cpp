@@ -2,8 +2,8 @@
 #include "diagnostic.h"
 #include <cassert>
 
-void Parser::InitBitSet() {
-    SetBitSet(firstOfSpecifierQualifier,
+void Parser::initBitSet() {
+    setBitSet(firstOfSpecifierQualifier,
               // TypeQualifier
               TokenKind::TK_CONST,
               TokenKind::TK_RESTRICT,
@@ -23,7 +23,7 @@ void Parser::InitBitSet() {
               TokenKind::TK_ENUM,
               TokenKind::TK_IDENTIFIER);
 
-    SetBitSet(firstOfDeclarator,
+    setBitSet(firstOfDeclarator,
               // Pointer
               TokenKind::TK_STAR,
               // DirectDeclarator
@@ -31,20 +31,20 @@ void Parser::InitBitSet() {
               TokenKind::TK_LPAR);
 }
 
-bool Parser::IsInBitSet(TokenBitSet &bitset, TokenSeqConstIter &iter) {
-    return bitset[(*iter)->GetKind()];
+bool Parser::isInBitSet(TokenBitSet &bitset, TokenSeqConstIter &iter) {
+    return bitset[(*iter)->getKind()];
 }
 
-TranslationUnit *Parser::ParseTranslationUnit() {
+TranslationUnit *Parser::parseTranslationUnit() {
     auto begin = cursor;
     TranslationUnit *transUnit = new TranslationUnit;
-    while ((*cursor)->GetKind() != TokenKind::TK_EOF) {
+    while ((*cursor)->getKind() != TokenKind::TK_EOF) {
         // ; null statement
-        if ((*cursor)->GetKind() == TokenKind::TK_SEMI) {
+        if ((*cursor)->getKind() == TokenKind::TK_SEMI) {
             ++cursor;
             continue;
         }
-        auto externDecl = ParseExternalDeclaration();
+        auto externDecl = parseExternalDeclaration();
         if (externDecl) {
             transUnit->extDecls.push_back(externDecl);
         }
@@ -52,110 +52,110 @@ TranslationUnit *Parser::ParseTranslationUnit() {
     return transUnit;
 }
 
-ExternalDeclaration *Parser::ParseExternalDeclaration() {
+ExternalDeclaration *Parser::parseExternalDeclaration() {
     auto begin = cursor;
-    auto declSpecs = ParseDeclarationSpecifiers();
-    if ((*cursor)->GetKind() == TokenKind::TK_SEMI) {
+    auto declSpecs = parseDeclarationSpecifiers();
+    if ((*cursor)->getKind() == TokenKind::TK_SEMI) {
         ++cursor;
         auto decl = new Declaration(declSpecs);
         return new ExternalDeclaration(decl);
     }
-    auto declarator = ParseDeclarator();
+    auto declarator = parseDeclarator();
     // TODO
     return nullptr;
 }
 
-DeclSpecifiers *Parser::ParseDeclarationSpecifiers() {
+DeclSpecifiers *Parser::parseDeclarationSpecifiers() {
     DeclSpecifiers *declSpecs = new DeclSpecifiers;
     while (true) {
-        switch ((*cursor)->GetKind()) {
+        switch ((*cursor)->getKind()) {
         case TokenKind::TK_TYPEDEF:
-            declSpecs->AddStorageClassSpecifier(new StorageClassSpecifier(StorageClassSpecifier::TYPEDEF));
+            declSpecs->addStorageClassSpecifier(new StorageClassSpecifier(StorageClassSpecifier::TYPEDEF));
             ++cursor;
             break;
         case TokenKind::TK_EXTERN:
-            declSpecs->AddStorageClassSpecifier(new StorageClassSpecifier(StorageClassSpecifier::EXTERN));
+            declSpecs->addStorageClassSpecifier(new StorageClassSpecifier(StorageClassSpecifier::EXTERN));
             ++cursor;
             break;
         case TokenKind::TK_STATIC:
-            declSpecs->AddStorageClassSpecifier(new StorageClassSpecifier(StorageClassSpecifier::STATIC));
+            declSpecs->addStorageClassSpecifier(new StorageClassSpecifier(StorageClassSpecifier::STATIC));
             ++cursor;
             break;
         case TokenKind::TK_AUTO:
-            declSpecs->AddStorageClassSpecifier(new StorageClassSpecifier(StorageClassSpecifier::AUTO));
+            declSpecs->addStorageClassSpecifier(new StorageClassSpecifier(StorageClassSpecifier::AUTO));
             ++cursor;
             break;
         case TokenKind::TK_REGISTER:
-            declSpecs->AddStorageClassSpecifier(new StorageClassSpecifier(StorageClassSpecifier::REGISTER));
+            declSpecs->addStorageClassSpecifier(new StorageClassSpecifier(StorageClassSpecifier::REGISTER));
             ++cursor;
             break;
         case TokenKind::TK_CONST:
-            declSpecs->AddTypeQualifier(new TypeQualifier(TypeQualifier::CONST));
+            declSpecs->addTypeQualifier(new TypeQualifier(TypeQualifier::CONST));
             ++cursor;
             break;
         case TokenKind::TK_RESTRICT:
-            declSpecs->AddTypeQualifier(new TypeQualifier(TypeQualifier::RESTRICT));
+            declSpecs->addTypeQualifier(new TypeQualifier(TypeQualifier::RESTRICT));
             ++cursor;
             break;
         case TokenKind::TK_VOLATILE:
-            declSpecs->AddTypeQualifier(new TypeQualifier(TypeQualifier::VOLATILE));
+            declSpecs->addTypeQualifier(new TypeQualifier(TypeQualifier::VOLATILE));
             ++cursor;
             break;
         case TokenKind::TK_INLINE:
-            declSpecs->AddFuncSpecifier(new FuncSpecifier(FuncSpecifier::INLINE));
+            declSpecs->addFuncSpecifier(new FuncSpecifier(FuncSpecifier::INLINE));
             ++cursor;
             break;
         case TokenKind::TK_VOID:
-            declSpecs->AddTypeSpecifier(new TypeSpecifier(TypeSpecifier::VOID));
+            declSpecs->addTypeSpecifier(new TypeSpecifier(TypeSpecifier::VOID));
             ++cursor;
             break;
         case TokenKind::TK_CHAR:
-            declSpecs->AddTypeSpecifier(new TypeSpecifier(TypeSpecifier::CHAR));
+            declSpecs->addTypeSpecifier(new TypeSpecifier(TypeSpecifier::CHAR));
             ++cursor;
             break;
         case TokenKind::TK_SHORT:
-            declSpecs->AddTypeSpecifier(new TypeSpecifier(TypeSpecifier::SHORT));
+            declSpecs->addTypeSpecifier(new TypeSpecifier(TypeSpecifier::SHORT));
             ++cursor;
             break;
         case TokenKind::TK_INT:
-            declSpecs->AddTypeSpecifier(new TypeSpecifier(TypeSpecifier::INT));
+            declSpecs->addTypeSpecifier(new TypeSpecifier(TypeSpecifier::INT));
             ++cursor;
             break;
         case TokenKind::TK_LONG:
-            declSpecs->AddTypeSpecifier(new TypeSpecifier(TypeSpecifier::LONG));
+            declSpecs->addTypeSpecifier(new TypeSpecifier(TypeSpecifier::LONG));
             ++cursor;
             break;
         case TokenKind::TK_FLOAT:
-            declSpecs->AddTypeSpecifier(new TypeSpecifier(TypeSpecifier::FLOAT));
+            declSpecs->addTypeSpecifier(new TypeSpecifier(TypeSpecifier::FLOAT));
             ++cursor;
             break;
         case TokenKind::TK_DOUBLE:
-            declSpecs->AddTypeSpecifier(new TypeSpecifier(TypeSpecifier::DOUBLE));
+            declSpecs->addTypeSpecifier(new TypeSpecifier(TypeSpecifier::DOUBLE));
             ++cursor;
             break;
         case TokenKind::TK_SIGNED:
-            declSpecs->AddTypeSpecifier(new TypeSpecifier(TypeSpecifier::SIGNED));
+            declSpecs->addTypeSpecifier(new TypeSpecifier(TypeSpecifier::SIGNED));
             ++cursor;
             break;
         case TokenKind::TK_UNSIGNED:
-            declSpecs->AddTypeSpecifier(new TypeSpecifier(TypeSpecifier::UNSIGNED));
+            declSpecs->addTypeSpecifier(new TypeSpecifier(TypeSpecifier::UNSIGNED));
             ++cursor;
             break;
         case TokenKind::TK_STRUCT:
         case TokenKind::TK_UNION: {
-            auto structUnionSpec = ParseStructOrUnionSpecifier();
+            auto structUnionSpec = parseStructOrUnionSpecifier();
             if (structUnionSpec) {
-                declSpecs->AddTypeSpecifier(new TypeSpecifier(structUnionSpec));
+                declSpecs->addTypeSpecifier(new TypeSpecifier(structUnionSpec));
             }
         } break;
         case TokenKind::TK_ENUM: {
-            auto enumSpec = ParseEnumSpecifier();
+            auto enumSpec = parseEnumSpecifier();
             if (enumSpec) {
-                declSpecs->AddTypeSpecifier(new TypeSpecifier(enumSpec));
+                declSpecs->addTypeSpecifier(new TypeSpecifier(enumSpec));
             }
         } break;
         case TokenKind::TK_IDENTIFIER:
-            declSpecs->AddTypeSpecifier(new TypeSpecifier((*cursor)->GetStr()));
+            declSpecs->addTypeSpecifier(new TypeSpecifier((*cursor)->getStr()));
             ++cursor;
             break;
         default:
@@ -164,79 +164,79 @@ DeclSpecifiers *Parser::ParseDeclarationSpecifiers() {
     }
 }
 
-Declarator *Parser::ParseDeclarator() {
+Declarator *Parser::parseDeclarator() {
 }
 
-StructOrUnionSpecifier *Parser::ParseStructOrUnionSpecifier() {
+StructOrUnionSpecifier *Parser::parseStructOrUnionSpecifier() {
     auto begin = cursor;
     StructOrUnionSpecifier *structUnionSpec = new StructOrUnionSpecifier;
-    structUnionSpec->isUnion = (*cursor)->GetKind() == TokenKind::TK_UNION;
+    structUnionSpec->isUnion = (*cursor)->getKind() == TokenKind::TK_UNION;
     ++cursor; // Consume STRUCT or UNION.
-    switch ((*cursor)->GetKind()) {
+    switch ((*cursor)->getKind()) {
     case TokenKind::TK_IDENTIFIER:
-        structUnionSpec->ident = (*cursor)->GetStr();
-        if ((*cursor)->GetKind() != TokenKind::TK_LBRACE) {
+        structUnionSpec->ident = (*cursor)->getStr();
+        if ((*cursor)->getKind() != TokenKind::TK_LBRACE) {
             return structUnionSpec;
         }
     case TokenKind::TK_LBRACE:
         ++cursor; // Consume the '{'.
-        while (IsInBitSet(firstOfSpecifierQualifier, cursor) || (*cursor)->GetKind() == TokenKind::TK_SEMI) {
+        while (isInBitSet(firstOfSpecifierQualifier, cursor) || (*cursor)->getKind() == TokenKind::TK_SEMI) {
             // struct_declaration or just ';'
-            auto structDecl = ParseStructDeclaration();
+            auto structDecl = parseStructDeclaration();
             if (structDecl) {
                 structUnionSpec->structDeclList.push_back(structDecl);
             }
         }
-        assert((*cursor)->GetKind() == TokenKind::TK_RBRACE);
+        assert((*cursor)->getKind() == TokenKind::TK_RBRACE);
         ++cursor; // Consume the '}'.
         return structUnionSpec;
     default:
-        Error((*cursor)->GetLoc(), "parse struct_or_union_specifier error");
+        error((*cursor)->getLoc(), "parse struct_or_union_specifier error");
         return nullptr;
     }
 }
 
-EnumSpecifier *Parser::ParseEnumSpecifier() {
+EnumSpecifier *Parser::parseEnumSpecifier() {
 }
 
-StructDeclaration *Parser::ParseStructDeclaration() {
+StructDeclaration *Parser::parseStructDeclaration() {
     auto begin = cursor;
 
     // To support struct like "struct id { ; };" which contains empty declaration.
-    if ((*cursor)->GetKind() == TokenKind::TK_SEMI) {
+    if ((*cursor)->getKind() == TokenKind::TK_SEMI) {
         ++cursor; // Consume the ';'.
         return nullptr;
     }
 
     StructDeclaration *structDecl = new StructDeclaration;
     // Parse specifier_qualifier_list
-    while (IsInBitSet(firstOfSpecifierQualifier, cursor)) {
-        auto specQual = ParseSpecifierQualifier();
+    while (isInBitSet(firstOfSpecifierQualifier, cursor)) {
+        auto specQual = parseSpecifierQualifier();
         if (specQual) {
             structDecl->specQualList.push_back(specQual);
         }
     }
     // Parse struct_declarator_list
-    while (IsInBitSet(firstOfDeclarator, cursor) || (*cursor)->GetKind() == TokenKind::TK_COLON) {
-        auto structDeclarator = ParseStructDeclarator();
+    while (isInBitSet(firstOfDeclarator, cursor) || (*cursor)->getKind() == TokenKind::TK_COLON) {
+        auto structDeclarator = parseStructDeclarator();
         if (structDeclarator) {
             structDecl->structDeclarators.push_back(structDeclarator);
         }
-        if ((*cursor)->GetKind() == TokenKind::TK_COMMA) {
+        if ((*cursor)->getKind() == TokenKind::TK_COMMA) {
             ++cursor; // Consume the ','.
         } else {
             break;
         }
     }
-    assert((*cursor)->GetKind() == TokenKind::TK_SEMI);
+    assert((*cursor)->getKind() == TokenKind::TK_SEMI);
     ++cursor; // Consume the ';'.
     return structDecl;
 }
 
-SpecifierQualifier *Parser::ParseSpecifierQualifier() {
+SpecifierQualifier *Parser::parseSpecifierQualifier() {
     auto begin = cursor;
     SpecifierQualifier *specQual = new SpecifierQualifier;
-    switch ((*cursor)->GetKind()) {
+    switch ((*cursor)->getKind()) {
     case TokenKind::TK_CONST:
         specQual->var = new TypeQualifier(TypeQualifier::CONST);
         ++cursor;
@@ -287,19 +287,19 @@ SpecifierQualifier *Parser::ParseSpecifierQualifier() {
         break;
     case TokenKind::TK_STRUCT:
     case TokenKind::TK_UNION: {
-        auto structUnionSpec = ParseStructOrUnionSpecifier();
+        auto structUnionSpec = parseStructOrUnionSpecifier();
         if (structUnionSpec) {
             specQual->var = new TypeSpecifier(structUnionSpec);
         }
     } break;
     case TokenKind::TK_ENUM: {
-        auto enumSpec = ParseEnumSpecifier();
+        auto enumSpec = parseEnumSpecifier();
         if (enumSpec) {
             specQual->var = new TypeSpecifier(enumSpec);
         }
     } break;
     case TokenKind::TK_IDENTIFIER:
-        specQual->var = new TypeSpecifier((*cursor)->GetStr());
+        specQual->var = new TypeSpecifier((*cursor)->getStr());
         ++cursor;
         break;
     default:
@@ -308,22 +308,22 @@ SpecifierQualifier *Parser::ParseSpecifierQualifier() {
     return specQual;
 }
 
-StructDeclarator *Parser::ParseStructDeclarator() {
+StructDeclarator *Parser::parseStructDeclarator() {
     auto begin = cursor;
     StructDeclarator *structDeclarator = new StructDeclarator;
-    if ((*cursor)->GetKind() == TokenKind::TK_COLON) {
+    if ((*cursor)->getKind() == TokenKind::TK_COLON) {
         ++cursor;
-        auto condExpr = ParseConditionalExpr();
+        auto condExpr = parseConditionalExpr();
         if (condExpr) {
             structDeclarator->constExpr = new ConstantExpr(condExpr);
         }
         return structDeclarator;
-    } else if (IsInBitSet(firstOfDeclarator, cursor)) {
-        auto declarator = ParseDeclarator();
+    } else if (isInBitSet(firstOfDeclarator, cursor)) {
+        auto declarator = parseDeclarator();
         if (declarator) {
             structDeclarator->declarator = declarator;
         }
-        if ((*cursor)->GetKind() == TokenKind::TK_COLON) {
+        if ((*cursor)->getKind() == TokenKind::TK_COLON) {
             ++cursor; // Consume the ':'.
         } else {
             
@@ -333,5 +333,5 @@ StructDeclarator *Parser::ParseStructDeclarator() {
     }
 }
 
-ConditionalExpr *Parser::ParseConditionalExpr() {
+ConditionalExpr *Parser::parseConditionalExpr() {
 }

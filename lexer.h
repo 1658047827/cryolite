@@ -11,27 +11,27 @@ public:
 
     ~Lexer() = default;
 
-    void Lex(TokenSequence &ts);
+    void lex(TokenSequence &ts);
 
 private:
-    char CurChar();
-    char Next();
-    char LookAhead(size_t n = 1);
-    bool NextIs(char c);
-    bool Try(char c);
+    char curChar();
+    char next();
+    char lookAhead(size_t n = 1);
+    bool nextIs(char c);
+    bool tryNext(char c);
 
-    void SkipComment();
-    Token LexNumericConstant();
-    Token LexCharConstant();
-    Token LexStringLiteral();
-    // LexIdentifier - Lex identifier and C keyword.
-    Token LexIdentifier();
+    void skipComment();
+    Token lexNumericConstant();
+    Token lexCharConstant();
+    Token lexStringLiteral();
+    // lexIdentifier - Lex identifier and C keyword.
+    Token lexIdentifier();
 
     SourceLocation curLoc;
     std::vector<char> &buffer;
     size_t p;
 };
 
-int ReadFile(std::string &filename, std::vector<char> &buffer);
+int readFile(std::string &filename, std::vector<char> &buffer);
 
 #endif

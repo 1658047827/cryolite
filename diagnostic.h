@@ -5,6 +5,6 @@
 #define ANSI_COLOR_YELLOW "\x1b[33m"
 #define ANSI_COLOR_RESET "\x1b[0m"
 
-void Error(const SourceLocation &loc, const std::string &msg);
+void error(const SourceLocation &loc, const std::string &msg);
 
-void Warning(const SourceLocation &loc, const std::string &msg);
+void warning(const SourceLocation &loc, const std::string &msg);

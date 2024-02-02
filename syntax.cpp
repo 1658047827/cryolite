@@ -1,17 +1,17 @@
 #include "syntax.h"
 
-void DeclSpecifiers::AddStorageClassSpecifier(StorageClassSpecifier *storageClassSpec) {
+void DeclSpecifiers::addStorageClassSpecifier(StorageClassSpecifier *storageClassSpec) {
     specs.push_back(new DeclSpecifier(storageClassSpec));
 }
 
-void DeclSpecifiers::AddTypeSpecifier(TypeSpecifier *typeSpec) {
+void DeclSpecifiers::addTypeSpecifier(TypeSpecifier *typeSpec) {
     specs.push_back(new DeclSpecifier(typeSpec));
 }
 
-void DeclSpecifiers::AddTypeQualifier(TypeQualifier *typeQual) {
+void DeclSpecifiers::addTypeQualifier(TypeQualifier *typeQual) {
     specs.push_back(new DeclSpecifier(typeQual));
 }
 
-void DeclSpecifiers::AddFuncSpecifier(FuncSpecifier *funcSpec) {
+void DeclSpecifiers::addFuncSpecifier(FuncSpecifier *funcSpec) {
     specs.push_back(new DeclSpecifier(funcSpec));
 }

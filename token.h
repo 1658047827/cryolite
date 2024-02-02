@@ -14,7 +14,7 @@ struct SourceLocation {
     unsigned int column;
 };
 
-std::string SrcLocToString(const SourceLocation &loc);
+std::string srcLocToString(const SourceLocation &loc);
 
 enum TokenKind {
 #define TOK(X) TK_##X,
@@ -31,12 +31,12 @@ public:
 
     ~Token() = default;
 
-    TokenKind GetKind();
-    SourceLocation GetLoc();
-    std::string GetStr();
-    std::string ToString();
-    void HideSetAdd(std::string &tokenStr);
-    bool HideSetHas(std::string &tokenStr);
+    TokenKind getKind();
+    SourceLocation getLoc();
+    std::string getStr();
+    std::string toString();
+    void hideSetAdd(std::string &tokenStr);
+    bool hideSetHas(std::string &tokenStr);
 
 private:
     TokenKind kind;
@@ -45,8 +45,8 @@ private:
     HideSet hideSet;
 };
 
-HideSet HideSetIntersection(HideSet &lhs, HideSet &rhs);
-HideSet HideSetUnion(HideSet &lhs, HideSet &rhs);
+HideSet hideSetIntersection(HideSet &lhs, HideSet &rhs);
+HideSet hideSetUnion(HideSet &lhs, HideSet &rhs);
 
 using TokenSeqIter = std::list<std::unique_ptr<Token>>::iterator;
 using TokenSeqConstIter = std::list<std::unique_ptr<Token>>::const_iterator;
@@ -58,15 +58,15 @@ public:
     ~TokenSequence() = default;
 
     template <typename... Args>
-    void EmplaceBack(Args &&...args) {
+    void emplaceBack(Args &&...args) {
         tokenList.emplace_back(std::make_unique<Token>(std::forward<Args>(args)...));
     }
-    void PushBack(Token &token);
-    void Print(std::ostream &out);
-    TokenSeqIter Begin();
-    TokenSeqIter End();
-    TokenSeqConstIter CBegin();
-    TokenSeqConstIter CEnd();
+    void pushBack(Token &token);
+    void print(std::ostream &out);
+    TokenSeqIter begin();
+    TokenSeqIter end();
+    TokenSeqConstIter cBegin();
+    TokenSeqConstIter cEnd();
 
 private:
     std::list<std::unique_ptr<Token>> tokenList;

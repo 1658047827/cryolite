@@ -5,12 +5,12 @@
 int main(int argc, char *argv[]) {
     std::string filename(argv[1]);
     std::vector<char> buffer;
-    ReadFile(filename, buffer);
+    readFile(filename, buffer);
     Lexer lexer(&filename, buffer);
     TokenSequence ts;
-    lexer.Lex(ts);
-    ts.Print(std::cout);
+    lexer.lex(ts);
+    ts.print(std::cout);
     // Parser parser(ts);
-    // TranslationUnit *root = parser.ParseTranslationUnit();
+    // TranslationUnit *root = parser.parseTranslationUnit();
     return 0;
 }
