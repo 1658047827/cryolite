@@ -10,7 +10,7 @@ int main(int argc, char *argv[]) {
     TokenSequence ts;
     lexer.lex(ts);
     ts.print(std::cout);
-    // Parser parser(ts);
-    // TranslationUnit *root = parser.parseTranslationUnit();
+    Parser parser(ts);
+    TranslationUnit *root = parser.parseTranslationUnit();
     return 0;
 }

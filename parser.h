@@ -22,6 +22,19 @@ public:
     SpecifierQualifier *parseSpecifierQualifier();
     StructDeclarator *parseStructDeclarator();
     ConditionalExpr *parseConditionalExpr();
+    LogicalOrExpr *parseLogicalOrExpr();
+    LogicalAndExpr *parseLogicalAndExpr();
+    BitOrExpr *parseBitOrExpr();
+    BitXorExpr *parseBitXorExpr();
+    BitAndExpr *parseBitAndExpr();
+    EqualityExpr *parseEqualityExpr();
+    RelationalExpr *parseRelationalExpr();
+    ShiftExpr *parseShiftExpr();
+    AdditiveExpr *parseAdditiveExpr();
+    MultiplicativeExpr *parseMultiplicativeExpr();
+    CastExpr *parseCastExpr();
+
+    Expr *parseExpression();
 
 private:
     void initBitSet();
