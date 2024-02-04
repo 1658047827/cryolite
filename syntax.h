@@ -1,5 +1,9 @@
 /**
- * https://www.quut.com/c/ANSI-C-grammar-y-1999.html
+ * syntax.h - C99 syntax definitions.
+ *
+ * This header file defines the syntax rules for the C99 standard, based on the
+ * official C99 specification document https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf
+ * and the yacc grammar from the website https://www.quut.com/c/ANSI-C-grammar-y-1999.html
  */
 
 #ifndef _CRYOLITE_SYNTAX_H_
@@ -10,264 +14,254 @@
 #include <variant>
 #include <vector>
 
-class Expr;
+/**
+ * Expressions
+ */
+class PrimaryExpression;
+class PostfixExpression;
+class UnaryExpression;
+class CastExpression;
+class MultiplicativeExpression;
+class AdditiveExpression;
+class ShiftExpression;
+class RelationalExpression;
+class EqualityExpression;
+class BitAndExpression;
+class BitXorExpression;
+class BitOrExpression;
+class LogicalAndExpression;
+class LogicalOrExpression;
+class ConditionalExpression;
+class AssignmentExpression;
+class Expression;
 
-// PostfixExpression
-class PostfixExprSubscript;
-class PostfixExprDot;
-class PostfixExprFuncall;
-class PostfixExprArrow;
-class PostfixExprIncrement;
-class PostfixExprDecrement;
-class PostfixExprTypeInitializer;
+/**
+ * Constant expressions
+ */
+class ConstantExpression;
 
-// UnaryExpression
-class UnaryExprIncrement;
-class UnaryExprDecrement;
-class UnaryExprUnaryOperator;
-class UnaryExprSizeOf;
-
-class TypeName;
-class CastExpr;
-class AssignmentExpr;
-
-class Initializer;
+/**
+ * Declarations
+ */
+class Declaration;
+class DeclarationSpecifiers;
 class InitDeclarator;
-class DeclSpecifiers;
-class Declarator;
-class InitializerList;
 class StorageClassSpecifier;
 class TypeSpecifier;
-class TypeQualifier;
-class FuncSpecifier;
 class StructOrUnionSpecifier;
+class StructDeclaration;
+class SpecifierQualifier;
+class StructDeclarator;
 class EnumSpecifier;
+class Enumerator;
+class TypeQualifier;
+class FunctionSpecifier;
+class Declarator;
+class DirectDeclarator;
 class Pointer;
-class ParamTypeList;
-class ParamDeclaration;
+class ParameterTypeList;
+class ParameterDeclaration;
+class TypeName;
 class AbstractDeclarator;
 class DirectAbstractDeclarator;
+class Initializer;
+class InitializerList;
+class Designator;
 
-// DirectDeclarator
-class DirectDeclarator;
-class DirectDeclaratorIdentifier;
-class DirectDeclaratorParentheses;
-class DirectDeclaratorNoStaticOrAsterisk;
-class DirectDeclaratorStatic;
-class DirectDeclaratorAsterisk;
-class DirectDeclaratorParamTypeList;
+/**
+ * Statements and blocks
+ */
+class Statement;
+class LabelStatement;
+class CaseStatement;
+class DefaultStatement;
+class CompoundStatement;
+class BlockItem;
+class ExpressionStatement;
+class IfStatement;
+class SwitchStatement;
+class WhileStatement;
+class DoWhileStatement;
+class ForStatement;
+class GotoStatement;
+class ContinueStatement;
+class BreakStatement;
+class ReturnStatement;
 
-// DirectAbstractDeclarator
-class DirectAbstractDeclaratorParentheses;
-class DirectAbstractDeclaratorAssignExpr;
-class DirectAbstractDeclaratorAsterisk;
-class DirectAbstractDeclaratorParamTypeList;
-
-// Statement
-class LabelStmt;
-class CaseStmt;
-class DefaultStmt;
-class BlockStmt;
-class ExprStmt;
-class IfStmt;
-class SwitchStmt;
-class WhileStmt;
-class DoWhileStmt;
-class ForStmt;
-class GotoStmt;
-class ContinueStmt;
-class BreakStmt;
-class ReturnStmt;
+/**
+ * External definitions
+ */
+class TranslationUnit;
+class ExternalDeclaration;
+class FunctionDefinition;
 
 /*
- * primary_expression:
+ * primary-expression:
  *     IDENTIFIER
  */
-class PrimaryExprIdentifier {
+class PrimaryExpressionIdentifier {
 public:
     std::string ident;
 };
 
 /*
- * primary_expression:
+ * primary-expression:
  *     CONSTANT
  *     STRING_LITERAL
  */
-class PrimaryExprConstant {
+class PrimaryExpressionConstant {
 public:
-    std::variant<int32_t,
-                 uint32_t,
-                 int64_t,
-                 uint64_t,
-                 float,
-                 double,
+    std::variant<int8_t, uint8_t,
+                 int16_t, uint16_t,
+                 int32_t, uint32_t,
+                 int64_t, uint64_t,
+                 float, double,
                  std::string>
         value;
 };
 
 /*
- * primary_expression:
+ * primary-expression:
  *     ( expression )
  */
-class PrimaryExprParentheses {
+class PrimaryExpressionParentheses {
 public:
-    Expr *expr;
+    Expression *expr;
 };
 
 /*
- * primary_expression:
+ * primary-expression:
  *     IDENTIFIER
  *     CONSTANT
  *     STRING_LITERAL
  *     ( expression )
  */
-class PrimaryExpr {
+class PrimaryExpression {
 public:
-    std::variant<PrimaryExprIdentifier *,
-                 PrimaryExprConstant *,
-                 PrimaryExprParentheses *>
+    std::variant<PrimaryExpressionIdentifier *,
+                 PrimaryExpressionConstant *,
+                 PrimaryExpressionParentheses *>
         var;
 };
 
 /**
- * postfix_expression:
- *     primary_expression
- *     postfix_expression [ expression ]
- *     postfix_expression ( )
- *     postfix_expression ( argument_expression_list )
- *     postfix_expression . IDENTIFIER
- *     postfix_expression -> IDENTIFIER
- *     postfix_expression ++
- *     postfix_expression --
- *     ( type_name ) { initializer_list }
- *     ( type_name ) { initializer_list , }
+ * postfix-expression:
+ *     postfix-expression [ expression ]
  */
-class PostfixExpr {
+class PostfixExpressionArraySubscript {
 public:
-    std::variant<PrimaryExpr *,
-                 PostfixExprSubscript *,
-                 PostfixExprFuncall *,
-                 PostfixExprDot *,
-                 PostfixExprArrow *,
-                 PostfixExprIncrement *,
-                 PostfixExprDecrement *,
-                 PostfixExprTypeInitializer *>
-        var;
+    PostfixExpression *postfixExpr;
+    Expression *expr;
 };
 
 /**
- * postfix_expression:
- *     postfix_expression [ expression ]
- */
-class PostfixExprSubscript {
-public:
-    PostfixExpr *postfixExpr;
-    Expr *expr;
-};
-
-/**
- * postfix_expression:
- *     postfix_expression ( )
- *     postfix_expression ( argument_expression_list )
+ * postfix-expression:
+ *     postfix-expression ( argument-expression-list{opt} )
  *
- * argument_expression_list:
- *     assignment_expression
- *     argument_expression_list , assignment_expression
+ * argument-expression-list:
+ *     assignment-expression
+ *     argument-expression-list , assignment-expression
  */
-class PostfixExprFuncall {
+class PostfixExpressionFunctionCall {
 public:
-    PostfixExpr *postfixExpr;
-    std::vector<AssignmentExpr *> args;
+    PostfixExpression *postfixExpr;
+    std::vector<AssignmentExpression *> args;
 };
 
 /**
- * postfix_expression:
- *     postfix_expression . IDENTIFIER
+ * postfix-expression:
+ *     postfix-expression . IDENTIFIER
  */
-class PostfixExprDot {
+class PostfixExpressionDotMember {
 public:
-    PostfixExpr *postfixExpr;
+    PostfixExpression *postfixExpr;
     std::string ident;
 };
 
 /**
- * postfix_expression:
- *     postfix_expression -> IDENTIFIER
+ * postfix-expression:
+ *     postfix-expression -> IDENTIFIER
  */
-class PostfixExprArrow {
+class PostfixExpressionArrowMember {
 public:
-    PostfixExpr *postfixExpr;
+    PostfixExpression *postfixExpr;
     std::string ident;
 };
 
 /**
- * postfix_expression:
- *     postfix_expression ++
+ * postfix-expression:
+ *     postfix-expression ++
  */
-class PostfixExprIncrement {
+class PostfixExpressionIncrement {
 public:
-    PostfixExpr *postfixExpr;
+    PostfixExpression *postfixExpr;
 };
 
 /**
- * postfix_expression:
- *     postfix_expression --
+ * postfix-expression:
+ *     postfix-expression --
  */
-class PostfixExprDecrement {
+class PostfixExpressionDecrement {
 public:
-    PostfixExpr *postfixExpr;
+    PostfixExpression *postfixExpr;
 };
 
 /**
- * postfix_expression:
- *     ( type_name ) { initializer_list }
- *     ( type_name ) { initializer_list , }
+ * postfix-expression:
+ *     ( type-name ) { initializer-list }
+ *     ( type-name ) { initializer-list , }
  */
-class PostfixExprTypeInitializer {
+class PostfixExpressionCompoundLiteral {
 public:
     TypeName *typeName;
     InitializerList *initList;
 };
 
 /**
- * unary_expression:
- *     postfix_expression
- *     ++ unary_expression
- *     -- unary_expression
- *     unary_operator cast_expression
- *     SIZEOF unary_expression
- *     SIZEOF ( type_name )
+ * postfix-expression:
+ *     primary-expression
+ *     postfix-expression [ expression ]
+ *     postfix-expression ( argument-expression-list{opt} )
+ *     postfix-expression . IDENTIFIER
+ *     postfix-expression -> IDENTIFIER
+ *     postfix-expression ++
+ *     postfix-expression --
+ *     ( type-name ) { initializer-list }
+ *     ( type-name ) { initializer-list , }
  */
-class UnaryExpr {
+class PostfixExpression {
 public:
-    std::variant<PostfixExpr *,
-                 UnaryExprIncrement *,
-                 UnaryExprDecrement *,
-                 UnaryExprUnaryOperator *,
-                 UnaryExprSizeOf *>
+    std::variant<PrimaryExpression *,
+                 PostfixExpressionArraySubscript *,
+                 PostfixExpressionFunctionCall *,
+                 PostfixExpressionDotMember *,
+                 PostfixExpressionArrowMember *,
+                 PostfixExpressionIncrement *,
+                 PostfixExpressionDecrement *,
+                 PostfixExpressionCompoundLiteral *>
         var;
 };
 
 /**
- * unary_expression:
- *     ++ unary_expression
+ * unary-expression:
+ *     ++ unary-expression
  */
-class UnaryExprIncrement {
+class UnaryExpressionIncrement {
 public:
-    UnaryExpr *unaryExpr;
+    UnaryExpression *unaryExpr;
 };
 
 /**
- * unary_expression:
- *     -- unary_expression
+ * unary-expression:
+ *     -- unary-expression
  */
-class UnaryExprDecrement {
+class UnaryExpressionDecrement {
 public:
-    UnaryExpr *unaryExpr;
+    UnaryExpression *unaryExpr;
 };
 
 /**
- * unary_operator:
+ * unary-operator:
  *     &
  *     *
  *     +
@@ -285,95 +279,113 @@ enum UnaryOp {
 };
 
 /**
- * unary_expression:
- *     unary_operator cast_expression
+ * unary-expression:
+ *     unary-operator cast-expression
  */
-class UnaryExprUnaryOperator {
+class UnaryExpressionUnaryOperator {
 public:
     UnaryOp unaryOp;
-    CastExpr *castExpr;
+    CastExpression *castExpr;
 };
 
 /**
- * unary_expression:
- *     SIZEOF unary_expression
- *     SIZEOF ( type_name )
+ * unary-expression:
+ *     SIZEOF unary-expression
+ *     SIZEOF ( type-name )
  */
-class UnaryExprSizeOf {
+class UnaryExpressionSizeOf {
 public:
-    std::variant<UnaryExpr *, TypeName *> var;
+    std::variant<UnaryExpression *, TypeName *> var;
 };
 
 /**
- * cast_expression:
- *     unary_expression
- *     ( type_name ) cast_expression
+ * unary-expression:
+ *     postfix-expression
+ *     ++ unary-expression
+ *     -- unary-expression
+ *     unary-operator cast-expression
+ *     SIZEOF unary-expression
+ *     SIZEOF ( type-name )
  */
-class CastExpr {
+class UnaryExpression {
 public:
-    std::vector<TypeName *> typeNames;
-    UnaryExpr *unaryExpr;
+    std::variant<PostfixExpression *,
+                 UnaryExpressionIncrement *,
+                 UnaryExpressionDecrement *,
+                 UnaryExpressionUnaryOperator *,
+                 UnaryExpressionSizeOf *>
+        var;
 };
 
 /**
- * multiplicative_expression:
- *     cast_expression
- *     multiplicative_expression * cast_expression
- *     multiplicative_expression / cast_expression
- *     multiplicative_expression % cast_expression
+ * cast-expression:
+ *     unary-expression
+ *     ( type-name ) cast-expression
  */
-class MultiplicativeExpr {
+class CastExpression {
+public:
+    std::variant<UnaryExpression *, std::pair<TypeName *, CastExpression *>> var;
+};
+
+/**
+ * multiplicative-expression:
+ *     cast-expression
+ *     multiplicative-expression * cast-expression
+ *     multiplicative-expression / cast-expression
+ *     multiplicative-expression % cast-expression
+ */
+class MultiplicativeExpression {
 public:
     enum MEOp {
         STAR,
         SLASH,
         PERCENT
     };
-    CastExpr *castExpr;
-    std::vector<std::pair<MEOp, CastExpr *>> exprs;
+    CastExpression *castExpr;
+    std::vector<std::pair<MEOp, CastExpression *>> exprs;
 };
 
 /**
- * additive_expression:
- *     multiplicative_expression
- *     additive_expression + multiplicative_expression
- *     additive_expression - multiplicative_expression
+ * additive-expression:
+ *     multiplicative-expression
+ *     additive-expression + multiplicative-expression
+ *     additive-expression - multiplicative-expression
  */
-class AdditiveExpr {
+class AdditiveExpression {
 public:
     enum AEOp {
         PLUS,
         MINUS
     };
-    MultiplicativeExpr *multiExpr;
-    std::vector<std::pair<AEOp, MultiplicativeExpr *>> exprs;
+    MultiplicativeExpression *multiExpr;
+    std::vector<std::pair<AEOp, MultiplicativeExpression *>> exprs;
 };
 
 /**
- * shift_expression:
- *     additive_expression
- *     shift_expression << additive_expression
- *     shift_expression >> additive_expression
+ * shift-expression:
+ *     additive-expression
+ *     shift-expression << additive-expression
+ *     shift-expression >> additive-expression
  */
-class ShiftExpr {
+class ShiftExpression {
 public:
     enum SEOp {
         LESSLESS,
         GREATERGREATER
     };
-    AdditiveExpr *addiExpr;
-    std::vector<std::pair<SEOp, AdditiveExpr *>> exprs;
+    AdditiveExpression *addiExpr;
+    std::vector<std::pair<SEOp, AdditiveExpression *>> exprs;
 };
 
 /**
- * relational_expression:
- *     shift_expression
- *     relational_expression < shift_expression
- *     relational_expression > shift_expression
- *     relational_expression <= shift_expression
- *     relational_expression >= shift_expression
+ * relational-expression:
+ *     shift-expression
+ *     relational-expression < shift-expression
+ *     relational-expression > shift-expression
+ *     relational-expression <= shift-expression
+ *     relational-expression >= shift-expression
  */
-class RelationalExpr {
+class RelationalExpression {
 public:
     enum REOp {
         LESS,
@@ -381,90 +393,90 @@ public:
         LESSEQUAL,
         GREATEREQUAL
     };
-    ShiftExpr *shiftExpr;
-    std::vector<std::pair<REOp, ShiftExpr *>> exprs;
+    ShiftExpression *shiftExpr;
+    std::vector<std::pair<REOp, ShiftExpression *>> exprs;
 };
 
 /**
- * equality_expression:
- *     relational_expression
- *     equality_expression == relational_expression
- *     equality_expression != relational_expression
+ * equality-expression:
+ *     relational-expression
+ *     equality-expression == relational-expression
+ *     equality-expression != relational-expression
  */
-class EqualityExpr {
+class EqualityExpression {
 public:
     enum EEOp {
         EQUALEQUAL,
         EXCLAIMEQUAL
     };
-    RelationalExpr *relatExpr;
-    std::vector<std::pair<EEOp, RelationalExpr *>> exprs;
+    RelationalExpression *relatExpr;
+    std::vector<std::pair<EEOp, RelationalExpression *>> exprs;
 };
 
 /**
- * and_expression:
- *     equality_expression
- *     and_expression & equality_expression
+ * and-expression:
+ *     equality-expression
+ *     and-expression & equality-expression
  */
-class BitAndExpr {
+class BitAndExpression {
 public:
-    std::vector<EqualityExpr *> exprs;
+    std::vector<EqualityExpression *> exprs;
 };
 
 /**
- * exclusive_or_expression:
- *     and_expression
- *     exclusive_or_expression ^ and_expression
+ * exclusive-or-expression:
+ *     and-expression
+ *     exclusive-or-expression ^ and-expression
  */
-class BitXorExpr {
+class BitXorExpression {
 public:
-    std::vector<BitAndExpr *> exprs;
+    std::vector<BitAndExpression *> exprs;
 };
 
 /**
- * inclusive_or_expression:
- *      exclusive_or_expression
- *      inclusive_or_expression | exclusive_or_expression
+ * inclusive-or-expression:
+ *      exclusive-or-expression
+ *      inclusive-or-expression | exclusive-or-expression
  */
-class BitOrExpr {
+class BitOrExpression {
 public:
-    std::vector<BitXorExpr *> exprs;
+    std::vector<BitXorExpression *> exprs;
 };
 
 /**
- * logical_and_expression:
- *      inclusive_or_expression
- *      logical_and_expression && inclusive_or_expression
+ * logical-and-expression:
+ *      inclusive-or-expression
+ *      logical-and-expression && inclusive-or-expression
  */
-class LogicalAndExpr {
+class LogicalAndExpression {
 public:
-    std::vector<BitOrExpr *> exprs;
+    std::vector<BitOrExpression *> exprs;
 };
 
 /**
- * logical_or_expression:
- *      logical_and_expression
- *      logical_or_expression || logical_and_expression
+ * logical-or-expression:
+ *      logical-and-expression
+ *      logical-or-expression || logical-and-expression
  */
-class LogicalOrExpr {
+class LogicalOrExpression {
 public:
-    std::vector<LogicalAndExpr *> exprs;
+    std::vector<LogicalAndExpression *> exprs;
 };
 
 /**
- * conditional_expression:
- *      logical_or_expression
- *      logical_or_expression ? expression : conditional_expression
+ * conditional-expression:
+ *      logical-or-expression
+ *      logical-or-expression ? expression : conditional-expression
  */
-class ConditionalExpr {
+class ConditionalExpression {
 public:
-    LogicalOrExpr *logiOrExpr;
-    std::optional<Expr *> expr;
-    std::optional<ConditionalExpr *> condExpr;
+    LogicalOrExpression *logiOrExpr;
+    std::optional<Expression *> expr;
+    std::optional<ConditionalExpression *> condExpr;
 };
 
 /**
- * assignment_operator:
+ * assignment-operator:
  *     =
  *     *=
  *     /=
@@ -477,7 +489,7 @@ public:
  *     ^=
  *     |=
  */
-enum AssignOp {
+enum AssignmentOperator {
     EQUAL,               // =
     STAREQUAL,           // *=
     SLASHEQUAL,          // /=
@@ -492,108 +504,72 @@ enum AssignOp {
 };
 
 /**
- * According to C99:
- *
- * assignment_expression:
- *     conditional_expression
- *     unary_expression assignment_operator assignment_expression
- *
- * Instead we are doing something similar to clang here though.
- * We'll be using the grammar of the form:
- *
- * assignment_expression:
- *     conditional_expression
- *     conditional_expression assignment_operator assignment_expression
- *
- * Checking if the left operand is an LValue will be done in semantics analysis.
+ * assignment-expression:
+ *     conditional-expression
+ *     unary-expression assignment-operator assignment-expression
  */
-class AssignmentExpr {
+class AssignmentExpression {
 public:
-    ConditionalExpr *condExpr;
-    std::vector<std::pair<AssignOp, ConditionalExpr *>> exprs;
+    ConditionalExpression *condExpr;
+    std::tuple<UnaryExpression *, AssignmentOperator, AssignmentExpression *> assign;
 };
 
 /**
  * expression:
- *     assignment_expression
- *     expression , assignment_expression
+ *     assignment-expression
+ *     expression , assignment-expression
  */
-class Expr {
+class Expression {
 public:
-    std::vector<AssignmentExpr *> exprs;
+    std::vector<AssignmentExpression *> exprs;
 };
 
 /**
- * constant_expression:
- *     conditional_expression
+ * constant-expression:
+ *     conditional-expression
  */
-class ConstantExpr {
+class ConstantExpression {
 public:
-    ConstantExpr(ConditionalExpr *condExpr)
-        : condExpr(condExpr) {}
-
-    ConditionalExpr *condExpr;
+    ConditionalExpression *condExpr;
 };
 
 /**
  * declaration:
- *     declaration_specifiers ;
- *     declaration_specifiers init_declarator_list ;
+ *     declaration-specifiers init-declarator-list{opt} ;
  *
- * init_declarator_list:
- *     init_declarator
- *     init_declarator_list , init_declarator
+ * init-declarator-list:
+ *     init-declarator
+ *     init-declarator-list , init-declarator
  */
 class Declaration {
 public:
-    Declaration(DeclSpecifiers *declSpecs)
-        : declSpecs(declSpecs) {}
-
-    DeclSpecifiers *declSpecs;
+    DeclarationSpecifiers *declSpecs;
     std::vector<InitDeclarator *> initDecls;
 };
 
 /**
- * declaration_specifiers:
- *     storage_class_specifier
- *     storage_class_specifier declaration_specifiers
- *     type_specifier
- *     type_specifier declaration_specifiers
- *     type_qualifier
- *     type_qualifier declaration_specifiers
- *     function_specifier
- *     function_specifier declaration_specifiers
+ * declaration-specifiers:
+ *     storage-class-specifier declaration-specifiers{opt}
+ *     type-specifier declaration-specifiers{opt}
+ *     type-qualifier declaration-specifiers{opt}
+ *     function-specifier declaration-specifiers{opt}
  */
-class DeclSpecifier {
+class DeclarationSpecifier {
 public:
-    DeclSpecifier(StorageClassSpecifier *storageClassSpec)
-        : var(storageClassSpec) {}
-    DeclSpecifier(TypeSpecifier *typeSpec)
-        : var(typeSpec) {}
-    DeclSpecifier(TypeQualifier *typeQual)
-        : var(typeQual) {}
-    DeclSpecifier(FuncSpecifier *funcSpec)
-        : var(funcSpec) {}
-
     std::variant<StorageClassSpecifier *,
                  TypeSpecifier *,
                  TypeQualifier *,
-                 FuncSpecifier *>
+                 FunctionSpecifier *>
         var;
 };
 
-class DeclSpecifiers {
+class DeclarationSpecifiers {
 public:
-    void addStorageClassSpecifier(StorageClassSpecifier *storageClassSpec);
-    void addTypeSpecifier(TypeSpecifier *typeSpec);
-    void addTypeQualifier(TypeQualifier *typeQual);
-    void addFuncSpecifier(FuncSpecifier *funcSpec);
-
-    std::vector<DeclSpecifier *> specs;
+    std::vector<DeclarationSpecifier *> declSpecs;
 };
 
 /**
- * init_declarator:
+ * init-declarator:
  *     declarator
  *     declarator = initializer
  */
@@ -604,7 +580,7 @@ public:
 };
 
 /**
- * storage_class_specifier:
+ * storage-class-specifier:
  *     TYPEDEF
  *     EXTERN
  *     STATIC
@@ -620,15 +596,11 @@ public:
         AUTO,
         REGISTER
     };
-
-    StorageClassSpecifier(Specifier spec)
-        : spec(spec) {}
-
     Specifier spec;
 };
 
 /**
- * type_specifier:
+ * type-specifier:
  *     VOID
  *     CHAR
  *     SHORT
@@ -638,11 +610,12 @@ public:
  *     DOUBLE
  *     SIGNED
  *     UNSIGNED
- *     struct_or_union_specifier
- *     enum_specifier
- *     TYPE_NAME
+ *     struct-or-union-specifier
+ *     enum-specifier
+ *     typedef-name
  *
- * Where TYPE_NAME is also known as IDENTIFIER.
+ * typedef-name:
+ *     IDENTIFIER
  */
 class TypeSpecifier {
 public:
@@ -657,16 +630,6 @@ public:
         SIGNED,
         UNSIGNED
     };
-
-    TypeSpecifier(PrimTypeKind typeKind)
-        : var(typeKind) {}
-    TypeSpecifier(StructOrUnionSpecifier *sOrUSpec)
-        : var(sOrUSpec) {}
-    TypeSpecifier(EnumSpecifier *enumSpec)
-        : var(enumSpec) {}
-    TypeSpecifier(std::string ident)
-        : var(ident) {}
-
     std::variant<PrimTypeKind,
                  StructOrUnionSpecifier *,
                  EnumSpecifier *,
@@ -675,23 +638,20 @@ public:
 };
 
 /**
- * struct_declarator:
+ * struct-declarator:
  *     declarator
- *     : constant_expression
- *     declarator : constant_expression
+ *     declarator{opt} : constant-expression
  */
 class StructDeclarator {
 public:
     std::optional<Declarator *> declarator;
-    std::optional<ConstantExpr *> constExpr;
+    std::optional<ConstantExpression *> constExpr;
 };
 
 /**
- * specifier_qualifier_list:
- *     type_specifier specifier_qualifier_list
- *     type_specifier
- *     type_qualifier specifier_qualifier_list
- *     type_qualifier
+ * specifier-qualifier-list:
+ *     type-specifier specifier-qualifier-list{opt}
+ *     type-qualifier specifier-qualifier-list{opt}
  */
 class SpecifierQualifier {
 public:
@@ -699,12 +659,12 @@ public:
 };
 
 /**
- * struct_declaration:
- *     specifier_qualifier_list struct_declarator_list ;
+ * struct-declaration:
+ *     specifier-qualifier-list struct-declarator-list ;
  *
- * struct_declarator_list:
- *     struct_declarator
- *     struct_declarator_list , struct_declarator
+ * struct-declarator-list:
+ *     struct-declarator
+ *     struct-declarator-list , struct-declarator
  */
 class StructDeclaration {
 public:
@@ -713,18 +673,17 @@ public:
 };
 
 /**
- * struct_or_union_specifier:
- *     struct_or_union IDENTIFIER { struct_declaration_list }
- *     struct_or_union { struct_declaration_list }
- *     struct_or_union IDENTIFIER
+ * struct-or-union-specifier:
+ *     struct-or-union IDENTIFIER{opt} { struct-declaration-list }
+ *     struct-or-union IDENTIFIER
  *
- * struct_or_union:
+ * struct-or-union:
  *     STRUCT
  *     UNION
  *
- * struct_declaration_list:
- *     struct_declaration
- *     struct_declaration_list struct_declaration
+ * struct-declaration-list:
+ *     struct-declaration
+ *     struct-declaration-list struct-declaration
  */
 class StructOrUnionSpecifier {
 public:
@@ -736,25 +695,23 @@ public:
 /**
  * enumerator:
  *     IDENTIFIER
- *     IDENTIFIER = constant_expression
+ *     IDENTIFIER = constant-expression
  */
 class Enumerator {
 public:
     std::string ident;
-    std::optional<ConstantExpr *> constExpr;
+    std::optional<ConstantExpression *> constExpr;
 };
 
 /**
- * enum_specifier:
- *     ENUM { enumerator_list }
- *     ENUM IDENTIFIER { enumerator_list }
- *     ENUM { enumerator_list , }
- *     ENUM IDENTIFIER { enumerator_list , }
+ * enum-specifier:
+ *     ENUM IDENTIFIER{opt} { enumerator-list }
+ *     ENUM IDENTIFIER{opt} { enumerator-list , }
  *     ENUM IDENTIFIER
  *
- * enumerator_list:
+ * enumerator-list:
  *     enumerator
- *     enumerator_list , enumerator
+ *     enumerator-list , enumerator
  */
 class EnumSpecifier {
 public:
@@ -763,7 +720,7 @@ public:
 };
 
 /**
- * type_qualifier:
+ * type-qualifier:
  *     CONST
  *     RESTRICT
  *     VOLATILE
@@ -775,33 +732,24 @@ public:
         RESTRICT,
         VOLATILE
     };
-
-    TypeQualifier(TypeQual typeQual)
-        : typeQual(typeQual) {}
-
     TypeQual typeQual;
 };
 
 /**
- * function_specifier:
+ * function-specifier:
  *     INLINE
  */
-class FuncSpecifier {
+class FunctionSpecifier {
 public:
     enum FuncSpec {
         INLINE
     };
-
-    FuncSpecifier(FuncSpec funcSpec)
-        : funcSpec(funcSpec) {}
-
     FuncSpec funcSpec;
 };
 
 /**
  * declarator:
- *     pointer direct_declarator
- *     direct_declarator
+ *     pointer{opt} direct-declarator
  */
 class Declarator {
 public:
@@ -810,22 +758,79 @@ public:
 };
 
 /**
- * direct_declarator:
+ * direct-declarator:
+ *     IDENTIFIER
+ */
+class DirectDeclaratorIdentifier {
+public:
+    std::string ident;
+};
+
+/**
+ * direct-declarator:
+ *     ( declarator )
+ */
+class DirectDeclaratorParentheses {
+public:
+    Declarator *declarator;
+};
+
+/**
+ * direct-declarator:
+ *     direct-declarator [ type-qualifier-list{opt} assignment-expression{opt} ]
+ */
+class DirectDeclaratorNoStaticOrAsterisk {
+public:
+    DirectDeclarator *directDeclarator;
+    std::vector<TypeQualifier *> typeQuals;
+    std::optional<AssignmentExpression *> assignExpr;
+};
+
+/**
+ * direct-declarator:
+ *     direct-declarator [ STATIC type-qualifier-list{opt} assignment-expression ]
+ *     direct-declarator [ type-qualifier-list STATIC assignment-expression ]
+ */
+class DirectDeclaratorStatic {
+public:
+    DirectDeclarator *directDeclarator;
+    bool staticFirst;
+    std::vector<TypeQualifier *> typeQuals;
+    AssignmentExpression *assignExpr;
+};
+
+/**
+ * direct-declarator:
+ *     direct-declarator [ type-qualifier-list{opt} * ]
+ */
+class DirectDeclaratorAsterisk {
+public:
+    DirectDeclarator *directDeclarator;
+    std::vector<TypeQualifier *> typeQuals;
+};
+
+/**
+ * direct-declarator:
+ *     direct-declarator ( parameter-type-list )
+ */
+class DirectDeclaratorParameterTypeList {
+public:
+    DirectDeclarator *directDeclarator;
+    ParameterTypeList *paramTypeList;
+};
+
+/**
+ * direct-declarator:
  *     IDENTIFIER
  *     ( declarator )
- *     direct_declarator [ type_qualifier_list assignment_expression ]
- *     direct_declarator [ type_qualifier_list ]
- *     direct_declarator [ assignment_expression ]
- *     direct_declarator [ ]
- *     direct_declarator [ STATIC type_qualifier_list assignment_expression ]
- *     direct_declarator [ type_qualifier_list STATIC assignment_expression ]
- *     direct_declarator [ type_qualifier_list * ]
- *     direct_declarator [ * ]
- *     direct_declarator ( parameter_type_list )
- *     direct_declarator ( identifier_list )
- *     direct_declarator ( )
+ *     direct-declarator [ type-qualifier-list{opt} assignment-expression{opt} ]
+ *     direct-declarator [ STATIC type-qualifier-list{opt} assignment-expression ]
+ *     direct-declarator [ type-qualifier-list STATIC assignment-expression ]
+ *     direct-declarator [ type-qualifier-list{opt} * ]
+ *     direct-declarator ( parameter-type-list )
+ *     direct-declarator ( identifier-list{opt} )
  *
- * "direct_declarator ( identifier_list )" here is used to support old-style declarator,
+ * "direct-declarator ( identifier-list )" here is used to support old-style declarator,
  * which we don't support. e.g.:
  *     int old(a, b) int a; int b; { return a + b; }
  */
@@ -836,82 +841,14 @@ public:
                  DirectDeclaratorNoStaticOrAsterisk *,
                  DirectDeclaratorStatic *,
                  DirectDeclaratorAsterisk *,
-                 DirectDeclaratorParamTypeList *>
+                 DirectDeclaratorParameterTypeList *>
         var;
 };
 
 /**
- * direct_declarator:
- *     IDENTIFIER
- */
-class DirectDeclaratorIdentifier {
-public:
-    std::string ident;
-};
-
-/**
- * direct_declarator:
- *     ( declarator )
- */
-class DirectDeclaratorParentheses {
-public:
-    Declarator *declarator;
-};
-
-/**
- * direct_declarator:
- *     direct_declarator [ type_qualifier_list assignment_expression ]
- *     direct_declarator [ type_qualifier_list ]
- *     direct_declarator [ assignment_expression ]
- *     direct_declarator [ ]
- */
-class DirectDeclaratorNoStaticOrAsterisk {
-public:
-    DirectDeclarator *directDeclarator;
-    std::vector<TypeQualifier *> typeQuals;
-    std::optional<AssignmentExpr *> assignExpr;
-};
-
-/**
- * direct_declarator:
- *     direct_declarator [ STATIC type_qualifier_list assignment_expression ]
- *     direct_declarator [ type_qualifier_list STATIC assignment_expression ]
- */
-class DirectDeclaratorStatic {
-public:
-    DirectDeclarator *directDeclarator;
-    bool staticFirst;
-    std::vector<TypeQualifier *> typeQuals;
-    AssignmentExpr *assignExpr;
-};
-
-/**
- * direct_declarator:
- *     direct_declarator [ type_qualifier_list * ]
- *     direct_declarator [ * ]
- */
-class DirectDeclaratorAsterisk {
-public:
-    DirectDeclarator *directDeclarator;
-    std::vector<TypeQualifier *> typeQuals;
-};
-
-/**
- * direct_declarator:
- *     direct_declarator ( parameter_type_list )
- */
-class DirectDeclaratorParamTypeList {
-public:
-    DirectDeclarator *directDeclarator;
-    ParamTypeList *paramTypeList;
-};
-
-/**
  * pointer:
- *     *
- *     * type_qualifier_list
- *     * pointer
- *     * type_qualifier_list pointer
+ *     * type-qualifier-list{opt}
+ *     * type-qualifier-list{opt} pointer
  */
 class Pointer {
 public:
@@ -919,35 +856,34 @@ public:
 };
 
 /**
- * parameter_type_list:
- *     parameter_list
- *     parameter_list , ...
+ * parameter-type-list:
+ *     parameter-list
+ *     parameter-list , ...
  *
- * parameter_list:
- *     parameter_declaration
- *     parameter_list , parameter_declaration
+ * parameter-list:
+ *     parameter-declaration
+ *     parameter-list , parameter-declaration
  */
-class ParamTypeList {
+class ParameterTypeList {
 public:
-    std::vector<ParamDeclaration *> paramList;
+    std::vector<ParameterDeclaration *> paramList;
     bool hasEllipsis;
 };
 
 /**
- * parameter_declaration:
- *     declaration_specifiers declarator
- *     declaration_specifiers abstract_declarator
- *     declaration_specifiers
+ * parameter-declaration:
+ *     declaration-specifiers declarator
+ *     declaration-specifiers abstract-declarator{opt}
  */
-class ParamDeclaration {
+class ParameterDeclaration {
 public:
-    DeclSpecifiers *declSpecs;
+    DeclarationSpecifiers *declSpecs;
     std::variant<Declarator *, std::optional<AbstractDeclarator *>> var;
 };
 
 /**
- * type_name:
- *     specifier_qualifier_list abstract_declarator
+ * type-name:
+ *     specifier-qualifier-list abstract-declarator{opt}
  */
 class TypeName {
 public:
@@ -956,10 +892,9 @@ public:
 };
 
 /**
- * abstract_declarator:
+ * abstract-declarator:
  *     pointer
- *     pointer direct_abstract_declarator
- *     direct_abstract_declarator
+ *     pointer{opt} direct-abstract-declarator
  */
 class AbstractDeclarator {
 public:
@@ -968,31 +903,8 @@ public:
 };
 
 /**
- * direct_abstract_declarator:
- *     ( abstract_declarator )
- *     direct_abstract_declarator [ assignment_expression ]
- *     direct_abstract_declarator [ ]
- *     [ assignment_expression ]
- *     [ ]
- *     direct_abstract_declarator [ * ]
- *     [ * ]
- *     direct_abstract_declarator ( parameter_type_list )
- *     direct_abstract_declarator ( )
- *     ( parameter_type_list )
- *     ( )
- */
-class DirectAbstractDeclarator {
-public:
-    std::variant<DirectAbstractDeclaratorParentheses *,
-                 DirectAbstractDeclaratorAssignExpr *,
-                 DirectAbstractDeclaratorAsterisk *,
-                 DirectAbstractDeclaratorParamTypeList *>
-        var;
-};
-
-/**
- * direct_abstract_declarator:
- *     ( abstract_declarator )
+ * direct-abstract-declarator:
+ *     ( abstract-declarator )
  */
 class DirectAbstractDeclaratorParentheses {
 public:
@@ -1000,22 +912,23 @@ public:
 };
 
 /**
- * direct_abstract_declarator:
- *     direct_abstract_declarator [ assignment_expression ]
- *     direct_abstract_declarator [ ]
- *     [ assignment_expression ]
- *     [ ]
+ * direct-abstract-declarator:
+ *     direct-abstract-declarator{opt} [ type-qualifier-list{opt} assignment-expression{opt} ]
+ *     direct-abstract-declarator{opt} [ STATIC type-qualifier-list{opt} assignment-expression ]
+ *     direct-abstract-declarator{opt} [ type-qualifier-list STATIC assignment-expression ]
  */
 class DirectAbstractDeclaratorAssignExpr {
 public:
     std::optional<DirectAbstractDeclarator *> directAbsDeclarator;
-    std::optional<AssignmentExpr *> assignExpr;
+    std::vector<TypeQualifier *> typeQualList;
+    std::optional<AssignmentExpression *> assignExpr;
+    bool hasStatic;
+    bool staticFirst;
 };
 
 /**
- * direct_abstract_declarator:
- *     direct_abstract_declarator [ * ]
- *     [ * ]
+ * direct-abstract-declarator:
+ *     direct-abstract-declarator{opt} [ * ]
  */
 class DirectAbstractDeclaratorAsterisk {
 public:
@@ -1023,45 +936,58 @@ public:
 };
 
 /**
- * direct_abstract_declarator:
- *     direct_abstract_declarator ( parameter_type_list )
- *     direct_abstract_declarator ( )
- *     ( parameter_type_list )
- *     ( )
+ * direct-abstract-declarator:
+ *     direct-abstract-declarator{opt} ( parameter-type-list{opt} )
  */
-class DirectAbstractDeclaratorParamTypeList {
+class DirectAbstractDeclaratorParameterTypeList {
 public:
     std::optional<DirectAbstractDeclarator *> directAbsDeclarator;
-    std::optional<ParamTypeList *> paramTypeList;
+    std::optional<ParameterTypeList *> paramTypeList;
+};
+
+/**
+ * direct-abstract-declarator:
+ *     ( abstract-declarator )
+ *     direct-abstract-declarator{opt} [ type-qualifier-list{opt} assignment-expression{opt} ]
+ *     direct-abstract-declarator{opt} [ STATIC type-qualifier-list{opt} assignment-expression ]
+ *     direct-abstract-declarator{opt} [ type-qualifier-list STATIC assignment-expression ]
+ *     direct-abstract-declarator{opt} [ * ]
+ *     direct-abstract-declarator{opt} ( parameter-type-list{opt} )
+ */
+class DirectAbstractDeclarator {
+public:
+    std::variant<DirectAbstractDeclaratorParentheses *,
+                 DirectAbstractDeclaratorAssignExpr *,
+                 DirectAbstractDeclaratorAsterisk *,
+                 DirectAbstractDeclaratorParameterTypeList *>
+        var;
 };
 
 /**
  * initializer:
- *     assignment_expression
- *     { initializer_list }
- *     { initializer_list , }
+ *     assignment-expression
+ *     { initializer-list }
+ *     { initializer-list , }
  */
 class Initializer {
 public:
-    std::variant<AssignmentExpr *, InitializerList *> var;
+    std::variant<AssignmentExpression *, InitializerList *> var;
 };
 
 /**
  * designator:
- *     [ constant_expression ]
+ *     [ constant-expression ]
  *     . IDENTIFIER
  */
 class Designator {
 public:
-    std::variant<ConstantExpr *, std::string> var;
+    std::variant<ConstantExpression *, std::string> var;
 };
 
 /**
- * initializer_list:
- *     designation initializer
- *     initializer
- *     initializer_list , designation initializer
- *     initializer_list , initializer
+ * initializer-list:
+ *     designation{opt} initializer
+ *     initializer-list , designation{opt} initializer
  */
 class InitializerPair {
 public:
@@ -1070,21 +996,19 @@ public:
 };
 
 /**
- * initializer_list:
- *     designation initializer
- *     initializer
- *     initializer_list , designation initializer
- *     initializer_list , initializer
+ * initializer-list:
+ *     designation{opt} initializer
+ *     initializer-list , designation{opt} initializer
  *
  * designation:
- *     designator_list =
+ *     designator-list =
  *
- * designator_list:
+ * designator-list:
  *     designator
- *     designator_list designator
+ *     designator-list designator
  *
  * designator:
- *     [ constant_expression ]
+ *     [ constant-expression ]
  *     . IDENTIFIER
  *
  * e.g.:
@@ -1097,206 +1021,194 @@ public:
 };
 
 /**
- * statement:
- *     labeled_statement
- *     compound_statement
- *     expression_statement
- *     selection_statement
- *     iteration_statement
- *     jump_statement
- */
-class Stmt {
-public:
-    std::variant<LabelStmt *,
-                 CaseStmt *,
-                 DefaultStmt *,
-                 BlockStmt *,
-                 ExprStmt *,
-                 IfStmt *,
-                 SwitchStmt *,
-                 WhileStmt *,
-                 DoWhileStmt *,
-                 ForStmt *,
-                 GotoStmt *,
-                 ContinueStmt *,
-                 BreakStmt *,
-                 ReturnStmt *>
-        var;
-};
-
-/**
- * labeled_statement:
+ * labeled-statement:
  *     IDENTIFIER : statement
- *     CASE constant_expression : statement
+ *     CASE constant-expression : statement
  *     DEFAULT : statement
  */
-class LabelStmt {
+class LabelStatement {
 public:
     std::string ident;
-    Stmt *stmt;
+    Statement *stmt;
 };
 
-class CaseStmt {
+class CaseStatement {
 public:
-    ConstantExpr *constExpr;
-    Stmt *stmt;
+    ConstantExpression *constExpr;
+    Statement *stmt;
 };
 
-class DefaultStmt {
+class DefaultStatement {
 public:
-    Stmt *stmt;
+    Statement *stmt;
 };
 
 /**
- * block_item:
+ * block-item:
  *     declaration
  *     statement
  */
 class BlockItem {
 public:
-    std::variant<Stmt *, Declaration *> var;
+    std::variant<Statement *, Declaration *> var;
 };
 
 /**
- * compound_statement:
- *     { }
- *     { block_item_list }
+ * compound-statement:
+ *     { block-item-list{opt} }
  *
- * block_item_list:
- *     block_item
- *     block_item_list block_item
+ * block-item-list:
+ *     block-item
+ *     block-item-list block-item
  */
-class BlockStmt {
+class CompoundStatement {
 public:
     std::vector<BlockItem *> blockItemList;
 };
 
 /**
- * expression_statement:
- *     ;
- *     expression ;
+ * expression-statement:
+ *     expression{opt} ;
  */
-class ExprStmt {
+class ExpressionStatement {
 public:
-    std::optional<Expr *> expr;
+    std::optional<Expression *> expr;
 };
 
 /**
- * selection_statement:
+ * selection-statement:
  *     IF ( expression ) statement
  *     IF ( expression ) statement ELSE statement
  *     SWITCH ( expression ) statement
  */
-class IfStmt {
+class IfStatement {
 public:
-    Expr *expr;
-    Stmt *thenStmt;
-    std::optional<Stmt *> elseStmt;
+    Expression *expr;
+    Statement *thenStmt;
+    std::optional<Statement *> elseStmt;
 };
 
-class SwitchStmt {
+class SwitchStatement {
 public:
-    Expr *expr;
-    Stmt *stmt;
+    Expression *expr;
+    Statement *stmt;
 };
 
 /**
- * iteration_statement:
+ * iteration-statement:
  *     WHILE ( expression ) statement
  *     DO statement WHILE ( expression ) ;
- *     FOR ( expression_statement expression_statement ) statement
- *     FOR ( expression_statement expression_statement expression ) statement
- *     FOR ( declaration expression_statement ) statement
- *     FOR ( declaration expression_statement expression ) statement
+ *     FOR ( expression-statement expression-statement expression{opt} ) statement
+ *     FOR ( declaration expression-statement expression{opt} ) statement
  */
-class WhileStmt {
+class WhileStatement {
 public:
-    Expr *expr;
-    Stmt *stmt;
+    Expression *expr;
+    Statement *stmt;
 };
 
-class DoWhileStmt {
+class DoWhileStatement {
 public:
-    Stmt *stmt;
-    Expr *expr;
+    Statement *stmt;
+    Expression *expr;
 };
 
-class ForStmt {
+class ForStatement {
 public:
-    std::variant<ExprStmt *, Declaration *> init;
-    ExprStmt *exprStmt;
-    std::optional<Expr *> expr;
-    Stmt *stmt;
+    std::variant<ExpressionStatement *, Declaration *> init;
+    ExpressionStatement *exprStmt;
+    std::optional<Expression *> expr;
+    Statement *stmt;
 };
 
 /**
- * jump_statement:
+ * jump-statement:
  *     GOTO IDENTIFIER ;
  *     CONTINUE ;
  *     BREAK ;
- *     RETURN ;
- *     RETURN expression ;
+ *     RETURN expression{opt} ;
  */
-class GotoStmt {
+class GotoStatement {
 public:
     std::string ident;
 };
 
-class ContinueStmt {
+class ContinueStatement {
 public:
 };
 
-class BreakStmt {
+class BreakStatement {
 public:
 };
 
-class ReturnStmt {
+class ReturnStatement {
 public:
-    std::optional<Expr *> expr;
+    std::optional<Expression *> expr;
 };
 
 /**
- * function_definition:
- *     declaration_specifiers declarator declaration_list compound_statement
- *     declaration_specifiers declarator compound_statement
+ * statement:
+ *     labeled-statement
+ *     compound-statement
+ *     expression-statement
+ *     selection-statement
+ *     iteration-statement
+ *     jump-statement
+ */
+class Statement {
+public:
+    std::variant<LabelStatement *,
+                 CaseStatement *,
+                 DefaultStatement *,
+                 CompoundStatement *,
+                 ExpressionStatement *,
+                 IfStatement *,
+                 SwitchStatement *,
+                 WhileStatement *,
+                 DoWhileStatement *,
+                 ForStatement *,
+                 GotoStatement *,
+                 ContinueStatement *,
+                 BreakStatement *,
+                 ReturnStatement *>
+        var;
+};
+
+/**
+ * function-definition:
+ *     declaration-specifiers declarator declaration-list{opt} compound-statement
  *
- * "declaration_list" here is used to support old-style function definitions, which we don't support.
+ * "declaration-list" here is used to support old-style function definitions, which we don't support.
  * e.g.:
  *     int old(a, b) int a; int b; { return a + b; }
  */
 class FunctionDefinition {
 public:
-    DeclSpecifiers *declSpecs;
+    DeclarationSpecifiers *declSpecs;
     Declarator *declarator;
-    BlockStmt *compoundStmt;
+    CompoundStatement *compoundStmt;
 };
 
 /**
- * external_declaration:
- *     function_definition
+ * external-declaration:
+ *     function-definition
  *     declaration
  */
 class ExternalDeclaration {
 public:
-    ExternalDeclaration() = default;
-    ExternalDeclaration(Declaration *decl)
-        : var(decl) {}
-    ExternalDeclaration(FunctionDefinition *funcDef)
-        : var(funcDef) {}
-
     std::variant<Declaration *, FunctionDefinition *> var;
 };
 
 /**
- * translation_unit:
- *     external_declaration
- *     translation_unit external_declaration
+ * translation-unit:
+ *     external-declaration
+ *     translation-unit external-declaration
  *
  * The entry of the syntax tree.
  */
 class TranslationUnit {
 public:
-    std::vector<ExternalDeclaration *> extDecls;
+    std::vector<ExternalDeclaration *> externDecls;
 };
 
 #endif
