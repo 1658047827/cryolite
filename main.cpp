@@ -3,7 +3,8 @@
 #include <iostream>
 
 int main(int argc, char *argv[]) {
-    std::string filename(argv[1]);
+    // std::string filename(argv[1]);
+    std::string filename("foo.c");
     std::vector<char> buffer;
     readFile(filename, buffer);
     Lexer lexer(&filename, buffer);
@@ -11,6 +12,6 @@ int main(int argc, char *argv[]) {
     lexer.lex(ts);
     ts.print(std::cout);
     Parser parser(ts);
-    TranslationUnit *root = parser.parseTranslationUnit();
+    TransUnit *root = parser.parseTranslationUnit();
     return 0;
 }

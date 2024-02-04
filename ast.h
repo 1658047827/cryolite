@@ -13,39 +13,72 @@ public:
 };
 
 /**
- * Expression
+ * Expressions
  */
-class Expression : public Node {
+class Expr : public Node {
 public:
 };
 
-class BinaryOperator : public Node {
+class UnaryExpr : public Expr {
 };
 
-class UnaryOperator : public Node {
+enum BinaryOpKind {
+    ADD,   // +
+    SUB,   // -
+    MUL,   // *
+    DIV,   // /
+    MOD,   // %
+    COMMA, // ,
+};
+
+class BinaryExpr : public Expr {
+public:
+    BinaryExpr(const SourceLocation &loc, BinaryOpKind op, Expr *lhs, Expr *rhs);
+
+    void accept(Visitor *v){};
+
+    BinaryOpKind op;
+    Expr *lhs;
+    Expr *rhs;
+
+private:
+    // TODO type check
+};
+
+// Only the conditional expression is ternary currently.
+class TernaryExpr : public Expr {
+public:
+    Expr *condition;
+    Expr *trueExpr;
+    Expr *falseExpr;
 };
 
 /**
- * Statement
+ * Declarations
  */
-class Statement : public Node {
+
+/**
+ * Statements and blocks
+ */
+class Stmt : public Node {
+};
+
+class NullStmt : public Stmt {
+};
+
+class ExprStmt : public Stmt {
 public:
+    Expr *expr;
 };
 
-class NullStmt : public Statement {
-};
-
-class ExpressionStatement : public Statement {
+class CompoundStmt : public Stmt {
 public:
-    Expression *expr;
+    std::vector<Stmt *> stmts;
 };
 
-class CompoundStmt : public Statement {
-};
-
-
-
-
+/**
+ * External definitions
+ */
 class FuncDef : public Node {
 };
 
@@ -54,6 +87,7 @@ class ExternDecl : public Node {
 
 class TransUnit : public Node {
 public:
+    std::vector<ExternDecl *> externDecls;
 };
 
 #endif

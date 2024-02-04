@@ -19,44 +19,44 @@ void Lexer::lex(TokenSequence &ts) {
     while (c != 0) {
         switch (c) {
         case '?':
-            ts.emplaceBack(TokenKind::TK_QUESTION, curLoc);
+            ts.emplaceBack(TK_QUESTION, curLoc);
             break;
         case '(':
-            ts.emplaceBack(TokenKind::TK_LPAR, curLoc);
+            ts.emplaceBack(TK_LPAR, curLoc);
             break;
         case ')':
-            ts.emplaceBack(TokenKind::TK_RPAR, curLoc);
+            ts.emplaceBack(TK_RPAR, curLoc);
             break;
         case '[':
-            ts.emplaceBack(TokenKind::TK_LSQB, curLoc);
+            ts.emplaceBack(TK_LSQB, curLoc);
             break;
         case ']':
-            ts.emplaceBack(TokenKind::TK_RSQB, curLoc);
+            ts.emplaceBack(TK_RSQB, curLoc);
             break;
         case '{':
-            ts.emplaceBack(TokenKind::TK_LBRACE, curLoc);
+            ts.emplaceBack(TK_LBRACE, curLoc);
             break;
         case '}':
-            ts.emplaceBack(TokenKind::TK_RBRACE, curLoc);
+            ts.emplaceBack(TK_RBRACE, curLoc);
             break;
         case '~':
-            ts.emplaceBack(TokenKind::TK_TILDE, curLoc);
+            ts.emplaceBack(TK_TILDE, curLoc);
             break;
         case ';':
-            ts.emplaceBack(TokenKind::TK_SEMI, curLoc);
+            ts.emplaceBack(TK_SEMI, curLoc);
             break;
         case ',':
-            ts.emplaceBack(TokenKind::TK_COMMA, curLoc);
+            ts.emplaceBack(TK_COMMA, curLoc);
             break;
         case ':':
-            ts.emplaceBack(TokenKind::TK_COLON, curLoc);
+            ts.emplaceBack(TK_COLON, curLoc);
             break;
         case '=': {
             if (nextIs('=')) {
-                ts.emplaceBack(TokenKind::TK_EQUALEQUAL, curLoc);
+                ts.emplaceBack(TK_EQUALEQUAL, curLoc);
                 next(); // Consume the '='.
             } else {
-                ts.emplaceBack(TokenKind::TK_EQUAL, curLoc);
+                ts.emplaceBack(TK_EQUAL, curLoc);
             }
         } break;
         case '.': {
@@ -65,144 +65,144 @@ void Lexer::lex(TokenSequence &ts) {
                 Token tk = lexNumericConstant();
                 ts.pushBack(tk);
             } else if (peekc == '.' && lookAhead(2) == '.') {
-                ts.emplaceBack(TokenKind::TK_ELLIPSIS, curLoc);
+                ts.emplaceBack(TK_ELLIPSIS, curLoc);
                 next(); // Consume the two dots.
                 next();
             } else {
-                ts.emplaceBack(TokenKind::TK_DOT, curLoc);
+                ts.emplaceBack(TK_DOT, curLoc);
             }
         } break;
         case '&': {
             char peekc = lookAhead();
             if (peekc == '&') {
-                ts.emplaceBack(TokenKind::TK_AMPAMP, curLoc);
+                ts.emplaceBack(TK_AMPAMP, curLoc);
                 next(); // Consume the '&'.
             } else if (peekc == '=') {
-                ts.emplaceBack(TokenKind::TK_AMPEQUAL, curLoc);
+                ts.emplaceBack(TK_AMPEQUAL, curLoc);
                 next(); // Consume thr '='.
             } else {
-                ts.emplaceBack(TokenKind::TK_AMP, curLoc);
+                ts.emplaceBack(TK_AMP, curLoc);
             }
         } break;
         case '*': {
             if (lookAhead() == '=') {
-                ts.emplaceBack(TokenKind::TK_STAREQUAL, curLoc);
+                ts.emplaceBack(TK_STAREQUAL, curLoc);
                 next(); // Consume the '='.
             } else {
-                ts.emplaceBack(TokenKind::TK_STAR, curLoc);
+                ts.emplaceBack(TK_STAR, curLoc);
             }
         } break;
         case '+': {
             char peekc = lookAhead();
             if (peekc == '+') {
-                ts.emplaceBack(TokenKind::TK_PLUSPLUS, curLoc);
+                ts.emplaceBack(TK_PLUSPLUS, curLoc);
                 next(); // Consume the '+'.
             } else if (peekc == '=') {
-                ts.emplaceBack(TokenKind::TK_PLUSEQUAL, curLoc);
+                ts.emplaceBack(TK_PLUSEQUAL, curLoc);
                 next(); // Consume the '='.
             } else {
-                ts.emplaceBack(TokenKind::TK_PLUS, curLoc);
+                ts.emplaceBack(TK_PLUS, curLoc);
             }
         } break;
         case '-': {
             char peekc = lookAhead();
             if (peekc == '-') {
-                ts.emplaceBack(TokenKind::TK_MINUSMINUS, curLoc);
+                ts.emplaceBack(TK_MINUSMINUS, curLoc);
                 next(); // Consume the '-'.
             } else if (peekc == '>') {
-                ts.emplaceBack(TokenKind::TK_ARROW, curLoc);
+                ts.emplaceBack(TK_ARROW, curLoc);
                 next(); // Consume the '>'.
             } else if (peekc == '=') {
-                ts.emplaceBack(TokenKind::TK_MINUSEQUAL, curLoc);
+                ts.emplaceBack(TK_MINUSEQUAL, curLoc);
                 next(); // Consume the '='.
             } else {
-                ts.emplaceBack(TokenKind::TK_MINUS, curLoc);
+                ts.emplaceBack(TK_MINUS, curLoc);
             }
         } break;
         case '!': {
             if (nextIs('=')) {
-                ts.emplaceBack(TokenKind::TK_EXCLAIMEQUAL, curLoc);
+                ts.emplaceBack(TK_EXCLAIMEQUAL, curLoc);
                 next(); // Consume the '='.
             } else {
-                ts.emplaceBack(TokenKind::TK_EXCLAIM, curLoc);
+                ts.emplaceBack(TK_EXCLAIM, curLoc);
             }
         } break;
         case '/': {
             if (nextIs('/') || nextIs('*')) {
                 skipComment();
             } else if (nextIs('=')) {
-                ts.emplaceBack(TokenKind::TK_SLASHEQUAL, curLoc);
+                ts.emplaceBack(TK_SLASHEQUAL, curLoc);
                 next(); // Consume the '='.
             } else {
-                ts.emplaceBack(TokenKind::TK_SLASH, curLoc);
+                ts.emplaceBack(TK_SLASH, curLoc);
             }
         } break;
         case '%': {
             if (lookAhead() == '=') {
-                ts.emplaceBack(TokenKind::TK_PERCENTEQUAL, curLoc);
+                ts.emplaceBack(TK_PERCENTEQUAL, curLoc);
                 next(); // Consume the '='.
             } else {
-                ts.emplaceBack(TokenKind::TK_PERCENT, curLoc);
+                ts.emplaceBack(TK_PERCENT, curLoc);
             }
         } break;
         case '<': {
             char peekc = lookAhead();
             if (peekc == '<' && lookAhead(2) == '=') {
-                ts.emplaceBack(TokenKind::TK_LESSLESSEQUAL, curLoc);
+                ts.emplaceBack(TK_LESSLESSEQUAL, curLoc);
                 next(); // Consume the "<=".
                 next();
             } else if (peekc == '<') {
-                ts.emplaceBack(TokenKind::TK_LESSLESS, curLoc);
+                ts.emplaceBack(TK_LESSLESS, curLoc);
                 next(); // Consume the '<'.
             } else if (peekc == '=') {
-                ts.emplaceBack(TokenKind::TK_LESSEQUAL, curLoc);
+                ts.emplaceBack(TK_LESSEQUAL, curLoc);
                 next(); // Consume the '='.
             } else {
-                ts.emplaceBack(TokenKind::TK_LESS, curLoc);
+                ts.emplaceBack(TK_LESS, curLoc);
             }
         } break;
         case '>': {
             char peekc = lookAhead();
             if (peekc == '=') {
-                ts.emplaceBack(TokenKind::TK_GREATEREQUAL, curLoc);
+                ts.emplaceBack(TK_GREATEREQUAL, curLoc);
                 next(); // Consume the '='.
             } else if (peekc == '>' && lookAhead(2) == '=') {
-                ts.emplaceBack(TokenKind::TK_GREATERGREATEREQUAL, curLoc);
+                ts.emplaceBack(TK_GREATERGREATEREQUAL, curLoc);
                 next(); // Consume the ">=".
                 next();
             } else if (peekc == '>') {
-                ts.emplaceBack(TokenKind::TK_GREATERGREATER, curLoc);
+                ts.emplaceBack(TK_GREATERGREATER, curLoc);
                 next(); // Consume the '>'.
             } else {
-                ts.emplaceBack(TokenKind::TK_GREATER, curLoc);
+                ts.emplaceBack(TK_GREATER, curLoc);
             }
         } break;
         case '^': {
             if (lookAhead() == '=') {
-                ts.emplaceBack(TokenKind::TK_CARETEQUAL, curLoc);
+                ts.emplaceBack(TK_CARETEQUAL, curLoc);
                 next(); // Consume the '='.
             } else {
-                ts.emplaceBack(TokenKind::TK_CARET, curLoc);
+                ts.emplaceBack(TK_CARET, curLoc);
             }
         } break;
         case '|': {
             char peekc = lookAhead();
             if (peekc == '=') {
-                ts.emplaceBack(TokenKind::TK_PIPEEQUAL, curLoc);
+                ts.emplaceBack(TK_PIPEEQUAL, curLoc);
                 next(); // Consume the '='.
             } else if (peekc == '|') {
-                ts.emplaceBack(TokenKind::TK_PIPEPIPE, curLoc);
+                ts.emplaceBack(TK_PIPEPIPE, curLoc);
                 next(); // Consume the '|'.
             } else {
-                ts.emplaceBack(TokenKind::TK_PIPE, curLoc);
+                ts.emplaceBack(TK_PIPE, curLoc);
             }
         } break;
         case '#': {
             if (lookAhead() == '#') {
-                ts.emplaceBack(TokenKind::TK_HASHHASH, curLoc);
+                ts.emplaceBack(TK_HASHHASH, curLoc);
                 next(); // Consume the '#'.
             } else {
-                ts.emplaceBack(TokenKind::TK_HASH, curLoc);
+                ts.emplaceBack(TK_HASH, curLoc);
             }
         } break;
         case '\'': {
@@ -235,7 +235,7 @@ void Lexer::lex(TokenSequence &ts) {
         c = next();
     }
 
-    ts.emplaceBack(TokenKind::TK_EOF, curLoc);
+    ts.emplaceBack(TK_EOF, curLoc);
 }
 
 char Lexer::curChar() {
@@ -323,7 +323,7 @@ Token Lexer::lexNumericConstant() {
     }
 
     std::string tkStr(buffer.begin() + begin, buffer.begin() + p + 1);
-    return Token(TokenKind::TK_NUMERIC_CONSTANT, loc, tkStr);
+    return Token(TK_NUMERIC_CONSTANT, loc, tkStr);
 }
 
 Token Lexer::lexCharConstant() {
@@ -331,7 +331,7 @@ Token Lexer::lexCharConstant() {
     SourceLocation loc = curLoc;
     if (tryNext('\'')) {
         error(loc, "empty character constant");
-        return Token(TokenKind::TK_UNKNOWN, loc);
+        return Token(TK_UNKNOWN, loc);
     }
     char c = next();
     while (c != '\'' && c != '\n' && c != 0) {
@@ -343,10 +343,10 @@ Token Lexer::lexCharConstant() {
     }
     if (c != '\'') {
         error(loc, "unterminated character constant");
-        return Token(TokenKind::TK_UNKNOWN, loc);
+        return Token(TK_UNKNOWN, loc);
     }
     std::string tkStr(buffer.begin() + begin, buffer.begin() + p + 1);
-    return Token(TokenKind::TK_CHAR_CONSTANT, loc, tkStr);
+    return Token(TK_CHAR_CONSTANT, loc, tkStr);
 }
 
 Token Lexer::lexStringLiteral() {
@@ -359,12 +359,12 @@ Token Lexer::lexStringLiteral() {
             next();
         } else if (c == '\n' || c == 0) {
             error(loc, "unterminated string literal");
-            return Token(TokenKind::TK_UNKNOWN, loc);
+            return Token(TK_UNKNOWN, loc);
         }
         c = next();
     }
     std::string tkStr(buffer.begin() + begin, buffer.begin() + p + 1);
-    return Token(TokenKind::TK_STRING_LITERAL, loc, tkStr);
+    return Token(TK_STRING_LITERAL, loc, tkStr);
 }
 
 Token Lexer::lexIdentifier() {
@@ -382,7 +382,7 @@ Token Lexer::lexIdentifier() {
     if (iter != keyword2TokenKind.cend()) {
         return Token(iter->second, loc);
     }
-    return Token(TokenKind::TK_IDENTIFIER, loc, tkStr);
+    return Token(TK_IDENTIFIER, loc, tkStr);
 }
 
 int readFile(std::string &filename, std::vector<char> &buffer) {

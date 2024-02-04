@@ -511,7 +511,9 @@ enum AssignmentOperator {
 class AssignmentExpression {
 public:
     ConditionalExpression *condExpr;
-    std::tuple<UnaryExpression *, AssignmentOperator, AssignmentExpression *> assign;
+    UnaryExpression *unaryExpr;
+    AssignmentOperator op;
+    AssignmentExpression *assignExpr;
 };
 
 /**
