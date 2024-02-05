@@ -462,38 +462,31 @@ EqualityExpression *Parser::parseEqualityExpr() {
     return equalityExpr;
 }
 
-RelationalExpression *Parser::parseRelationalExpr() {
-    auto begin = cursor;
-    RelationalExpression *relatExpr = new RelationalExpression;
-    auto shiftExpr = parseShiftExpr();
-    if (shiftExpr) {
-        relatExpr->shiftExpr = shiftExpr;
-    }
-    auto kind = (*cursor)->getKind();
-    while (kind == TK_LESS || kind == TK_GREATER || kind == TK_LESSEQUAL || kind == TK_GREATEREQUAL) {
-        RelationalExpression::REOp op;
-        switch (kind) {
+Expr *Parser::parseRelationalExpression() {
+    Expr *lhs = parseShiftExpression();
+    while (true) {
+        BinaryOpKind op;
+        switch ((*cursor)->getKind()) {
         case TK_LESS:
-            op = RelationalExpression::LESS;
-            break;
-        case TK_GREATER:
-            op = RelationalExpression::GREATER;
+            op = BinaryOpKind::LESS;
             break;
         case TK_LESSEQUAL:
-            op = RelationalExpression::LESSEQUAL;
+            op = BinaryOpKind::LEQ;
+            break;
+        case TK_GREATER:
+            op = BinaryOpKind::GREATER;
             break;
         case TK_GREATEREQUAL:
-            op = RelationalExpression::GREATEREQUAL;
+            op = BinaryOpKind::GEQ;
             break;
+        default:
+            return lhs;
         }
+        SourceLocation loc = (*cursor)->getLoc();
         ++cursor;
-        shiftExpr = parseShiftExpr();
-        if (shiftExpr) {
-            relatExpr->exprs.emplace_back(op, shiftExpr);
-        }
-        kind = (*cursor)->getKind();
+        Expr *rhs = parseShiftExpression();
+        lhs = new BinaryExpr(loc, op, lhs, rhs);
     }
-    return relatExpr;
 }
 
 Expr *Parser::parseShiftExpression() {

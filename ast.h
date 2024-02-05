@@ -26,14 +26,18 @@ class UnaryExpr : public Expr {
 };
 
 enum BinaryOpKind {
-    ADD,   // +
-    SUB,   // -
-    MUL,   // *
-    DIV,   // /
-    MOD,   // %
-    SHL,   // <<
-    SHR,   // >>
-    COMMA, // ,
+    ADD,     // +
+    SUB,     // -
+    MUL,     // *
+    DIV,     // /
+    MOD,     // %
+    SHL,     // <<
+    SHR,     // >>
+    LESS,    // <
+    LEQ,     // <=
+    GREATER, // >
+    GEQ,     // >=
+    COMMA,   // ,
 };
 
 class BinaryExpr : public Expr {
@@ -50,10 +54,12 @@ private:
     // TODO type check
 };
 
-// Only the conditional expression is ternary currently.
+// Currently, only the conditional expression is ternary.
 class TernaryExpr : public Expr {
 public:
-    Expr *condition;
+    TernaryExpr(const SourceLocation &loc, Expr *condExpr, Expr *trueExpr, Expr *falseExpr);
+
+    Expr *condExpr;
     Expr *trueExpr;
     Expr *falseExpr;
 };
