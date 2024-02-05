@@ -44,7 +44,9 @@ enum BinaryOpKind {
     BITOR,    // |
     LOGICAND, // &&
     LOGICOR,  // ||
-    COMMA,    // ,
+    ASSIGN,   // =
+    // Compound assignment will be break into two BinaryExprs.
+    COMMA, // ,
 };
 
 class BinaryExpr : public Expr {

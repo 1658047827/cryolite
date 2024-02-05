@@ -343,6 +343,94 @@ StructDeclarator *Parser::parseStructDeclarator() {
     return structDeclarator;
 }
 
+Expr *Parser::parseExpression() {
+    return nullptr;
+}
+
+/**
+ * According to C99:
+ *
+ * assignment-expression:
+ *     conditional-expression
+ *     unary-expression assignment-operator assignment-expression
+ *
+ * assignment-operator:
+ *     =
+ *     *=
+ *     /=
+ *     %=
+ *     +=
+ *     -=
+ *     <<=
+ *     >>=
+ *     &=
+ *     ^=
+ *     |=
+ *
+ * Instead we are doing something similar to clang here.
+ * We use the grammar of the form:
+ *
+ * assignment-expression:
+ *     conditional-expression
+ *     conditional-expression assignment-operator assignment-expression
+ *
+ * Checking if the lhs is an LValue will be done by type checking inside BinaryExpr.
+ */
+Expr *Parser::parseAssignmentExpression() {
+    // Let the BinaryExpr handle the unexpected expression kind.
+    Expr *lhs = parseConditionalExpression();
+    // Because this is a right-associative expression, we cannot use a loop structure
+    // in the same manner as we do with left-associative expressions.
+    BinaryOpKind op;
+    switch ((*cursor)->getKind()) {
+    case TK_EQUAL:
+        op = BinaryOpKind::ASSIGN;
+        break;
+    case TK_STAREQUAL:
+        op = BinaryOpKind::MUL;
+        break;
+    case TK_SLASHEQUAL:
+        op = BinaryOpKind::DIV;
+        break;
+    case TK_PERCENTEQUAL:
+        op = BinaryOpKind::MOD;
+        break;
+    case TK_PLUSEQUAL:
+        op = BinaryOpKind::ADD;
+        break;
+    case TK_MINUSEQUAL:
+        op = BinaryOpKind::SUB;
+        break;
+    case TK_LESSLESSEQUAL:
+        op = BinaryOpKind::SHL;
+        break;
+    case TK_GREATERGREATEREQUAL:
+        op = BinaryOpKind::SHR;
+        break;
+    case TK_AMPEQUAL:
+        op = BinaryOpKind::BITAND;
+        break;
+    case TK_CARETEQUAL:
+        op = BinaryOpKind::BITXOR;
+        break;
+    case TK_PIPEEQUAL:
+        op = BinaryOpKind::BITOR;
+        break;
+    default:
+        // Now it seems to be a single conditional expression.
+        return lhs;
+    }
+    SourceLocation loc = (*cursor)->getLoc();
+    ++cursor;
+    Expr *rhs = parseAssignmentExpression();
+    // Break compound assignment into two BinaryExprs.
+    // e.g.: a += b => a = a + b
+    if (op != BinaryOpKind::ASSIGN) {
+        rhs = new BinaryExpr(loc, op, lhs, rhs);
+    }
+    return new BinaryExpr(loc, BinaryOpKind::ASSIGN, lhs, rhs);
+}
+
 Expr *Parser::parseConditionalExpression() {
     Expr *condExpr = parseLogicalOrExpression();
     if (isKind(cursor, TK_QUESTION)) {
@@ -540,10 +628,6 @@ UnaryExpression *Parser::parseUnaryExpr() {
             assert(isKind(cursor, TK_RPAR));
         }
     }
-    return nullptr;
-}
-
-Expr *Parser::parseExpression() {
     return nullptr;
 }
 

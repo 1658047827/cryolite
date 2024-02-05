@@ -25,8 +25,12 @@ public:
     SpecifierQualifier *parseSpecifierQualifier();
     StructDeclarator *parseStructDeclarator();
 
+    /**
+     * Parse expressions.
+     */
+    Expr *parseExpression();
+    Expr* parseAssignmentExpression();
     Expr *parseConditionalExpression();
-
     // parseSimpleBinaryExpression - Parse very simple binary expressions like
     // LogicalAndExpression, LogicalOrExpression, BitOrExpression etc.
     // They only involve one type of binary operator.
@@ -43,8 +47,8 @@ public:
     Expr *parseMultiplicativeExpression();
     Expr *parseCastExpression();
 
-    UnaryExpression *parseUnaryExpr();
-    Expr *parseExpression();
+    Expr *parseUnaryExpression();
+
     TypeName *parseTypeName();
     InitializerList *parseInitializerList();
 
