@@ -443,23 +443,25 @@ BitAndExpression *Parser::parseBitAndExpr() {
     return bitAndExpr;
 }
 
-EqualityExpression *Parser::parseEqualityExpr() {
-    auto begin = cursor;
-    EqualityExpression *equalityExpr = new EqualityExpression;
-    auto relatExpr = parseRelationalExpr();
-    if (relatExpr) {
-        equalityExpr->relatExpr = relatExpr;
-    }
-    while (isKind(cursor, TK_EQUALEQUAL) || isKind(cursor, TK_EXCLAIMEQUAL)) {
-        TokenKind kind = (*cursor)->getKind();
-        auto op = (kind == TK_EQUALEQUAL) ? EqualityExpression::EQUALEQUAL : EqualityExpression::EXCLAIMEQUAL;
-        ++cursor;
-        relatExpr = parseRelationalExpr();
-        if (relatExpr) {
-            equalityExpr->exprs.emplace_back(op, relatExpr);
+Expr *Parser::parseEqualityExpression() {
+    Expr *lhs = parseRelationalExpression();
+    while (true) {
+        BinaryOpKind op;
+        switch ((*cursor)->getKind()) {
+        case TK_EQUALEQUAL:
+            op = BinaryOpKind::EQUAL;
+            break;
+        case TK_EXCLAIMEQUAL:
+            op = BinaryOpKind::NEQ;
+            break;
+        default:
+            return lhs;
         }
+        SourceLocation loc = (*cursor)->getLoc();
+        ++cursor;
+        Expr *rhs = parseRelationalExpression();
+        lhs = new BinaryExpr(loc, op, lhs, rhs);
     }
-    return equalityExpr;
 }
 
 Expr *Parser::parseRelationalExpression() {

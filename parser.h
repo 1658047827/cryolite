@@ -30,7 +30,7 @@ public:
     BitOrExpression *parseBitOrExpr();
     BitXorExpression *parseBitXorExpr();
     BitAndExpression *parseBitAndExpr();
-    EqualityExpression *parseEqualityExpr();
+    Expr *parseEqualityExpression();
     Expr *parseRelationalExpression();
     Expr *parseShiftExpression();
     Expr *parseAdditiveExpression();

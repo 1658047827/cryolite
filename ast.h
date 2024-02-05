@@ -37,6 +37,8 @@ enum BinaryOpKind {
     LEQ,     // <=
     GREATER, // >
     GEQ,     // >=
+    EQUAL,   // ==
+    NEQ,     // !=
     COMMA,   // ,
 };
 
