@@ -37,7 +37,7 @@ class UnaryExpr : public Expr {
 public:
     UnaryExpr(const SourceLocation &loc, UnaryOpKind op, Expr *expr);
 
-    void accept(Visitor *v);
+    void accept(Visitor *v) { v->visitUnaryExpr(this); }
 
     UnaryOpKind op;
     Expr *operand;
@@ -168,6 +168,7 @@ public:
     void visitFloatingConstant(FloatingConstant *floating);
 
     std::string prefix;
+    const std::string u = "│   ";
     std::ostream &out;
 };
 

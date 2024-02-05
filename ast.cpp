@@ -3,8 +3,6 @@
 UnaryExpr::UnaryExpr(const SourceLocation &loc, UnaryOpKind op, Expr *expr)
     : Expr(loc), op(op), operand(expr) {}
 
-void UnaryExpr::accept(Visitor *v) { v->visitUnaryExpr(this); }
-
 BinaryExpr::BinaryExpr(const SourceLocation &loc, BinaryOpKind op, Expr *lhs, Expr *rhs)
     : Expr(loc), op(op), lhs(lhs), rhs(rhs) {}
 
@@ -24,72 +22,72 @@ void ASTDump::visitUnaryExpr(UnaryExpr *unary) {
 }
 
 void ASTDump::visitBinaryExpr(BinaryExpr *binary) {
+    out << "BinaryExpr ";
     switch (binary->op) {
     case ADD:
-        out << "+\n";
+        out << "'+'\n";
         break;
     case SUB:
-        out << "-\n";
+        out << "'-'\n";
         break;
     case MUL:
-        out << "*\n";
+        out << "'*'\n";
         break;
     case DIV:
-        out << "/\n";
+        out << "'/'\n";
         break;
     case MOD:
-        out << "%\n";
+        out << "'%'\n";
         break;
     case SHL:
-        out << "<<\n";
+        out << "'<<'\n";
         break;
     case SHR:
-        out << ">>\n";
+        out << "'>>'\n";
         break;
     case LESS:
-        out << "<\n";
+        out << "'<'\n";
         break;
     case LEQ:
-        out << "<=\n";
+        out << "'<='\n";
         break;
     case GREATER:
-        out << ">\n";
+        out << "'>'\n";
         break;
     case GEQ:
-        out << ">=\n";
+        out << "'>='\n";
         break;
     case EQUAL:
-        out << "==\n";
+        out << "'=='\n";
         break;
     case NEQ:
-        out << "!=\n";
+        out << "'!='\n";
         break;
     case BITAND:
-        out << "&\n";
+        out << "'&'\n";
         break;
     case BITXOR:
-        out << "^\n";
+        out << "'^'\n";
         break;
     case BITOR:
-        out << "|\n";
+        out << "'|'\n";
         break;
     case LOGICAND:
-        out << "&&\n";
+        out << "'&&'\n";
         break;
     case LOGICOR:
-        out << "||\n";
+        out << "'||'\n";
         break;
     case ASSIGN:
-        out << "=\n";
+        out << "'='\n";
         break;
     case COMMA:
-        out << ",\n";
+        out << "','\n";
         break;
     default:
         break;
     }
     out << prefix << "├── ";
-    static std::string u("│   ");
     prefix.append(u);
     binary->lhs->accept(this);
     prefix.erase(prefix.size() - u.size());
@@ -100,10 +98,27 @@ void ASTDump::visitBinaryExpr(BinaryExpr *binary) {
     prefix.erase(prefix.size() - 4);
 }
 
-void ASTDump::visitTernaryExpr(TernaryExpr *ternary) {}
+void ASTDump::visitTernaryExpr(TernaryExpr *ternary) {
+    out << "TernaryExpr\n";
+
+    out << prefix << "├── ";
+    prefix.append(u);
+    ternary->condExpr->accept(this);
+    prefix.erase(prefix.size() - u.size());
+
+    out << prefix << "├── ";
+    prefix.append(u);
+    ternary->trueExpr->accept(this);
+    prefix.erase(prefix.size() - u.size());
+
+    out << prefix << "└── ";
+    prefix.append("    ");
+    ternary->trueExpr->accept(this);
+    prefix.erase(prefix.size() - 4);
+}
 
 void ASTDump::visitIntegerConstant(IntegerConstant *integer) {
-    out << integer->value << '\n';
+    out << "IntegerConstant " << integer->value << '\n';
 }
 
 void ASTDump::visitFloatingConstant(FloatingConstant *floating) {}
