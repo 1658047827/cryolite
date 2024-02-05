@@ -36,7 +36,7 @@ public:
     ShiftExpression *parseShiftExpr();
     Expr *parseAdditiveExpression();
     Expr *parseMultiplicativeExpression();
-    CastExpression *parseCastExpr();
+    Expr *parseCastExpression();
     UnaryExpression *parseUnaryExpr();
     Expression *parseExpression();
     TypeName *parseTypeName();

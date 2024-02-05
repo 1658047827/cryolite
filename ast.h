@@ -7,6 +7,8 @@
 
 class Node {
 public:
+    Node(const SourceLocation &loc) : srcLoc(loc) {}
+
     virtual void accept(Visitor *v) = 0;
 
     SourceLocation srcLoc;
@@ -17,6 +19,7 @@ public:
  */
 class Expr : public Node {
 public:
+    Expr(const SourceLocation &loc) : Node(loc) {}
 };
 
 class UnaryExpr : public Expr {

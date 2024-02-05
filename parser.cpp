@@ -537,9 +537,30 @@ Expr *Parser::parseAdditiveExpression() {
 }
 
 Expr *Parser::parseMultiplicativeExpression() {
+    Expr *lhs = parseCastExpression();
+    while (true) {
+        BinaryOpKind op;
+        switch ((*cursor)->getKind()) {
+        case TK_STAR:
+            op = BinaryOpKind::MUL;
+            break;
+        case TK_SLASH:
+            op = BinaryOpKind::DIV;
+            break;
+        case TK_PERCENT:
+            op = BinaryOpKind::MOD;
+            break;
+        default:
+            return lhs;
+        }
+        SourceLocation loc = (*cursor)->getLoc();
+        ++cursor;
+        Expr *rhs = parseCastExpression();
+        lhs = new BinaryExpr(loc, op, lhs, rhs);
+    }
 }
 
-CastExpression *Parser::parseCastExpr() {
+Expr *Parser::parseCastExpression() {
     auto begin = cursor;
     CastExpression *castExpr = new CastExpression;
     auto nxt = std::next(cursor, 1);
