@@ -5,6 +5,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <unordered_map>
 
 using HideSet = std::set<std::string>;
 
@@ -20,6 +21,12 @@ enum TokenKind {
 #define TOK(X) TK_##X,
 #include "tokenkind.def"
     NUM_TOKENS
+};
+
+static const std::unordered_map<TokenKind, std::string> tokenKind2Str{
+#define PUNCTUATOR(X, Y) {TK_##X, Y},
+#define KEYWORD(X, Y) {TK_##X, Y},
+#include "tokenkind.def"
 };
 
 class Token {

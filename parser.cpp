@@ -6,6 +6,12 @@ inline bool Parser::isKind(TokenSeqConstIter &iter, TokenKind kind) {
     return (*iter)->getKind() == kind;
 }
 
+void Parser::expect(TokenSeqConstIter &iter, TokenKind kind) {
+    if ((*iter)->getKind() != kind) {
+        error((*iter)->getLoc(), "expected '" + tokenKind2Str.at(kind) + "' here");
+    }
+}
+
 void Parser::initBitSet() {
     setBitSet(firstOfSpecifierQualifier,
               // TypeQualifier
@@ -337,23 +343,16 @@ StructDeclarator *Parser::parseStructDeclarator() {
     return structDeclarator;
 }
 
-ConditionalExpression *Parser::parseConditionalExpr() {
-    auto begin = cursor;
-    auto logicalOrExpr = parseLogicalOrExpr();
-    ConditionalExpression *condExpr = new ConditionalExpression;
-    if (logicalOrExpr) {
-        condExpr->logiOrExpr = logicalOrExpr;
-    }
+Expr *Parser::parseConditionalExpression() {
+    Expr *condExpr = parseLogicalOrExpression();
     if (isKind(cursor, TK_QUESTION)) {
-        ++cursor; // Consume the '?'.
-        auto expr = parseExpression();
-        assert(isKind(cursor, TK_COLON));
-        ++cursor; // Consume the ':'.
-        auto cond = parseConditionalExpr();
-        if (expr && cond) {
-            condExpr->expr = expr;
-            condExpr->condExpr = cond;
-        }
+        SourceLocation loc = (*cursor)->getLoc();
+        ++cursor;
+        Expr *trueExpr = parseExpression();
+        expect(cursor, TK_COLON);
+        ++cursor;
+        Expr *falseExpr = parseConditionalExpression();
+        return new TernaryExpr(loc, condExpr, trueExpr, falseExpr);
     }
     return condExpr;
 }
@@ -544,7 +543,7 @@ UnaryExpression *Parser::parseUnaryExpr() {
     return nullptr;
 }
 
-Expression *Parser::parseExpression() {
+Expr *Parser::parseExpression() {
     return nullptr;
 }
 

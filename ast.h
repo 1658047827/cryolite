@@ -66,6 +66,8 @@ class TernaryExpr : public Expr {
 public:
     TernaryExpr(const SourceLocation &loc, Expr *condExpr, Expr *trueExpr, Expr *falseExpr);
 
+    void accept(Visitor *v){};
+
     Expr *condExpr;
     Expr *trueExpr;
     Expr *falseExpr;

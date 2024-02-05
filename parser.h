@@ -24,7 +24,8 @@ public:
     StructDeclaration *parseStructDeclaration();
     SpecifierQualifier *parseSpecifierQualifier();
     StructDeclarator *parseStructDeclarator();
-    ConditionalExpression *parseConditionalExpr();
+
+    Expr *parseConditionalExpression();
 
     // parseSimpleBinaryExpression - Parse very simple binary expressions like
     // LogicalAndExpression, LogicalOrExpression, BitOrExpression etc.
@@ -43,12 +44,13 @@ public:
     Expr *parseCastExpression();
 
     UnaryExpression *parseUnaryExpr();
-    Expression *parseExpression();
+    Expr *parseExpression();
     TypeName *parseTypeName();
     InitializerList *parseInitializerList();
 
 private:
     inline bool isKind(TokenSeqConstIter &iter, TokenKind kind);
+    void expect(TokenSeqConstIter &iter, TokenKind kind);
     void initBitSet();
     template <typename... Args>
     void setBitSet(TokenBitSet &bitset, Args... values) {

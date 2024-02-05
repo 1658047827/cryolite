@@ -1,13 +1,6 @@
 #include "token.h"
 #include <algorithm>
 #include <iostream>
-#include <unordered_map>
-
-static const std::unordered_map<TokenKind, std::string> tokenKind2Str{
-#define PUNCTUATOR(X, Y) {TK_##X, Y},
-#define KEYWORD(X, Y) {TK_##X, Y},
-#include "tokenkind.def"
-};
 
 std::string srcLocToString(const SourceLocation &loc) {
     std::string s(*loc.filename);
