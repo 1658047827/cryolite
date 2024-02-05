@@ -358,89 +358,35 @@ ConditionalExpression *Parser::parseConditionalExpr() {
     return condExpr;
 }
 
-LogicalOrExpression *Parser::parseLogicalOrExpr() {
-    auto begin = cursor;
-    LogicalOrExpression *logicalOrExpr = new LogicalOrExpression;
-    auto logiAndExpr = parseLogicalAndExpr();
-    if (logiAndExpr) {
-        logicalOrExpr->exprs.push_back(logiAndExpr);
-    }
-    while (isKind(cursor, TK_PIPEPIPE)) {
+Expr *Parser::parseSimpleBinaryExpression(Expr *(Parser::*parseTerm)(), TokenKind kind, BinaryOpKind op) {
+    Expr *lhs = (this->*parseTerm)();
+    while (isKind(cursor, kind)) {
+        SourceLocation loc = (*cursor)->getLoc();
         ++cursor;
-        logiAndExpr = parseLogicalAndExpr();
-        if (logiAndExpr) {
-            logicalOrExpr->exprs.push_back(logiAndExpr);
-        }
+        Expr *rhs = (this->*parseTerm)();
+        lhs = new BinaryExpr(loc, op, lhs, rhs);
     }
-    return logicalOrExpr;
+    return lhs;
 }
 
-LogicalAndExpression *Parser::parseLogicalAndExpr() {
-    auto begin = cursor;
-    LogicalAndExpression *logicalAndExpr = new LogicalAndExpression;
-    auto bitOrExpr = parseBitOrExpr();
-    if (bitOrExpr) {
-        logicalAndExpr->exprs.push_back(bitOrExpr);
-    }
-    while (isKind(cursor, TK_AMPAMP)) {
-        ++cursor;
-        bitOrExpr = parseBitOrExpr();
-        if (bitOrExpr) {
-            logicalAndExpr->exprs.push_back(bitOrExpr);
-        }
-    }
-    return logicalAndExpr;
+Expr *Parser::parseLogicalOrExpression() {
+    return parseSimpleBinaryExpression(parseLogicalAndExpression, TK_PIPEPIPE, BinaryOpKind::LOGICOR);
 }
 
-BitOrExpression *Parser::parseBitOrExpr() {
-    auto begin = cursor;
-    BitOrExpression *bitOrExpr = new BitOrExpression;
-    auto bitXorExpr = parseBitXorExpr();
-    if (bitXorExpr) {
-        bitOrExpr->exprs.push_back(bitXorExpr);
-    }
-    while (isKind(cursor, TK_PIPE)) {
-        ++cursor;
-        bitXorExpr = parseBitXorExpr();
-        if (bitXorExpr) {
-            bitOrExpr->exprs.push_back(bitXorExpr);
-        }
-    }
-    return bitOrExpr;
+Expr *Parser::parseLogicalAndExpression() {
+    return parseSimpleBinaryExpression(parseBitOrExpression, TK_AMPAMP, BinaryOpKind::LOGICAND);
 }
 
-BitXorExpression *Parser::parseBitXorExpr() {
-    auto begin = cursor;
-    BitXorExpression *bitXorExpr = new BitXorExpression;
-    auto bitAndExpr = parseBitAndExpr();
-    if (bitAndExpr) {
-        bitXorExpr->exprs.push_back(bitAndExpr);
-    }
-    while (isKind(cursor, TK_CARET)) {
-        ++cursor;
-        bitAndExpr = parseBitAndExpr();
-        if (bitAndExpr) {
-            bitXorExpr->exprs.push_back(bitAndExpr);
-        }
-    }
-    return bitXorExpr;
+Expr *Parser::parseBitOrExpression() {
+    return parseSimpleBinaryExpression(parseBitXorExpression, TK_PIPE, BinaryOpKind::BITOR);
 }
 
-BitAndExpression *Parser::parseBitAndExpr() {
-    auto begin = cursor;
-    BitAndExpression *bitAndExpr = new BitAndExpression;
-    auto equalExpr = parseEqualityExpr();
-    if (equalExpr) {
-        bitAndExpr->exprs.push_back(equalExpr);
-    }
-    while (isKind(cursor, TK_AMP)) {
-        ++cursor;
-        equalExpr = parseEqualityExpr();
-        if (equalExpr) {
-            bitAndExpr->exprs.push_back(equalExpr);
-        }
-    }
-    return bitAndExpr;
+Expr *Parser::parseBitXorExpression() {
+    return parseSimpleBinaryExpression(parseBitAndExpression, TK_CARET, BinaryOpKind::BITXOR);
+}
+
+Expr *Parser::parseBitAndExpression() {
+    return parseSimpleBinaryExpression(parseEqualityExpression, TK_AMP, BinaryOpKind::BITAND);
 }
 
 Expr *Parser::parseEqualityExpression() {

@@ -25,17 +25,23 @@ public:
     SpecifierQualifier *parseSpecifierQualifier();
     StructDeclarator *parseStructDeclarator();
     ConditionalExpression *parseConditionalExpr();
-    LogicalOrExpression *parseLogicalOrExpr();
-    LogicalAndExpression *parseLogicalAndExpr();
-    BitOrExpression *parseBitOrExpr();
-    BitXorExpression *parseBitXorExpr();
-    BitAndExpression *parseBitAndExpr();
+
+    // parseSimpleBinaryExpression - Parse very simple binary expressions like
+    // LogicalAndExpression, LogicalOrExpression, BitOrExpression etc.
+    // They only involve one type of binary operator.
+    Expr *parseSimpleBinaryExpression(Expr *(Parser::*parseTerm)(), TokenKind kind, BinaryOpKind op);
+    Expr *parseLogicalOrExpression();
+    Expr *parseLogicalAndExpression();
+    Expr *parseBitOrExpression();
+    Expr *parseBitXorExpression();
+    Expr *parseBitAndExpression();
     Expr *parseEqualityExpression();
     Expr *parseRelationalExpression();
     Expr *parseShiftExpression();
     Expr *parseAdditiveExpression();
     Expr *parseMultiplicativeExpression();
     Expr *parseCastExpression();
+
     UnaryExpression *parseUnaryExpr();
     Expression *parseExpression();
     TypeName *parseTypeName();

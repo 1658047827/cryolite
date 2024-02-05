@@ -26,20 +26,25 @@ class UnaryExpr : public Expr {
 };
 
 enum BinaryOpKind {
-    ADD,     // +
-    SUB,     // -
-    MUL,     // *
-    DIV,     // /
-    MOD,     // %
-    SHL,     // <<
-    SHR,     // >>
-    LESS,    // <
-    LEQ,     // <=
-    GREATER, // >
-    GEQ,     // >=
-    EQUAL,   // ==
-    NEQ,     // !=
-    COMMA,   // ,
+    ADD,      // +
+    SUB,      // -
+    MUL,      // *
+    DIV,      // /
+    MOD,      // %
+    SHL,      // <<
+    SHR,      // >>
+    LESS,     // <
+    LEQ,      // <=
+    GREATER,  // >
+    GEQ,      // >=
+    EQUAL,    // ==
+    NEQ,      // !=
+    BITAND,   // &
+    BITXOR,   // ^
+    BITOR,    // |
+    LOGICAND, // &&
+    LOGICOR,  // ||
+    COMMA,    // ,
 };
 
 class BinaryExpr : public Expr {
