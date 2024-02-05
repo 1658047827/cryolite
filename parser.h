@@ -8,7 +8,6 @@
 using TokenBitSet = std::bitset<NUM_TOKENS>;
 
 class Scope {
-
 };
 
 class Parser {
@@ -33,14 +32,14 @@ public:
     BitAndExpression *parseBitAndExpr();
     EqualityExpression *parseEqualityExpr();
     RelationalExpression *parseRelationalExpr();
-    ShiftExpression *parseShiftExpr();
+    Expr *parseShiftExpression();
     Expr *parseAdditiveExpression();
     Expr *parseMultiplicativeExpression();
     Expr *parseCastExpression();
     UnaryExpression *parseUnaryExpr();
     Expression *parseExpression();
     TypeName *parseTypeName();
-    InitializerList* parseInitializerList();
+    InitializerList *parseInitializerList();
 
 private:
     inline bool isKind(TokenSeqConstIter &iter, TokenKind kind);
@@ -50,7 +49,7 @@ private:
         (bitset.set(values), ...);
     }
     bool isInBitSet(TokenBitSet &bitset, TokenSeqConstIter &iter);
-    bool isFirstOfTypeName(TokenSeqConstIter& iter);
+    bool isFirstOfTypeName(TokenSeqConstIter &iter);
 
     TokenSequence &tksq;
     TokenSeqConstIter cursor;

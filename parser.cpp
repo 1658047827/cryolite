@@ -496,23 +496,25 @@ RelationalExpression *Parser::parseRelationalExpr() {
     return relatExpr;
 }
 
-ShiftExpression *Parser::parseShiftExpr() {
-    auto begin = cursor;
-    ShiftExpression *shiftExpr = new ShiftExpression;
-    auto addExpr = parseAdditiveExpr();
-    if (addExpr) {
-        shiftExpr->addiExpr = addExpr;
-    }
-    while (isKind(cursor, TK_LESSLESS) || isKind(cursor, TK_GREATERGREATER)) {
-        TokenKind kind = (*cursor)->getKind();
-        auto op = (kind == TK_LESSLESS) ? ShiftExpression::LESSLESS : ShiftExpression::GREATERGREATER;
-        ++cursor;
-        addExpr = parseAdditiveExpr();
-        if (addExpr) {
-            shiftExpr->exprs.emplace_back(op, addExpr);
+Expr *Parser::parseShiftExpression() {
+    Expr *lhs = parseAdditiveExpression();
+    while (true) {
+        BinaryOpKind op;
+        switch ((*cursor)->getKind()) {
+        case TK_LESSLESS:
+            op = BinaryOpKind::SHL;
+            break;
+        case TK_GREATERGREATER:
+            op = BinaryOpKind::SHR;
+            break;
+        default:
+            return lhs;
         }
+        SourceLocation loc = (*cursor)->getLoc();
+        ++cursor;
+        Expr *rhs = parseAdditiveExpression();
+        lhs = new BinaryExpr(loc, op, lhs, rhs);
     }
-    return shiftExpr;
 }
 
 Expr *Parser::parseAdditiveExpression() {

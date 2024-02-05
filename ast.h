@@ -31,6 +31,8 @@ enum BinaryOpKind {
     MUL,   // *
     DIV,   // /
     MOD,   // %
+    SHL,   // <<
+    SHR,   // >>
     COMMA, // ,
 };
 
