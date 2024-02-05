@@ -12,6 +12,9 @@ int main(int argc, char *argv[]) {
     lexer.lex(ts);
     ts.print(std::cout);
     Parser parser(ts);
-    TransUnit *root = parser.parseTranslationUnit();
+    // TransUnit *root = parser.parseTranslationUnit();
+    Expr *expr = parser.parseExpression();
+    ASTDump *astDump = new ASTDump(std::cout);
+    expr->accept(astDump);
     return 0;
 }

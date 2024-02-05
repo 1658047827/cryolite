@@ -15,21 +15,11 @@ public:
     Parser(TokenSequence &ts)
         : tksq(ts), cursor(ts.cBegin()) { initBitSet(); }
 
-    TransUnit *parseTranslationUnit();
-    ExternalDeclaration *parseExternalDeclaration();
-    DeclarationSpecifiers *parseDeclarationSpecifiers();
-    Declarator *parseDeclarator();
-    StructOrUnionSpecifier *parseStructOrUnionSpecifier();
-    EnumSpecifier *parseEnumSpecifier();
-    StructDeclaration *parseStructDeclaration();
-    SpecifierQualifier *parseSpecifierQualifier();
-    StructDeclarator *parseStructDeclarator();
-
     /**
-     * Parse expressions.
+     * Expressions
      */
     Expr *parseExpression();
-    Expr* parseAssignmentExpression();
+    Expr *parseAssignmentExpression();
     Expr *parseConditionalExpression();
     // parseSimpleBinaryExpression - Parse very simple binary expressions like
     // LogicalAndExpression, LogicalOrExpression, BitOrExpression etc.
@@ -46,11 +36,31 @@ public:
     Expr *parseAdditiveExpression();
     Expr *parseMultiplicativeExpression();
     Expr *parseCastExpression();
-
     Expr *parseUnaryExpression();
+    UnaryExpr *parsePrefixIncrementOrDecrement(UnaryOpKind op);
+    UnaryExpr *parseUnaryOperatorExpression(UnaryOpKind op);
+    Expr *parsePostfixExpression();
 
-    TypeName *parseTypeName();
-    InitializerList *parseInitializerList();
+    Expr *parsePrimaryExpr();
+    // Expr *parseParenthesesExpression();
+    // IntegerConstant *parseIntegerConstant();
+    // FloatingConstant *parseFloatingConstant();
+    // StringLiteral *parseStringLiteral();
+
+    /**
+     * Declarations
+     */
+    // void *parseSpecifierQualifierList();
+    // void *parseTypeName();
+
+    /**
+     * Statements and blocks
+     */
+
+    /**
+     * External definitions
+     */
+    TransUnit *parseTranslationUnit();
 
 private:
     inline bool isKind(TokenSeqConstIter &iter, TokenKind kind);

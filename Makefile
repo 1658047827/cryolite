@@ -8,7 +8,7 @@ else
 	RM = rm -f
 endif
 
-$(TARGET): diagnostic.o token.o lexer.o parser.o main.o
+$(TARGET): diagnostic.o token.o lexer.o parser.o type.o ast.o main.o
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $^
 
 diagnostic.o: diagnostic.cpp diagnostic.h
@@ -23,10 +23,13 @@ lexer.o: lexer.cpp lexer.h token.h diagnostic.h tokenkind.def
 parser.o: parser.cpp parser.h token.h ast.h
 	$(CXX) $(CXXFLAGS) -c $<
 
+type.o: type.cpp type.h
+	$(CXX) $(CXXFLAGS) -c $<
+
 ast.o: ast.cpp ast.h token.h visitor.h
 	$(CXX) $(CXXFLAGS) -c $<
 
-main.o: main.cpp lexer.h
+main.o: main.cpp lexer.h parser.h
 	$(CXX) $(CXXFLAGS) -c $<
 
 clean:
