@@ -53,6 +53,7 @@ public:
     bool isUnsignedLongLong(unsigned int flags);
     bool isFloat(unsigned int flags);
     bool isDouble(unsigned int flags);
+    bool isLongDouble(unsigned int flags);
 
     // kind - Bit flags.
     unsigned int kind;

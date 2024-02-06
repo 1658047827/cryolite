@@ -11,6 +11,7 @@ int main(int argc, char *argv[]) {
     TokenSequence ts;
     lexer.lex(ts);
     ts.print(std::cout);
+    std::cout << std::endl;
     Parser parser(ts);
     // TransUnit *root = parser.parseTranslationUnit();
     Expr *expr = parser.parseExpression();

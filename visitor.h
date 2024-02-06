@@ -1,13 +1,12 @@
 #ifndef _CRYOLITE_VISITOR_H_
 #define _CRYOLITE_VISITOR_H_
 
-#include "ast.h"
-
 class UnaryExpr;
 class BinaryExpr;
 class TernaryExpr;
 class IntegerConstant;
 class FloatingConstant;
+class StringLiteral;
 
 class Visitor {
 public:
@@ -16,6 +15,7 @@ public:
     virtual void visitTernaryExpr(TernaryExpr *ternary) = 0;
     virtual void visitIntegerConstant(IntegerConstant *integer) = 0;
     virtual void visitFloatingConstant(FloatingConstant *floating) = 0;
+    virtual void visitStringLiteral(StringLiteral *string) = 0;
 };
 
 #endif

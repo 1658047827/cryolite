@@ -66,6 +66,7 @@ BuiltinType *BuiltinType::getBuiltinType(unsigned int flags) {
     static BuiltinType *unsignedLongLongType = BUILTIN_TYPE(UNSIGNED | LONGLONG);
     static BuiltinType *floatType = BUILTIN_TYPE(FLOAT);
     static BuiltinType *doubleType = BUILTIN_TYPE(DOUBLE);
+    static BuiltinType *longDoubleType = BUILTIN_TYPE(LONG | DOUBLE);
 #undef BUILTIN_TYPE
 
     if (isChar(flags)) return charType;
@@ -81,6 +82,7 @@ BuiltinType *BuiltinType::getBuiltinType(unsigned int flags) {
     if (isUnsignedLongLong(flags)) return unsignedLongLongType;
     if (isFloat(flags)) return floatType;
     if (isDouble(flags)) return doubleType;
+    if (isLongDouble(flags)) return longDoubleType;
     return nullptr;
 }
 
@@ -134,4 +136,8 @@ bool BuiltinType::isFloat(unsigned int flags) {
 
 bool BuiltinType::isDouble(unsigned int flags) {
     return flags == DOUBLE;
+}
+
+bool BuiltinType::isLongDouble(unsigned int flags) {
+    return flags == (LONG | DOUBLE);
 }

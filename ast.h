@@ -104,11 +104,11 @@ public:
 
 class FloatingConstant : public Expr {
 public:
-    FloatingConstant(const SourceLocation &loc, double val);
+    FloatingConstant(const SourceLocation &loc, long double val);
 
     void accept(Visitor *v) { v->visitFloatingConstant(this); };
 
-    double value;
+    long double value;
 };
 
 class StringLiteral : public Expr {
@@ -166,6 +166,7 @@ public:
     void visitTernaryExpr(TernaryExpr *ternary);
     void visitIntegerConstant(IntegerConstant *integer);
     void visitFloatingConstant(FloatingConstant *floating);
+    void visitStringLiteral(StringLiteral* string);
 
     std::string prefix;
     std::ostream &out;

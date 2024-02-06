@@ -83,9 +83,69 @@ private:
 // NumericLiteralParser - Analysis and classify a string as either integer, floating, or erroneous.
 class NumericLiteralParser {
 public:
-    NumericLiteralParser(const std::string &str, SourceLocation Loc);
+    NumericLiteralParser(const char *begin, const char *end, const SourceLocation &loc);
+
+    bool hadError;
+    bool isUnsigned;
+    bool isLong; // This is *not* set for long long.
+    bool isLongLong;
+    bool isFloat;
+
+    bool isIntegerLiteral() const {
+        return !saw_period && !saw_exponent;
+    }
+    bool isFloatingLiteral() const {
+        return saw_period || saw_exponent;
+    }
+    bool hasSuffix() const {
+        return suffixBegin != thisTokEnd;
+    }
+
+    unsigned getRadix() const { return radix; }
 
 private:
+    const char *const thisTokBegin;
+    const char *const thisTokEnd;
+    const char *digitsBegin, *suffixBegin; // markers
+    const char *s;                         // cursor
+
+    unsigned radix;
+
+    bool saw_exponent, saw_period;
+
+    void parseNumberStartingWithZero(SourceLocation TokLoc);
+
+    // skipHexDigits - Read and skip over any hex digits, up to End.
+    // Return a pointer to the first non-hex digit or End.
+    const char *skipHexDigits(const char *ptr) {
+        while (ptr != thisTokEnd && std::isxdigit(*ptr))
+            ++ptr;
+        return ptr;
+    }
+
+    // skipOctalDigits - Read and skip over any octal digits, up to End.
+    // Return a pointer to the first non-hex digit or End.
+    const char *skipOctalDigits(const char *ptr) {
+        while (ptr != thisTokEnd && ((*ptr >= '0') && (*ptr <= '7')))
+            ++ptr;
+        return ptr;
+    }
+
+    // skipDigits - Read and skip over any digits, up to End.
+    // Return a pointer to the first non-hex digit or End.
+    const char *skipDigits(const char *ptr) {
+        while (ptr != thisTokEnd && std::isdigit(*ptr))
+            ++ptr;
+        return ptr;
+    }
+
+    // skipBinaryDigits - Read and skip over any binary digits, up to End.
+    // Return a pointer to the first non-binary digit or End.
+    const char *SkipBinaryDigits(const char *ptr) {
+        while (ptr != thisTokEnd && (*ptr == '0' || *ptr == '1'))
+            ++ptr;
+        return ptr;
+    }
 };
 
 #endif

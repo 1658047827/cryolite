@@ -40,11 +40,11 @@ public:
     UnaryExpr *parsePrefixIncrementOrDecrement(UnaryOpKind op);
     UnaryExpr *parseUnaryOperatorExpression(UnaryOpKind op);
     Expr *parsePostfixExpression();
-
-    Expr *parsePrimaryExpr();
-    // Expr *parseParenthesesExpression();
-    // IntegerConstant *parseIntegerConstant();
-    // FloatingConstant *parseFloatingConstant();
+    // Parse primary expressions.
+    Expr *parsePrimaryExpression();
+    Expr *parseParenthesesExpression();
+    IntegerConstant *parseIntegerConstant(NumericLiteralParser &parser);
+    FloatingConstant *parseFloatingConstant(NumericLiteralParser &parser);
     // StringLiteral *parseStringLiteral();
 
     /**

@@ -339,22 +339,71 @@ UnaryExpr *Parser::parseUnaryOperatorExpression(UnaryOpKind op) {
 }
 
 Expr *Parser::parsePostfixExpression() {
-    return parsePrimaryExpr();
+    return parsePrimaryExpression();
 }
 
-Expr *Parser::parsePrimaryExpr() {
-    Expr* ret;
+Expr *Parser::parsePrimaryExpression() {
+    Expr *ret;
+    SourceLocation loc = (*cursor)->getLoc();
     switch ((*cursor)->getKind()) {
     case TK_IDENTIFIER:
-    case TK_NUMERIC_CONSTANT:
-        ret = new IntegerConstant((*cursor)->getLoc(), std::stoull((*cursor)->getStr()));
-        ++cursor;
-        return ret;
+    case TK_NUMERIC_CONSTANT: {
+        std::string tok = (*cursor)->getStr();
+        NumericLiteralParser parser(tok.data(), tok.data() + tok.size(), loc);
+        if (parser.hadError) {
+            return nullptr;
+        } else if (parser.isIntegerLiteral()) {
+            return parseIntegerConstant(parser);
+        } else if (parser.isFloatingLiteral()) {
+            return parseFloatingConstant(parser);
+        }
+    }
     case TK_CHAR_CONSTANT:
     case TK_STRING_LITERAL:
     case TK_LPAR:
+        return parseParenthesesExpression();
     default:
         // error();
         return nullptr;
     }
+}
+
+Expr *Parser::parseParenthesesExpression() {
+    expect(cursor, TK_LPAR);
+    ++cursor;
+    Expr *expr = parseExpression();
+    expect(cursor, TK_RPAR);
+    // Maintain consistency: after parseXXX, cursor always points to next token.
+    ++cursor;
+    return expr;
+}
+
+IntegerConstant *Parser::parseIntegerConstant(NumericLiteralParser &parser) {
+    SourceLocation loc = (*cursor)->getLoc();
+    std::string tok = (*cursor)->getStr();
+    unsigned long long val = 0;
+    size_t idx = 0;
+    try {
+        val = std::stoull(tok, &idx, parser.getRadix());
+    } catch (const std::out_of_range &e) {
+        error(loc, "integer constant too large");
+        val = 0;
+    }
+    ++cursor; // Maintain consistency.
+    return new IntegerConstant(loc, val);
+}
+
+FloatingConstant *Parser::parseFloatingConstant(NumericLiteralParser &parser) {
+    SourceLocation loc = (*cursor)->getLoc();
+    std::string tok = (*cursor)->getStr();
+    long double val;
+    size_t idx = 0;
+    try {
+        val = std::stold(tok, &idx);
+    } catch (const std::out_of_range &e) {
+        error(loc, "floating constant too large");
+        val = 0.0;
+    }
+    ++cursor; // Maintain consistency.
+    return new FloatingConstant(loc, val);
 }

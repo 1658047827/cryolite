@@ -12,7 +12,7 @@ TernaryExpr::TernaryExpr(const SourceLocation &loc, Expr *condExpr, Expr *trueEx
 IntegerConstant::IntegerConstant(const SourceLocation &loc, unsigned long long val)
     : Expr(loc), value(val) {}
 
-FloatingConstant::FloatingConstant(const SourceLocation &loc, double val)
+FloatingConstant::FloatingConstant(const SourceLocation &loc, long double val)
     : Expr(loc), value(val) {}
 
 StringLiteral::StringLiteral(const SourceLocation &loc, const std::string &str)
@@ -113,7 +113,7 @@ void ASTDump::visitTernaryExpr(TernaryExpr *ternary) {
 
     out << prefix << "`-- ";
     prefix.append("    ");
-    ternary->trueExpr->accept(this);
+    ternary->falseExpr->accept(this);
     prefix.erase(prefix.size() - 4);
 }
 
@@ -123,4 +123,8 @@ void ASTDump::visitIntegerConstant(IntegerConstant *integer) {
 
 void ASTDump::visitFloatingConstant(FloatingConstant *floating) {
     out << "FloatingConstant <" << srcLocToPos(floating->srcLoc) << "> " << floating->value << '\n';
+}
+
+void ASTDump::visitStringLiteral(StringLiteral *string) {
+    out << "StringLiteral <" << srcLocToPos(string->srcLoc) << "> \"" << string->value << "\"\n";
 }
