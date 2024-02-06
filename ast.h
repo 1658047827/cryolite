@@ -168,7 +168,6 @@ public:
     void visitFloatingConstant(FloatingConstant *floating);
 
     std::string prefix;
-    const std::string u = "│   ";
     std::ostream &out;
 };
 

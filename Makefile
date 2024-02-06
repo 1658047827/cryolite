@@ -26,7 +26,7 @@ parser.o: parser.cpp parser.h token.h ast.h
 type.o: type.cpp type.h
 	$(CXX) $(CXXFLAGS) -c $<
 
-ast.o: ast.cpp ast.h token.h visitor.h
+ast.o: ast.cpp ast.h token.h type.h visitor.h
 	$(CXX) $(CXXFLAGS) -c $<
 
 main.o: main.cpp lexer.h parser.h

@@ -2,13 +2,21 @@
 #include <algorithm>
 #include <iostream>
 
-std::string srcLocToString(const SourceLocation &loc) {
+std::string srcLocToStr(const SourceLocation &loc) {
     std::string s(*loc.filename);
     s += ":";
     s += std::to_string(loc.line);
     s += ":";
     s += std::to_string(loc.column);
     s += ": ";
+    return s;
+}
+
+std::string srcLocToPos(const SourceLocation &loc) {
+    std::string s("line:");
+    s += std::to_string(loc.line);
+    s += ", col:";
+    s += std::to_string(loc.column);
     return s;
 }
 

@@ -22,7 +22,7 @@ void ASTDump::visitUnaryExpr(UnaryExpr *unary) {
 }
 
 void ASTDump::visitBinaryExpr(BinaryExpr *binary) {
-    out << "BinaryExpr ";
+    out << "BinaryExpr <" << srcLocToPos(binary->srcLoc) << "> ";
     switch (binary->op) {
     case ADD:
         out << "'+'\n";
@@ -87,38 +87,40 @@ void ASTDump::visitBinaryExpr(BinaryExpr *binary) {
     default:
         break;
     }
-    out << prefix << "├── ";
-    prefix.append(u);
+    out << prefix << "|-- ";
+    prefix.append("|   ");
     binary->lhs->accept(this);
-    prefix.erase(prefix.size() - u.size());
+    prefix.erase(prefix.size() - 4);
 
-    out << prefix << "└── ";
+    out << prefix << "`-- ";
     prefix.append("    ");
     binary->rhs->accept(this);
     prefix.erase(prefix.size() - 4);
 }
 
 void ASTDump::visitTernaryExpr(TernaryExpr *ternary) {
-    out << "TernaryExpr\n";
+    out << "TernaryExpr <" << srcLocToPos(ternary->srcLoc) << ">\n";
 
-    out << prefix << "├── ";
-    prefix.append(u);
+    out << prefix << "|-- ";
+    prefix.append("|   ");
     ternary->condExpr->accept(this);
-    prefix.erase(prefix.size() - u.size());
+    prefix.erase(prefix.size() - 4);
 
-    out << prefix << "├── ";
-    prefix.append(u);
+    out << prefix << "|-- ";
+    prefix.append("|   ");
     ternary->trueExpr->accept(this);
-    prefix.erase(prefix.size() - u.size());
+    prefix.erase(prefix.size() - 4);
 
-    out << prefix << "└── ";
+    out << prefix << "`-- ";
     prefix.append("    ");
     ternary->trueExpr->accept(this);
     prefix.erase(prefix.size() - 4);
 }
 
 void ASTDump::visitIntegerConstant(IntegerConstant *integer) {
-    out << "IntegerConstant " << integer->value << '\n';
+    out << "IntegerConstant <" << srcLocToPos(integer->srcLoc) << "> " << integer->value << '\n';
 }
 
-void ASTDump::visitFloatingConstant(FloatingConstant *floating) {}
+void ASTDump::visitFloatingConstant(FloatingConstant *floating) {
+    out << "FloatingConstant <" << srcLocToPos(floating->srcLoc) << "> " << floating->value << '\n';
+}

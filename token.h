@@ -15,7 +15,8 @@ struct SourceLocation {
     unsigned int column;
 };
 
-std::string srcLocToString(const SourceLocation &loc);
+std::string srcLocToStr(const SourceLocation &loc);
+std::string srcLocToPos(const SourceLocation &loc);
 
 enum TokenKind {
 #define TOK(X) TK_##X,
