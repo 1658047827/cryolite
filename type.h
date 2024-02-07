@@ -3,6 +3,8 @@
 
 #include <string>
 
+class Expr;
+
 enum TypeKind {
     VOID,
     BUILTIN,
@@ -14,7 +16,7 @@ enum TypeKind {
 
 class Type {
 public:
-    Type(TypeKind kind) : kind(kind) {}
+    Type(TypeKind kind, bool complete = true) : kind(kind), complete(complete) {}
 
     // repr - Return two string, "left-string + IDENTIFIER + right-string"
     // constitutes the type declaration for this IDENTIFIER. e.g.:
@@ -25,6 +27,8 @@ public:
     virtual std::pair<std::string, std::string> repr() = 0;
 
     TypeKind kind;
+    // complete - A type is considered incomplete if its size or structure is unknown at a particular point in time.
+    bool complete;
 };
 
 /**
@@ -113,6 +117,34 @@ public:
 };
 
 class ArrayType : public Type {
+public:
+    enum ArrayKind {
+        CONSTANT,
+        VARIABLE,
+    };
+
+    ArrayType(const QualType &type, ArrayKind kind = CONSTANT, Expr *expr = nullptr);
+
+    ArrayKind arrKind;
+    QualType elemType;
+    // sizeExpr - The corresponding expression of array size.
+    // If we declare like "int arr[] = {0, 1};", this will be set to nullptr.
+    // And "hello world" has a 'char[12]' type, whose sizeExpr is nullptr.
+    Expr *sizeExpr;
+};
+
+class ConstantArrayType : public ArrayType {
+public:
+    ConstantArrayType(const QualType &type, size_t size, Expr *expr = nullptr);
+
+    std::pair<std::string, std::string> repr();
+
+    // size - The length of the array, the quantity of elements.
+    size_t size;
+};
+
+class VariableArrayType : public ArrayType {
+public:
 };
 
 class FunctionType : public Type {

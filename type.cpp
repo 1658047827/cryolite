@@ -221,3 +221,21 @@ std::pair<std::string, std::string> PointerType::repr() {
     repr_pair.first.push_back('*');
     return repr_pair;
 }
+
+ArrayType::ArrayType(const QualType &type, ArrayKind kind, Expr *expr)
+    : Type(TypeKind::ARRAY), elemType(type), arrKind(kind), sizeExpr(expr) {}
+
+ConstantArrayType::ConstantArrayType(const QualType &type, size_t size, Expr *expr)
+    : ArrayType(type, CONSTANT, expr), size(size) {}
+
+std::pair<std::string, std::string> ConstantArrayType::repr() {
+    auto repr_pair = elemType.repr();
+    // TODO: [C99 6.7.5.2] Support arrays like "int A[static restrict 4]" which has
+    // index type qualifier(s) and static size. These are only allowed on function parameters.
+    // We can refer to TypePrinter.cpp in the Clang source code.
+    std::string tmp = "[";
+    tmp.append(std::to_string(size));
+    tmp.push_back(']');
+    repr_pair.second.insert(0, tmp);
+    return repr_pair;
+}
