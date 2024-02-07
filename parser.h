@@ -46,7 +46,7 @@ public:
     IntegerConstant *parseIntegerConstant(NumericLiteralParser &parser);
     FloatingConstant *parseFloatingConstant(NumericLiteralParser &parser);
     CharacterConstant* parseCharacterConstant();
-    StringLiteral *parseStringLiteral();
+    StringLiteral *parseStringLiterals();
 
     /**
      * Declarations

@@ -122,9 +122,9 @@ public:
 
 class StringLiteral : public Expr {
 public:
-    StringLiteral(const SourceLocation &loc, const std::string &str);
+    StringLiteral(const SourceLocation &loc, const QualType &qt, const std::string &str);
 
-    void accept(Visitor *v){};
+    void accept(Visitor *v) { v->visitStringLiteral(this); };
 
     std::string value;
 };

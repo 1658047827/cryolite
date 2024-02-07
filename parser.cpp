@@ -388,11 +388,11 @@ Expr *Parser::parsePrimaryExpression() {
     case TK_CHAR_CONSTANT:
         return parseCharacterConstant();
     case TK_STRING_LITERAL:
-        return parseStringLiteral();
+        return parseStringLiterals();
     case TK_LPAR:
         return parseParenthesesExpression();
     default:
-        // error();
+        error(loc, "expected primary expression");
         return nullptr;
     }
 }
@@ -445,8 +445,8 @@ FloatingConstant *Parser::parseFloatingConstant(NumericLiteralParser &parser) {
 
 CharacterConstant *Parser::parseCharacterConstant() {
     SourceLocation loc = (*cursor)->getLoc();
-    std::string tok = (*cursor)->getStr();
-    unsigned int val; // "'c'"
+    std::string tok = (*cursor)->getStr(); // "'c'"
+    unsigned int val;
     // TODO: Support more kinds of character constants.
     val = tok[1];
     ++cursor; // Maintain consistency.
@@ -454,6 +454,21 @@ CharacterConstant *Parser::parseCharacterConstant() {
     return new CharacterConstant(loc, QualType(builtinType), val);
 }
 
-StringLiteral *Parser::parseStringLiteral() {
-    return nullptr;
+StringLiteral *Parser::parseStringLiterals() {
+    // TODO: Support more kinds of string literals.
+    SourceLocation loc = (*cursor)->getLoc();
+    std::string val;
+    // char str[] = "hello" " world";
+    while (isKind(cursor, TK_STRING_LITERAL)) {
+        std::string tmp = (*cursor)->getStr();
+        // Remove "".
+        tmp.erase(0, 1);
+        tmp.pop_back();
+        val.append(tmp);
+        ++cursor;
+    }
+    size_t sz = val.size() + 1; // '\0'
+    BuiltinType *charT = BuiltinType::getBuiltinType(BuiltinType::CHAR);
+    ConstantArrayType *constArrT = new ConstantArrayType(charT, sz);
+    return new StringLiteral(loc, QualType(constArrT), val);
 }

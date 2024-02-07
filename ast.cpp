@@ -18,8 +18,8 @@ FloatingConstant::FloatingConstant(const SourceLocation &loc, const QualType &qt
 CharacterConstant::CharacterConstant(const SourceLocation &loc, const QualType &qt, unsigned val)
     : Expr(loc, qt), value(val) {}
 
-StringLiteral::StringLiteral(const SourceLocation &loc, const std::string &str)
-    : Expr(loc, QualType()), value(str) {}
+StringLiteral::StringLiteral(const SourceLocation &loc, const QualType &qt, const std::string &str)
+    : Expr(loc, qt), value(str) {}
 
 void ASTDumper::visitUnaryExpr(UnaryExpr *unary) {
 }
@@ -139,5 +139,7 @@ void ASTDumper::visitCharacterConstant(CharacterConstant *character) {
 }
 
 void ASTDumper::visitStringLiteral(StringLiteral *string) {
-    out << "StringLiteral <" << srcLocToPos(string->srcLoc) << "> \"" << string->value << "\"\n";
+    auto repr_pair = string->qtype.repr();
+    out << "StringLiteral <" << srcLocToPos(string->srcLoc) << "> '";
+    out << repr_pair.first << repr_pair.second << "' \"" << string->value << "\"\n";
 }
