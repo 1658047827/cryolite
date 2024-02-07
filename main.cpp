@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
     Parser parser(ts);
     // TransUnit *root = parser.parseTranslationUnit();
     Expr *expr = parser.parseExpression();
-    ASTDump *astDump = new ASTDump(std::cout);
-    expr->accept(astDump);
+    ASTDumper *astDumper = new ASTDumper(std::cout);
+    expr->accept(astDumper);
     return 0;
 }

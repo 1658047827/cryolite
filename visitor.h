@@ -6,6 +6,7 @@ class BinaryExpr;
 class TernaryExpr;
 class IntegerConstant;
 class FloatingConstant;
+class CharacterConstant;
 class StringLiteral;
 
 class Visitor {
@@ -15,6 +16,7 @@ public:
     virtual void visitTernaryExpr(TernaryExpr *ternary) = 0;
     virtual void visitIntegerConstant(IntegerConstant *integer) = 0;
     virtual void visitFloatingConstant(FloatingConstant *floating) = 0;
+    virtual void visitCharacterConstant(CharacterConstant *character) = 0;
     virtual void visitStringLiteral(StringLiteral *string) = 0;
 };
 

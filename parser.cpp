@@ -2,6 +2,32 @@
 #include "diagnostic.h"
 #include <cassert>
 
+unsigned int parseIntegerSuffix(NumericLiteralParser &parser) {
+    // Integer constants are implicitly of type int by default.
+    unsigned int ret = BuiltinType::INT;
+    if (parser.isLong) {
+        ret |= BuiltinType::LONG;
+    } else if (parser.isLongLong) {
+        ret |= BuiltinType::LONGLONG;
+    }
+    if (parser.isUnsigned) {
+        ret |= BuiltinType::UNSIGNED;
+    }
+    return ret;
+}
+
+unsigned int parseFloatingSuffix(NumericLiteralParser &parser) {
+    // Floating constants are implicitly of type double by default.
+    unsigned int ret = BuiltinType::DOUBLE;
+    if (parser.isFloat) {
+        ret |= BuiltinType::FLOAT;
+        ret &= ~BuiltinType::DOUBLE;
+    } else if (parser.isLong) {
+        ret |= BuiltinType::LONG;
+    }
+    return ret;
+}
+
 inline bool Parser::isKind(TokenSeqConstIter &iter, TokenKind kind) {
     return (*iter)->getKind() == kind;
 }
@@ -351,6 +377,7 @@ Expr *Parser::parsePrimaryExpression() {
         std::string tok = (*cursor)->getStr();
         NumericLiteralParser parser(tok.data(), tok.data() + tok.size(), loc);
         if (parser.hadError) {
+            // TODO: A better way?
             return nullptr;
         } else if (parser.isIntegerLiteral()) {
             return parseIntegerConstant(parser);
@@ -359,7 +386,9 @@ Expr *Parser::parsePrimaryExpression() {
         }
     }
     case TK_CHAR_CONSTANT:
+        return parseCharacterConstant();
     case TK_STRING_LITERAL:
+        return parseStringLiteral();
     case TK_LPAR:
         return parseParenthesesExpression();
     default:
@@ -390,7 +419,10 @@ IntegerConstant *Parser::parseIntegerConstant(NumericLiteralParser &parser) {
         val = 0;
     }
     ++cursor; // Maintain consistency.
-    return new IntegerConstant(loc, val);
+    // TODO: Automatically determine the type based on the size of the integer constant.
+    unsigned int builtinTypeFlags = parseIntegerSuffix(parser);
+    BuiltinType *builtinType = BuiltinType::getBuiltinType(builtinTypeFlags);
+    return new IntegerConstant(loc, QualType(builtinType), val);
 }
 
 FloatingConstant *Parser::parseFloatingConstant(NumericLiteralParser &parser) {
@@ -405,5 +437,23 @@ FloatingConstant *Parser::parseFloatingConstant(NumericLiteralParser &parser) {
         val = 0.0;
     }
     ++cursor; // Maintain consistency.
-    return new FloatingConstant(loc, val);
+    // TODO: Automatically determine the type based on the size of the floating constant.
+    unsigned int builtinTypeFlags = parseFloatingSuffix(parser);
+    BuiltinType *builtinType = BuiltinType::getBuiltinType(builtinTypeFlags);
+    return new FloatingConstant(loc, QualType(builtinType), val);
+}
+
+CharacterConstant *Parser::parseCharacterConstant() {
+    SourceLocation loc = (*cursor)->getLoc();
+    std::string tok = (*cursor)->getStr();
+    unsigned int val; // "'c'"
+    // TODO: Support more kinds of character constants.
+    val = tok[1];
+    ++cursor; // Maintain consistency.
+    BuiltinType *builtinType = BuiltinType::getBuiltinType(BuiltinType::INT);
+    return new CharacterConstant(loc, QualType(builtinType), val);
+}
+
+StringLiteral *Parser::parseStringLiteral() {
+    return nullptr;
 }

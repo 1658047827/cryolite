@@ -1,6 +1,23 @@
 #include "type.h"
 #include <algorithm>
 
+std::pair<std::string, std::string> QualType::repr() {
+    // TODO: A proper way to print qualifiers.
+    // std::string s = isConst() ? "const " : "";
+    // if (isVolatile())
+    //     s += "volatile ";
+    // if (isRestrict())
+    //     s += "restrict ";
+    auto repr_pair = type->repr();
+    // repr_pair.first = s + repr_pair.first;
+    return repr_pair;
+}
+
+VoidType *VoidType::getVoidType() {
+    static VoidType *voidType = new VoidType();
+    return voidType;
+}
+
 BuiltinType::BuiltinType(unsigned int flags)
     : Type(TypeKind::BUILTIN), kind(flags) {}
 
@@ -140,4 +157,67 @@ bool BuiltinType::isDouble(unsigned int flags) {
 
 bool BuiltinType::isLongDouble(unsigned int flags) {
     return flags == (LONG | DOUBLE);
+}
+
+std::pair<std::string, std::string> BuiltinType::repr() {
+    std::string s;
+    switch (kind) {
+    case CHAR:
+        s = "char";
+        break;
+    case (SIGNED | CHAR):
+        s = "signed char";
+        break;
+    case (UNSIGNED | CHAR):
+        s = "unsigned char";
+        break;
+    case SHORT:
+        s = "short";
+        break;
+    case (UNSIGNED | SHORT):
+        s = "unsigned short";
+        break;
+    case INT:
+        s = "int";
+        break;
+    case (UNSIGNED | INT):
+        s = "unsigned int";
+        break;
+    case LONG:
+        s = "long";
+        break;
+    case (UNSIGNED | LONG):
+        s = "unsigned long";
+        break;
+    case LONGLONG:
+        s = "long long";
+        break;
+    case (UNSIGNED | LONGLONG):
+        s = "unsigned long long";
+        break;
+    case FLOAT:
+        s = "float";
+        break;
+    case DOUBLE:
+        s = "double";
+        break;
+    case (LONG | DOUBLE):
+        s = "long double";
+        break;
+    }
+    return std::make_pair(s, "");
+}
+
+PointerType::PointerType(const QualType &p)
+    : Type(TypeKind::POINTER), pointee(p) {}
+
+std::pair<std::string, std::string> PointerType::repr() {
+    auto repr_pair = pointee.repr();
+    // Handle things like 'int (*A)[4];' correctly.
+    if (pointee.type->kind == TypeKind::ARRAY) {
+        repr_pair.first.push_back('(');
+        repr_pair.second.insert(0, ")");
+    }
+    repr_pair.first.push_back('*');
+    return repr_pair;
 }

@@ -45,7 +45,8 @@ public:
     Expr *parseParenthesesExpression();
     IntegerConstant *parseIntegerConstant(NumericLiteralParser &parser);
     FloatingConstant *parseFloatingConstant(NumericLiteralParser &parser);
-    // StringLiteral *parseStringLiteral();
+    CharacterConstant* parseCharacterConstant();
+    StringLiteral *parseStringLiteral();
 
     /**
      * Declarations

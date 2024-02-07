@@ -1,6 +1,8 @@
 #ifndef _CRYOLITE_TYPE_H_
 #define _CRYOLITE_TYPE_H_
 
+#include <string>
+
 enum TypeKind {
     VOID,
     BUILTIN,
@@ -13,16 +15,53 @@ enum TypeKind {
 class Type {
 public:
     Type(TypeKind kind) : kind(kind) {}
+
+    // repr - Return two string, "left-string + IDENTIFIER + right-string"
+    // constitutes the type declaration for this IDENTIFIER. e.g.:
+    // char ( * IDENTIFIER )
+    // int * IDENTIFIER ( )
+    // double ( * IDENTIFIER ) ( float )
+    // int IDENTIFIER [ 10 ]
+    virtual std::pair<std::string, std::string> repr() = 0;
+
     TypeKind kind;
 };
 
+/**
+ * QualType - A (possibly-)qualified type, which is a simple wrapper class.
+ */
 class QualType {
 public:
+    enum Qualifier : unsigned char {
+        CONST = 1 << 0,
+        RESTRICT = 1 << 1,
+        VOLATILE = 1 << 2,
+    };
+
+    QualType() : type(nullptr), quals(0) {}
+    QualType(Type *type, unsigned char quals = 0) : type(type), quals(quals) {}
+
+    bool isConst() { return quals & CONST; }
+    bool isRestrict() { return quals & RESTRICT; }
+    bool isVolatile() { return quals & VOLATILE; }
+
+    std::pair<std::string, std::string> repr();
+
     unsigned char quals;
     Type *type;
 };
 
+/**
+ * VoidType - [C11 6.2.5p19] The void type comprises an empty set of values;
+ * it is an incomplete object type that cannot be completed.
+ */
 class VoidType : public Type {
+public:
+    static VoidType *getVoidType();
+    std::pair<std::string, std::string> repr() { return std::make_pair("void", ""); }
+
+protected:
+    VoidType() : Type(TypeKind::VOID) {}
 };
 
 class BuiltinType : public Type {
@@ -39,21 +78,23 @@ public:
         UNSIGNED = 1 << 8
     };
 
-    BuiltinType *getBuiltinType(unsigned int flags);
-    bool isChar(unsigned int flags);
-    bool isSignedChar(unsigned int flags);
-    bool isUnsignedChar(unsigned int flags);
-    bool isShort(unsigned int flags);
-    bool isUnsignedShort(unsigned int flags);
-    bool isInt(unsigned int flags);
-    bool isUnsignedInt(unsigned int flags);
-    bool isLong(unsigned int flags);
-    bool isUnsignedLong(unsigned int flags);
-    bool isLongLong(unsigned int flags);
-    bool isUnsignedLongLong(unsigned int flags);
-    bool isFloat(unsigned int flags);
-    bool isDouble(unsigned int flags);
-    bool isLongDouble(unsigned int flags);
+    static BuiltinType *getBuiltinType(unsigned int flags);
+    static bool isChar(unsigned int flags);
+    static bool isSignedChar(unsigned int flags);
+    static bool isUnsignedChar(unsigned int flags);
+    static bool isShort(unsigned int flags);
+    static bool isUnsignedShort(unsigned int flags);
+    static bool isInt(unsigned int flags);
+    static bool isUnsignedInt(unsigned int flags);
+    static bool isLong(unsigned int flags);
+    static bool isUnsignedLong(unsigned int flags);
+    static bool isLongLong(unsigned int flags);
+    static bool isUnsignedLongLong(unsigned int flags);
+    static bool isFloat(unsigned int flags);
+    static bool isDouble(unsigned int flags);
+    static bool isLongDouble(unsigned int flags);
+
+    std::pair<std::string, std::string> repr();
 
     // kind - Bit flags.
     unsigned int kind;
@@ -63,6 +104,12 @@ protected:
 };
 
 class PointerType : public Type {
+public:
+    PointerType(const QualType &p);
+
+    std::pair<std::string, std::string> repr();
+
+    QualType pointee;
 };
 
 class ArrayType : public Type {

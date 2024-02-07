@@ -21,9 +21,9 @@ public:
  */
 class Expr : public Node {
 public:
-    Expr(const SourceLocation &loc) : Node(loc) {}
+    Expr(const SourceLocation &loc, const QualType &qt) : Node(loc), qtype(qt) {}
 
-    QualType qt;
+    QualType qtype;
 };
 
 enum UnaryOpKind {
@@ -95,7 +95,7 @@ public:
 
 class IntegerConstant : public Expr {
 public:
-    IntegerConstant(const SourceLocation &loc, unsigned long long val);
+    IntegerConstant(const SourceLocation &loc, const QualType &qt, unsigned long long val);
 
     void accept(Visitor *v) { v->visitIntegerConstant(this); };
 
@@ -104,11 +104,20 @@ public:
 
 class FloatingConstant : public Expr {
 public:
-    FloatingConstant(const SourceLocation &loc, long double val);
+    FloatingConstant(const SourceLocation &loc, const QualType &qt, long double val);
 
     void accept(Visitor *v) { v->visitFloatingConstant(this); };
 
     long double value;
+};
+
+class CharacterConstant : public Expr {
+public:
+    CharacterConstant(const SourceLocation &loc, const QualType &qt, unsigned val);
+
+    void accept(Visitor *v) { v->visitCharacterConstant(this); };
+
+    unsigned value;
 };
 
 class StringLiteral : public Expr {
@@ -157,16 +166,17 @@ public:
     std::vector<ExternDecl *> externDecls;
 };
 
-class ASTDump : public Visitor {
+class ASTDumper : public Visitor {
 public:
-    ASTDump(std::ostream &os) : out(os) {}
+    ASTDumper(std::ostream &os) : out(os) {}
 
     void visitUnaryExpr(UnaryExpr *unary);
     void visitBinaryExpr(BinaryExpr *binary);
     void visitTernaryExpr(TernaryExpr *ternary);
     void visitIntegerConstant(IntegerConstant *integer);
     void visitFloatingConstant(FloatingConstant *floating);
-    void visitStringLiteral(StringLiteral* string);
+    void visitCharacterConstant(CharacterConstant *character);
+    void visitStringLiteral(StringLiteral *string);
 
     std::string prefix;
     std::ostream &out;

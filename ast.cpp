@@ -1,27 +1,30 @@
 #include "ast.h"
 
 UnaryExpr::UnaryExpr(const SourceLocation &loc, UnaryOpKind op, Expr *expr)
-    : Expr(loc), op(op), operand(expr) {}
+    : Expr(loc, QualType()), op(op), operand(expr) {}
 
 BinaryExpr::BinaryExpr(const SourceLocation &loc, BinaryOpKind op, Expr *lhs, Expr *rhs)
-    : Expr(loc), op(op), lhs(lhs), rhs(rhs) {}
+    : Expr(loc, QualType()), op(op), lhs(lhs), rhs(rhs) {}
 
 TernaryExpr::TernaryExpr(const SourceLocation &loc, Expr *condExpr, Expr *trueExpr, Expr *falseExpr)
-    : Expr(loc), condExpr(condExpr), trueExpr(trueExpr), falseExpr(falseExpr) {}
+    : Expr(loc, QualType()), condExpr(condExpr), trueExpr(trueExpr), falseExpr(falseExpr) {}
 
-IntegerConstant::IntegerConstant(const SourceLocation &loc, unsigned long long val)
-    : Expr(loc), value(val) {}
+IntegerConstant::IntegerConstant(const SourceLocation &loc, const QualType &qt, unsigned long long val)
+    : Expr(loc, qt), value(val) {}
 
-FloatingConstant::FloatingConstant(const SourceLocation &loc, long double val)
-    : Expr(loc), value(val) {}
+FloatingConstant::FloatingConstant(const SourceLocation &loc, const QualType &qt, long double val)
+    : Expr(loc, qt), value(val) {}
+
+CharacterConstant::CharacterConstant(const SourceLocation &loc, const QualType &qt, unsigned val)
+    : Expr(loc, qt), value(val) {}
 
 StringLiteral::StringLiteral(const SourceLocation &loc, const std::string &str)
-    : Expr(loc), value(str) {}
+    : Expr(loc, QualType()), value(str) {}
 
-void ASTDump::visitUnaryExpr(UnaryExpr *unary) {
+void ASTDumper::visitUnaryExpr(UnaryExpr *unary) {
 }
 
-void ASTDump::visitBinaryExpr(BinaryExpr *binary) {
+void ASTDumper::visitBinaryExpr(BinaryExpr *binary) {
     out << "BinaryExpr <" << srcLocToPos(binary->srcLoc) << "> ";
     switch (binary->op) {
     case ADD:
@@ -98,7 +101,7 @@ void ASTDump::visitBinaryExpr(BinaryExpr *binary) {
     prefix.erase(prefix.size() - 4);
 }
 
-void ASTDump::visitTernaryExpr(TernaryExpr *ternary) {
+void ASTDumper::visitTernaryExpr(TernaryExpr *ternary) {
     out << "TernaryExpr <" << srcLocToPos(ternary->srcLoc) << ">\n";
 
     out << prefix << "|-- ";
@@ -117,14 +120,24 @@ void ASTDump::visitTernaryExpr(TernaryExpr *ternary) {
     prefix.erase(prefix.size() - 4);
 }
 
-void ASTDump::visitIntegerConstant(IntegerConstant *integer) {
-    out << "IntegerConstant <" << srcLocToPos(integer->srcLoc) << "> " << integer->value << '\n';
+void ASTDumper::visitIntegerConstant(IntegerConstant *integer) {
+    auto repr_pair = integer->qtype.repr();
+    out << "IntegerConstant <" << srcLocToPos(integer->srcLoc) << "> '";
+    out << repr_pair.first << repr_pair.second << "' " << integer->value << '\n';
 }
 
-void ASTDump::visitFloatingConstant(FloatingConstant *floating) {
-    out << "FloatingConstant <" << srcLocToPos(floating->srcLoc) << "> " << floating->value << '\n';
+void ASTDumper::visitFloatingConstant(FloatingConstant *floating) {
+    auto repr_pair = floating->qtype.repr();
+    out << "FloatingConstant <" << srcLocToPos(floating->srcLoc) << "> '";
+    out << repr_pair.first << repr_pair.second << "' " << floating->value << '\n';
 }
 
-void ASTDump::visitStringLiteral(StringLiteral *string) {
+void ASTDumper::visitCharacterConstant(CharacterConstant *character) {
+    auto repr_pair = character->qtype.repr();
+    out << "CharacterConstant <" << srcLocToPos(character->srcLoc) << "> '";
+    out << repr_pair.first << repr_pair.second << "' " << character->value << '\n';
+}
+
+void ASTDumper::visitStringLiteral(StringLiteral *string) {
     out << "StringLiteral <" << srcLocToPos(string->srcLoc) << "> \"" << string->value << "\"\n";
 }
