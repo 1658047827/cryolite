@@ -90,18 +90,12 @@ Expr *Parser::parseExpression() {
  *     conditional-expression
  *     unary-expression assignment-operator assignment-expression
  *
- * assignment-operator:
+ * assignment-operator: one of
  *     =
- *     *=
- *     /=
- *     %=
- *     +=
- *     -=
- *     <<=
- *     >>=
- *     &=
- *     ^=
- *     |=
+ *     *= /= %=
+ *     += -=
+ *     <<= >>=
+ *     &= ^= |=
  *
  * Instead we are doing something similar to clang here.
  * We use the grammar of the form:
@@ -343,11 +337,19 @@ Expr *Parser::parseUnaryExpression() {
     case TK_MINUSMINUS:
         return parsePrefixIncrementOrDecrement(UnaryOpKind::PREDEC);
     case TK_AMP:
+        return parseUnaryOperatorExpression(UnaryOpKind::ADDR);
     case TK_STAR:
+        return parseUnaryOperatorExpression(UnaryOpKind::DEREF);
     case TK_PLUS:
+        return parseUnaryOperatorExpression(UnaryOpKind::PLUS);
     case TK_MINUS:
+        return parseUnaryOperatorExpression(UnaryOpKind::MINUS);
     case TK_TILDE:
+        return parseUnaryOperatorExpression(UnaryOpKind::BITNOT);
     case TK_EXCLAIM:
+        return parseUnaryOperatorExpression(UnaryOpKind::LOGICNOT);
+    case TK_SIZEOF:
+        return parseSizeof();
     default:
         return parsePostfixExpression();
     }
@@ -361,11 +363,68 @@ UnaryExpr *Parser::parsePrefixIncrementOrDecrement(UnaryOpKind op) {
 }
 
 UnaryExpr *Parser::parseUnaryOperatorExpression(UnaryOpKind op) {
-    return nullptr;
+    SourceLocation loc = (*cursor)->getLoc();
+    ++cursor; // Consume the unary operator.
+    Expr *expr = parseCastExpression();
+    return new UnaryExpr(loc, op, expr);
+}
+
+SizeofExpr *Parser::parseSizeof() {
+    SourceLocation loc = (*cursor)->getLoc();
+    ++cursor; // Consume the SIZEOF.
+    TokenSeqConstIter nxt = std::next(cursor, 1);
+    if (isKind(cursor, TK_LPAR) && isFirstOfTypeName(nxt)) {
+        ++cursor; // Consume the '('.
+        QualType *qt = parseTypeName();
+        expect(cursor, TK_RPAR);
+        ++cursor; // Consume the ')'.
+        return new SizeofExpr(loc, qt);
+    } else {
+        Expr *expr = parseUnaryExpression();
+        return new SizeofExpr(loc, expr);
+    }
 }
 
 Expr *Parser::parsePostfixExpression() {
-    return parsePrimaryExpression();
+    // Postfix expression, which always starts with a compound literal or primary expression,
+    // is followed by a series of suffixes like '++', '--', '->', '.' etc.
+    Expr *expr;
+    if (isKind(cursor, TK_LPAR) && isFirstOfTypeName(cursor)) {
+        expr = parseCompoundLiteral();
+    } else {
+        expr = parsePrimaryExpression();
+    }
+    return parsePostfixExpressionSuffix(expr);
+}
+
+Expr *Parser::parsePostfixExpressionSuffix(Expr *expr) {
+    while (true) {
+        switch ((*cursor)->getKind()) {
+        case TK_LSQB:
+        case TK_LPAR:
+        case TK_DOT:
+        case TK_ARROW:
+        case TK_PLUSPLUS:
+            expr = new UnaryExpr((*cursor)->getLoc(), POSINC, expr);
+            break;
+        case TK_MINUSMINUS:
+            expr = new UnaryExpr((*cursor)->getLoc(), POSDEC, expr);
+            break;
+        default:
+            return expr;
+        }
+        ++cursor;
+    }
+}
+
+Expr *Parser::parseCompoundLiteral() {
+    // TODO: Complete this function.
+    return nullptr;
+}
+
+Expr *Parser::parseArraySubscripting() {
+    // TODO: Complete this function.
+    return nullptr;
 }
 
 Expr *Parser::parsePrimaryExpression() {
@@ -373,6 +432,7 @@ Expr *Parser::parsePrimaryExpression() {
     SourceLocation loc = (*cursor)->getLoc();
     switch ((*cursor)->getKind()) {
     case TK_IDENTIFIER:
+        return parseIdentifier();
     case TK_NUMERIC_CONSTANT: {
         std::string tok = (*cursor)->getStr();
         NumericLiteralParser parser(tok.data(), tok.data() + tok.size(), loc);
@@ -395,6 +455,9 @@ Expr *Parser::parsePrimaryExpression() {
         error(loc, "expected primary expression");
         return nullptr;
     }
+}
+
+DeclRefExpr *Parser::parseIdentifier() {
 }
 
 Expr *Parser::parseParenthesesExpression() {
@@ -458,7 +521,8 @@ StringLiteral *Parser::parseStringLiterals() {
     // TODO: Support more kinds of string literals.
     SourceLocation loc = (*cursor)->getLoc();
     std::string val;
-    // char str[] = "hello" " world";
+    // Continuous string literals like "hello" " world" produces
+    // a single string literal "hello world".
     while (isKind(cursor, TK_STRING_LITERAL)) {
         std::string tmp = (*cursor)->getStr();
         // Remove "".
@@ -471,4 +535,8 @@ StringLiteral *Parser::parseStringLiterals() {
     BuiltinType *charT = BuiltinType::getBuiltinType(BuiltinType::CHAR);
     ConstantArrayType *constArrT = new ConstantArrayType(charT, sz);
     return new StringLiteral(loc, QualType(constArrT), val);
+}
+
+QualType *Parser::parseTypeName() {
+    return nullptr;
 }

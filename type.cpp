@@ -208,8 +208,10 @@ std::pair<std::string, std::string> BuiltinType::repr() {
     return std::make_pair(s, "");
 }
 
+// The completeness of a pointer is independent of the definition status of the data type it points to.
+// TODO: The size of pointer.
 PointerType::PointerType(const QualType &p)
-    : Type(TypeKind::POINTER), pointee(p) {}
+    : Type(TypeKind::POINTER, true, 8), pointee(p) {}
 
 std::pair<std::string, std::string> PointerType::repr() {
     auto repr_pair = pointee.repr();
@@ -238,4 +240,12 @@ std::pair<std::string, std::string> ConstantArrayType::repr() {
     tmp.push_back(']');
     repr_pair.second.insert(0, tmp);
     return repr_pair;
+}
+
+size_t ConstantArrayType::getSize() {
+    if (sizeCache != 0) {
+        return sizeCache;
+    } else {
+        return sizeCache = elemType.type->getSize() * size;
+    }
 }

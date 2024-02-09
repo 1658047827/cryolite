@@ -3,6 +3,18 @@
 UnaryExpr::UnaryExpr(const SourceLocation &loc, UnaryOpKind op, Expr *expr)
     : Expr(loc, QualType()), op(op), operand(expr) {}
 
+SizeofExpr::SizeofExpr(const SourceLocation &loc, Expr *expr)
+    : Expr(loc, BuiltinType::getBuiltinType(BuiltinType::UNSIGNED | BuiltinType::LONGLONG)) {
+    sizeOfKind = UNARY_EXPR;
+    arg.expr = expr;
+}
+
+SizeofExpr::SizeofExpr(const SourceLocation &loc, QualType *type)
+    : Expr(loc, BuiltinType::getBuiltinType(BuiltinType::UNSIGNED | BuiltinType::LONGLONG)) {
+    sizeOfKind = TYPE_NAME;
+    arg.type = type;
+}
+
 BinaryExpr::BinaryExpr(const SourceLocation &loc, BinaryOpKind op, Expr *lhs, Expr *rhs)
     : Expr(loc, QualType()), op(op), lhs(lhs), rhs(rhs) {}
 
@@ -22,6 +34,59 @@ StringLiteral::StringLiteral(const SourceLocation &loc, const QualType &qt, cons
     : Expr(loc, qt), value(str) {}
 
 void ASTDumper::visitUnaryExpr(UnaryExpr *unary) {
+    out << "UnaryExpr <" << srcLocToPos(unary->srcLoc) << "> ";
+    switch (unary->op) {
+    case PREINC:
+        out << "prefix '++'\n";
+        break;
+    case PREDEC:
+        out << "prefix '--'\n";
+        break;
+    case POSINC:
+        out << "postfix '++'\n";
+        break;
+    case POSDEC:
+        out << "postfix '--'\n";
+        break;
+    case PLUS:
+        out << "prefix '+'\n";
+        break;
+    case MINUS:
+        out << "prefix '-'\n";
+        break;
+    case BITNOT:
+        out << "prefix '~'\n";
+        break;
+    case LOGICNOT:
+        out << "prefix '!'\n";
+        break;
+    case ADDR:
+        out << "prefix '&'\n";
+        break;
+    case DEREF:
+        out << "prefix '*'\n";
+        break;
+    default:
+        break;
+    }
+    out << prefix << "`-- ";
+    prefix.append("    ");
+    unary->operand->accept(this);
+    prefix.erase(prefix.size() - 4);
+}
+
+void ASTDumper::visitSizeofExpr(SizeofExpr *sizeofExpr) {
+    out << "SizeofExpr <" << srcLocToPos(sizeofExpr->srcLoc) << "> sizeof ";
+    if (sizeofExpr->sizeOfKind == SizeofExpr::UNARY_EXPR) {
+        out << '\n';
+        out << prefix << "`-- ";
+        prefix.append("    ");
+        sizeofExpr->arg.expr->accept(this);
+        prefix.erase(prefix.size() - 4);
+    } else if (sizeofExpr->sizeOfKind == SizeofExpr::TYPE_NAME) {
+        auto repr_pair = sizeofExpr->arg.type->repr();
+        out << '\'' << repr_pair.first << repr_pair.second << "'\n";
+    }
 }
 
 void ASTDumper::visitBinaryExpr(BinaryExpr *binary) {
@@ -142,4 +207,10 @@ void ASTDumper::visitStringLiteral(StringLiteral *string) {
     auto repr_pair = string->qtype.repr();
     out << "StringLiteral <" << srcLocToPos(string->srcLoc) << "> '";
     out << repr_pair.first << repr_pair.second << "' \"" << string->value << "\"\n";
+}
+
+void ASTDumper::visitDeclRefExpr(DeclRefExpr *declRef) {
+}
+
+void ASTDumper::visitVarDecl(VarDecl *varDecl) {
 }

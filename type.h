@@ -1,6 +1,7 @@
 #ifndef _CRYOLITE_TYPE_H_
 #define _CRYOLITE_TYPE_H_
 
+#include <vector>
 #include <string>
 
 class Expr;
@@ -120,6 +121,7 @@ public:
     PointerType(const QualType &p);
 
     std::pair<std::string, std::string> repr();
+    size_t getSize() { return sizeCache; }
 
     QualType pointee;
 };
@@ -146,6 +148,7 @@ public:
     ConstantArrayType(const QualType &type, size_t size, Expr *expr = nullptr);
 
     std::pair<std::string, std::string> repr();
+    size_t getSize();
 
     // size - The length of the array, the quantity of elements.
     size_t size;
@@ -169,6 +172,7 @@ public:
     };
 
     bool hasDef() { return complete; }
+    size_t getSize() { return 1ULL; }
 
     QualType retType;
     std::vector<QualType> params;

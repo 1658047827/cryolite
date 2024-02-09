@@ -36,23 +36,30 @@ public:
     Expr *parseAdditiveExpression();
     Expr *parseMultiplicativeExpression();
     Expr *parseCastExpression();
+    // Parse unary expressions.
     Expr *parseUnaryExpression();
     UnaryExpr *parsePrefixIncrementOrDecrement(UnaryOpKind op);
     UnaryExpr *parseUnaryOperatorExpression(UnaryOpKind op);
+    SizeofExpr *parseSizeof();
+    // Parse postfix expressions.
     Expr *parsePostfixExpression();
+    Expr *parsePostfixExpressionSuffix(Expr *expr);
+    Expr *parseCompoundLiteral();
+    Expr *parseArraySubscripting();
     // Parse primary expressions.
     Expr *parsePrimaryExpression();
+    DeclRefExpr *parseIdentifier();
     Expr *parseParenthesesExpression();
     IntegerConstant *parseIntegerConstant(NumericLiteralParser &parser);
     FloatingConstant *parseFloatingConstant(NumericLiteralParser &parser);
-    CharacterConstant* parseCharacterConstant();
+    CharacterConstant *parseCharacterConstant();
     StringLiteral *parseStringLiterals();
 
     /**
      * Declarations
      */
     // void *parseSpecifierQualifierList();
-    // void *parseTypeName();
+    QualType *parseTypeName();
 
     /**
      * Statements and blocks

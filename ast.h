@@ -7,6 +7,8 @@
 #include <ostream>
 #include <vector>
 
+class Decl;
+
 class Node {
 public:
     Node(const SourceLocation &loc) : srcLoc(loc) {}
@@ -27,10 +29,17 @@ public:
 };
 
 enum UnaryOpKind {
-    PREINC, // ++i
-    PREDEC, // --i
-    POSINC, // i++
-    POSDEC, // i--
+    PREINC,   // ++i
+    PREDEC,   // --i
+    POSINC,   // i++
+    POSDEC,   // i--
+    PLUS,     // +
+    MINUS,    // -
+    BITNOT,   // ~
+    LOGICNOT, // !
+    ADDR,     // &
+    DEREF,    // *
+    // sizeof will be handled in SizeofExpr.
 };
 
 class UnaryExpr : public Expr {
@@ -41,6 +50,35 @@ public:
 
     UnaryOpKind op;
     Expr *operand;
+
+private:
+    // TODO: type check
+};
+
+// SizeofExpr - The 'sizeof' keyword is quite unique.
+// It is semantically closer to a unary expression, but functionally it operates on type trait.
+class SizeofExpr : public Expr {
+public:
+    enum SizeofKind {
+        UNARY_EXPR,
+        TYPE_NAME
+    };
+
+    void accept(Visitor *v) { v->visitSizeofExpr(this); }
+
+    // for "sizeof unary-expression"
+    SizeofExpr(const SourceLocation &loc, Expr *expr);
+    // for "sizeof ( type-name )"
+    SizeofExpr(const SourceLocation &loc, QualType *type);
+
+    union {
+        Expr *expr;
+        QualType *type;
+    } arg;
+    SizeofKind sizeOfKind;
+
+private:
+    // TODO: type check
 };
 
 enum BinaryOpKind {
@@ -71,14 +109,14 @@ class BinaryExpr : public Expr {
 public:
     BinaryExpr(const SourceLocation &loc, BinaryOpKind op, Expr *lhs, Expr *rhs);
 
-    void accept(Visitor *v) { v->visitBinaryExpr(this); };
+    void accept(Visitor *v) { v->visitBinaryExpr(this); }
 
     BinaryOpKind op;
     Expr *lhs;
     Expr *rhs;
 
 private:
-    // TODO type check
+    // TODO: type check
 };
 
 // Currently, only the conditional expression is ternary.
@@ -86,7 +124,7 @@ class TernaryExpr : public Expr {
 public:
     TernaryExpr(const SourceLocation &loc, Expr *condExpr, Expr *trueExpr, Expr *falseExpr);
 
-    void accept(Visitor *v) { v->visitTernaryExpr(this); };
+    void accept(Visitor *v) { v->visitTernaryExpr(this); }
 
     Expr *condExpr;
     Expr *trueExpr;
@@ -97,7 +135,7 @@ class IntegerConstant : public Expr {
 public:
     IntegerConstant(const SourceLocation &loc, const QualType &qt, unsigned long long val);
 
-    void accept(Visitor *v) { v->visitIntegerConstant(this); };
+    void accept(Visitor *v) { v->visitIntegerConstant(this); }
 
     unsigned long long value;
 };
@@ -106,7 +144,7 @@ class FloatingConstant : public Expr {
 public:
     FloatingConstant(const SourceLocation &loc, const QualType &qt, long double val);
 
-    void accept(Visitor *v) { v->visitFloatingConstant(this); };
+    void accept(Visitor *v) { v->visitFloatingConstant(this); }
 
     long double value;
 };
@@ -115,7 +153,7 @@ class CharacterConstant : public Expr {
 public:
     CharacterConstant(const SourceLocation &loc, const QualType &qt, unsigned val);
 
-    void accept(Visitor *v) { v->visitCharacterConstant(this); };
+    void accept(Visitor *v) { v->visitCharacterConstant(this); }
 
     unsigned value;
 };
@@ -124,22 +162,74 @@ class StringLiteral : public Expr {
 public:
     StringLiteral(const SourceLocation &loc, const QualType &qt, const std::string &str);
 
-    void accept(Visitor *v) { v->visitStringLiteral(this); };
+    void accept(Visitor *v) { v->visitStringLiteral(this); }
 
     std::string value;
+};
+
+// DeclRefExpr - A reference to a declared variable, function, enum, etc.
+// [C99 6.5.1p2] An identifier is a primary expression, provided it has been declared as designating an
+// object (in which case it is an lvalue) or a function (in which case it is a function designator).
+class DeclRefExpr : public Expr {
+public:
+    // DeclRefExpr(const SourceLocation &loc, const QualType &qt, Decl *decl);
+
+    // void accept(Visitor *v) { v->visitDeclRefExpr(this); }
+
+    // Decl *decl;
+};
+
+class CallExpr : public Expr {
+};
+
+class MemberExpr : public Expr {
+};
+
+class CastExpr : public Expr {
 };
 
 /**
  * Declarations
  */
+class Decl : public Node {
+public:
+    Decl(const SourceLocation &loc) : Node(loc) {}
+};
+
+class EmptyDecl : public Decl {
+};
+
+class FunctionDecl : public Decl {
+};
+
+class VarDecl : public Decl {
+public:
+    QualType type;
+    std::string name;
+};
+
+class EnumDecl : public Decl {
+};
+
+class TypedefDecl : public Decl {
+};
+
+class RecordDecl : public Decl {
+};
 
 /**
  * Statements and blocks
  */
 class Stmt : public Node {
+public:
+    Stmt(const SourceLocation &loc) : Node(loc) {}
+};
+
+class DeclStmt : public Stmt {
 };
 
 class NullStmt : public Stmt {
+public:
 };
 
 class ExprStmt : public Stmt {
@@ -152,18 +242,17 @@ public:
     std::vector<Stmt *> stmts;
 };
 
+class ForStmt : public Stmt {
+public:
+    CompoundStmt *stmts;
+};
+
 /**
- * External definitions
+ * Translation unit
  */
-class FuncDef : public Node {
-};
-
-class ExternDecl : public Node {
-};
-
 class TransUnit : public Node {
 public:
-    std::vector<ExternDecl *> externDecls;
+    std::vector<Decl *> externDecls;
 };
 
 class ASTDumper : public Visitor {
@@ -171,13 +260,18 @@ public:
     ASTDumper(std::ostream &os) : out(os) {}
 
     void visitUnaryExpr(UnaryExpr *unary);
+    void visitSizeofExpr(SizeofExpr *sizeofExpr);
     void visitBinaryExpr(BinaryExpr *binary);
     void visitTernaryExpr(TernaryExpr *ternary);
     void visitIntegerConstant(IntegerConstant *integer);
     void visitFloatingConstant(FloatingConstant *floating);
     void visitCharacterConstant(CharacterConstant *character);
     void visitStringLiteral(StringLiteral *string);
+    void visitDeclRefExpr(DeclRefExpr *declRef);
 
+    void visitVarDecl(VarDecl *varDecl);
+
+    // prefix - Indentation of every line.
     std::string prefix;
     std::ostream &out;
 };
