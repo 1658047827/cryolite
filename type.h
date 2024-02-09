@@ -73,7 +73,8 @@ public:
     size_t getSize() { return 1ULL; }
 
 protected:
-    VoidType() : Type(TypeKind::VOID, true, 1ULL) {}
+    // void is incomplete.
+    VoidType() : Type(TypeKind::VOID, false, 1ULL) {}
 };
 
 class BuiltinType : public Type {
