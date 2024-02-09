@@ -16,7 +16,8 @@ enum TypeKind {
 
 class Type {
 public:
-    Type(TypeKind kind, bool complete = true) : kind(kind), complete(complete) {}
+    Type(TypeKind kind, bool complete = true, size_t szCache = 0ULL)
+        : kind(kind), complete(complete), sizeCache(szCache) {}
 
     // repr - Return two string, "left-string + IDENTIFIER + right-string"
     // constitutes the type declaration for this IDENTIFIER. e.g.:
@@ -25,10 +26,15 @@ public:
     // double ( * IDENTIFIER ) ( float )
     // int IDENTIFIER [ 10 ]
     virtual std::pair<std::string, std::string> repr() = 0;
+    virtual size_t getSize() = 0;
 
     TypeKind kind;
     // complete - A type is considered incomplete if its size or structure is unknown at a particular point in time.
     bool complete;
+    // sizeCache - To get the size of a specific type, we should call getSize().
+    // getSize() will calculate the size and save the result in sizeCache.
+    // If sizeCache!=0, getSize() will return sizeCache directly.
+    size_t sizeCache;
 };
 
 /**
@@ -56,16 +62,17 @@ public:
 };
 
 /**
- * VoidType - [C11 6.2.5p19] The void type comprises an empty set of values;
+ * VoidType - [C99 6.2.5p19] The void type comprises an empty set of values;
  * it is an incomplete object type that cannot be completed.
  */
 class VoidType : public Type {
 public:
     static VoidType *getVoidType();
     std::pair<std::string, std::string> repr() { return std::make_pair("void", ""); }
+    size_t getSize() { return 1ULL; }
 
 protected:
-    VoidType() : Type(TypeKind::VOID) {}
+    VoidType() : Type(TypeKind::VOID, true, 1ULL) {}
 };
 
 class BuiltinType : public Type {
@@ -99,12 +106,13 @@ public:
     static bool isLongDouble(unsigned int flags);
 
     std::pair<std::string, std::string> repr();
+    size_t getSize() { return sizeCache; }
 
     // kind - Bit flags.
     unsigned int kind;
 
 protected:
-    BuiltinType(unsigned int flags);
+    BuiltinType(unsigned int flags, size_t size);
 };
 
 class PointerType : public Type {
@@ -147,11 +155,33 @@ class VariableArrayType : public ArrayType {
 public:
 };
 
+/**
+ * FunctionType - Represents a function prototype with parameter type info.
+ * e.g.:
+ * "int foo(int)", "float bar()" or "long func(char *, int)"
+ * Old-style function, which has no information available about its arguments,
+ * is totally not supported.
+ */
 class FunctionType : public Type {
+public:
+    enum FuncSpec : unsigned char {
+        INLINE = 1 << 0,
+    };
+
+    bool hasDef() { return complete; }
+
+    QualType retType;
+    std::vector<QualType> params;
+    unsigned char funcSpecs;
 };
 
 // Struct or union
 class RecordType : public Type {
+public:
+};
+
+class EnumType : public Type {
+public:
 };
 
 #endif

@@ -18,8 +18,8 @@ VoidType *VoidType::getVoidType() {
     return voidType;
 }
 
-BuiltinType::BuiltinType(unsigned int flags)
-    : Type(TypeKind::BUILTIN), kind(flags) {}
+BuiltinType::BuiltinType(unsigned int flags, size_t size)
+    : Type(TypeKind::BUILTIN, true, size), kind(flags) {}
 
 const unsigned int shortVec[4] = {
     BuiltinType::SHORT,
@@ -69,22 +69,22 @@ const unsigned int unsignedLongLongVec[2] = {
 };
 
 BuiltinType *BuiltinType::getBuiltinType(unsigned int flags) {
-#define BUILTIN_TYPE(tag) new BuiltinType(tag)
-    static BuiltinType *charType = BUILTIN_TYPE(CHAR);
-    static BuiltinType *signedCharType = BUILTIN_TYPE(SIGNED | CHAR);
-    static BuiltinType *unsignedCharType = BUILTIN_TYPE(UNSIGNED | CHAR);
-    static BuiltinType *shortType = BUILTIN_TYPE(SHORT);
-    static BuiltinType *unsignedShortType = BUILTIN_TYPE(UNSIGNED | SHORT);
-    static BuiltinType *intType = BUILTIN_TYPE(INT);
-    static BuiltinType *unsignedIntType = BUILTIN_TYPE(UNSIGNED | INT);
-    static BuiltinType *longType = BUILTIN_TYPE(LONG);
-    static BuiltinType *unsignedLongType = BUILTIN_TYPE(UNSIGNED | LONG);
-    static BuiltinType *longLongType = BUILTIN_TYPE(LONGLONG);
-    static BuiltinType *unsignedLongLongType = BUILTIN_TYPE(UNSIGNED | LONGLONG);
-    static BuiltinType *floatType = BUILTIN_TYPE(FLOAT);
-    static BuiltinType *doubleType = BUILTIN_TYPE(DOUBLE);
-    static BuiltinType *longDoubleType = BUILTIN_TYPE(LONG | DOUBLE);
-#undef BUILTIN_TYPE
+    static BuiltinType *charType = new BuiltinType(CHAR, 1);
+    static BuiltinType *signedCharType = new BuiltinType((SIGNED | CHAR), 1);
+    static BuiltinType *unsignedCharType = new BuiltinType((UNSIGNED | CHAR), 1);
+    static BuiltinType *shortType = new BuiltinType(SHORT, 2);
+    static BuiltinType *unsignedShortType = new BuiltinType((UNSIGNED | SHORT), 2);
+    static BuiltinType *intType = new BuiltinType(INT, 4);
+    static BuiltinType *unsignedIntType = new BuiltinType((UNSIGNED | INT), 4);
+    // TODO: The size of (unsigned) long?
+    static BuiltinType *longType = new BuiltinType(LONG, 4);
+    static BuiltinType *unsignedLongType = new BuiltinType((UNSIGNED | LONG), 4);
+    static BuiltinType *longLongType = new BuiltinType(LONGLONG, 8);
+    static BuiltinType *unsignedLongLongType = new BuiltinType((UNSIGNED | LONGLONG), 8);
+    static BuiltinType *floatType = new BuiltinType(FLOAT, 4);
+    static BuiltinType *doubleType = new BuiltinType(DOUBLE, 8);
+    // TODO: The size of long double?
+    static BuiltinType *longDoubleType = new BuiltinType((LONG | DOUBLE), 8);
 
     if (isChar(flags)) return charType;
     if (isSignedChar(flags)) return signedCharType;
