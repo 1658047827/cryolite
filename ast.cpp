@@ -6,13 +6,13 @@ UnaryExpr::UnaryExpr(const SourceLocation &loc, UnaryOpKind op, Expr *expr)
 
 SizeofExpr::SizeofExpr(const SourceLocation &loc, Expr *expr)
     : Expr(loc, BuiltinType::getBuiltinType(BuiltinType::UNSIGNED | BuiltinType::LONGLONG)) {
-    sizeOfKind = UNARY_EXPR;
+    sizeofKind = UNARY_EXPR;
     arg.expr = expr;
 }
 
-SizeofExpr::SizeofExpr(const SourceLocation &loc, QualType *type)
+SizeofExpr::SizeofExpr(const SourceLocation &loc, QualType type)
     : Expr(loc, BuiltinType::getBuiltinType(BuiltinType::UNSIGNED | BuiltinType::LONGLONG)) {
-    sizeOfKind = TYPE_NAME;
+    sizeofKind = TYPE_NAME;
     arg.type = type;
 }
 
@@ -56,6 +56,9 @@ void BinaryExpr::checkAdditiveOperator() {
         }
         qtype.type = c;
     }
+}
+
+void BinaryExpr::checkMultiplicativeOperator() {
 }
 
 TernaryExpr::TernaryExpr(const SourceLocation &loc, Expr *condExpr, Expr *trueExpr, Expr *falseExpr)
@@ -122,25 +125,18 @@ void ASTDumper::visitUnaryExpr(UnaryExpr *unary) {
     default:
         break;
     }
-
-    out << prefix << "`--";
-    prefix.append("   ");
-    unary->operand->accept(this);
-    prefix.erase(prefix.size() - 3);
+    printLastChild(unary->operand);
 }
 
 void ASTDumper::visitSizeofExpr(SizeofExpr *sizeofExpr) {
     auto repr_pair = sizeofExpr->qtype.repr();
     out << "SizeofExpr <" << srcLocToPos(sizeofExpr->srcLoc) << "> '";
     out << repr_pair.first << repr_pair.second << "' sizeof ";
-    if (sizeofExpr->sizeOfKind == SizeofExpr::UNARY_EXPR) {
+    if (sizeofExpr->sizeofKind == SizeofExpr::UNARY_EXPR) {
         out << '\n';
-        out << prefix << "`--";
-        prefix.append("   ");
-        sizeofExpr->arg.expr->accept(this);
-        prefix.erase(prefix.size() - 3);
-    } else if (sizeofExpr->sizeOfKind == SizeofExpr::TYPE_NAME) {
-        auto repr_pair = sizeofExpr->arg.type->repr();
+        printLastChild(sizeofExpr->arg.expr);
+    } else if (sizeofExpr->sizeofKind == SizeofExpr::TYPE_NAME) {
+        auto repr_pair = sizeofExpr->arg.type.repr();
         out << '\'' << repr_pair.first << repr_pair.second << "'\n";
     }
 }
@@ -213,35 +209,15 @@ void ASTDumper::visitBinaryExpr(BinaryExpr *binary) {
     default:
         break;
     }
-
-    out << prefix << "|--";
-    prefix.append("|  ");
-    binary->lhs->accept(this);
-    prefix.erase(prefix.size() - 3);
-
-    out << prefix << "`--";
-    prefix.append("   ");
-    binary->rhs->accept(this);
-    prefix.erase(prefix.size() - 3);
+    printChild(binary->lhs);
+    printLastChild(binary->rhs);
 }
 
 void ASTDumper::visitTernaryExpr(TernaryExpr *ternary) {
     out << "TernaryExpr <" << srcLocToPos(ternary->srcLoc) << ">\n";
-
-    out << prefix << "|--";
-    prefix.append("|  ");
-    ternary->condExpr->accept(this);
-    prefix.erase(prefix.size() - 3);
-
-    out << prefix << "|--";
-    prefix.append("|  ");
-    ternary->trueExpr->accept(this);
-    prefix.erase(prefix.size() - 3);
-
-    out << prefix << "`--";
-    prefix.append("   ");
-    ternary->falseExpr->accept(this);
-    prefix.erase(prefix.size() - 3);
+    printChild(ternary->condExpr);
+    printChild(ternary->trueExpr);
+    printLastChild(ternary->falseExpr);
 }
 
 void ASTDumper::visitIntegerConstant(IntegerConstant *integer) {
@@ -295,12 +271,26 @@ void ASTDumper::visitImplicitCastExpr(ImplicitCastExpr *implicitCast) {
         out << "<FunctionToPointerDecay>\n";
         break;
     }
-
-    out << prefix << "`--";
-    prefix.append("   ");
-    implicitCast->fromExpr->accept(this);
-    prefix.erase(prefix.size() - 3);
+    printLastChild(implicitCast->fromExpr);
 }
 
 void ASTDumper::visitVarDecl(VarDecl *varDecl) {
+}
+
+void ASTDumper::visitBreakStmt(BreakStmt *breakStmt) {
+    out << "BreakStmt <" << srcLocToPos(breakStmt->srcLoc) << ">\n";
+}
+
+void ASTDumper::printChild(Node *node) {
+    out << prefix << "|--";
+    prefix.append("|  ");
+    node->accept(this);
+    prefix.erase(prefix.size() - 3);
+}
+
+void ASTDumper::printLastChild(Node *node) {
+    out << prefix << "`--";
+    prefix.append("   ");
+    node->accept(this);
+    prefix.erase(prefix.size() - 3);
 }

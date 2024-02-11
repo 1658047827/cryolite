@@ -69,13 +69,15 @@ public:
     // for "sizeof unary-expression"
     SizeofExpr(const SourceLocation &loc, Expr *expr);
     // for "sizeof ( type-name )"
-    SizeofExpr(const SourceLocation &loc, QualType *type);
+    SizeofExpr(const SourceLocation &loc, QualType type);
 
-    union {
+    union SizeofArg {
         Expr *expr;
-        QualType *type;
+        QualType type;
+
+        SizeofArg() {}
     } arg;
-    SizeofKind sizeOfKind;
+    SizeofKind sizeofKind;
 
 private:
     // TODO: type check
@@ -118,6 +120,7 @@ public:
 private:
     // TODO: Finish type checking.
     void checkAdditiveOperator();
+    void checkMultiplicativeOperator();
 };
 
 // Currently, only the conditional expression is ternary.
@@ -250,6 +253,17 @@ public:
 class DeclStmt : public Stmt {
 };
 
+class BreakStmt : public Stmt {
+public:
+    BreakStmt(const SourceLocation &loc) : Stmt(loc) {}
+    
+    void accept(Visitor *v) { v->visitBreakStmt(this); }
+};
+
+class ContinueStmt : public Stmt {
+public:
+};
+
 class NullStmt : public Stmt {
 public:
 };
@@ -294,6 +308,12 @@ public:
     void visitImplicitCastExpr(ImplicitCastExpr *implicitCast);
 
     void visitVarDecl(VarDecl *varDecl);
+
+    void visitBreakStmt(BreakStmt *breakStmt);
+
+    // Helper functions.
+    void printChild(Node *node);
+    void printLastChild(Node *node);
 
     // prefix - Indentation of every line.
     std::string prefix;
