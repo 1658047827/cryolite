@@ -160,7 +160,11 @@ bool BuiltinType::isLongDouble(unsigned int flags) {
 }
 
 bool BuiltinType::isInteger() {
-    return builtinKind & (CHAR | SHORT | INT | LONG | LONGLONG);
+    if (builtinKind & (CHAR | SHORT | INT | LONGLONG) || builtinKind == LONG) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 bool BuiltinType::isFloating() {
@@ -255,10 +259,8 @@ BuiltinType *BuiltinType::integerPromote(BuiltinType *t) {
     // TODO: What if the width of 'int' is the same as that of 'short'?
 }
 
-BuiltinType *BuiltinType::usualArithConv(Type *ltype, Type *rtype) {
-    assert(ltype->kind == TypeKind::BUILTIN && rtype->kind == TypeKind::BUILTIN);
-    BuiltinType *l = dynamic_cast<BuiltinType *>(ltype);
-    BuiltinType *r = dynamic_cast<BuiltinType *>(rtype);
+BuiltinType *BuiltinType::usualArithConv(BuiltinType *l, BuiltinType *r) {
+    assert(l->kind == TypeKind::BUILTIN && r->kind == TypeKind::BUILTIN);
 
     // If either operand has a floating-point type, then the operand with the lower conversion rank
     // is converted to a type with the same rank as the other operand.
@@ -292,7 +294,7 @@ BuiltinType *BuiltinType::usualArithConv(Type *ltype, Type *rtype) {
         // the other type is an unsigned integer type U.
         if (t1->builtinKind & UNSIGNED)
             std::swap(t1, t2);
-        // Now T1 is signed, T2 is unsigned.
+        // Now T1 is signed(S), T2 is unsigned(U).
 
         if (t2->convRank() >= t1->convRank()) {
             return t2;

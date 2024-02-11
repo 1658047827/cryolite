@@ -1,4 +1,5 @@
 #include "ast.h"
+#include <cassert>
 
 UnaryExpr::UnaryExpr(const SourceLocation &loc, UnaryOpKind op, Expr *expr)
     : Expr(loc, QualType()), op(op), operand(expr) {}
@@ -16,7 +17,46 @@ SizeofExpr::SizeofExpr(const SourceLocation &loc, QualType *type)
 }
 
 BinaryExpr::BinaryExpr(const SourceLocation &loc, BinaryOpKind op, Expr *lhs, Expr *rhs)
-    : Expr(loc, QualType()), op(op), lhs(lhs), rhs(rhs) {}
+    : Expr(loc, QualType()), op(op), lhs(lhs), rhs(rhs) {
+    switch (op) {
+    case ADD:
+    case SUB:
+        checkAdditiveOperator();
+        break;
+    case MUL:
+    case DIV:
+    case MOD:
+        break;
+    default:
+        assert(0);
+    }
+}
+
+void BinaryExpr::checkAdditiveOperator() {
+    QualType lqt = lhs->qtype;
+    QualType rqt = rhs->qtype;
+
+    // TODO: Value transformations.
+    // Lvalue-to-rvalue conversion.
+    // Array-to-pointer conversion.
+    // Function-to-pointer conversion.
+
+    BuiltinType *l = dynamic_cast<BuiltinType *>(lqt.type);
+    BuiltinType *r = dynamic_cast<BuiltinType *>(rqt.type);
+
+    if (lqt.type->kind == BUILTIN && rqt.type->kind == BUILTIN) {
+        BuiltinType *c = BuiltinType::usualArithConv(l, r);
+        if (l != c) {
+            ImplicitCastExpr::ImplicitKind castK = ImplicitCastExpr::inferArithCastKind(l, c);
+            lhs = new ImplicitCastExpr(lhs->srcLoc, lhs, QualType(c), castK);
+        }
+        if (r != c) {
+            ImplicitCastExpr::ImplicitKind castK = ImplicitCastExpr::inferArithCastKind(r, c);
+            rhs = new ImplicitCastExpr(rhs->srcLoc, rhs, QualType(c), castK);
+        }
+        qtype.type = c;
+    }
+}
 
 TernaryExpr::TernaryExpr(const SourceLocation &loc, Expr *condExpr, Expr *trueExpr, Expr *falseExpr)
     : Expr(loc, QualType()), condExpr(condExpr), trueExpr(trueExpr), falseExpr(falseExpr) {}
@@ -32,6 +72,19 @@ CharacterConstant::CharacterConstant(const SourceLocation &loc, const QualType &
 
 StringLiteral::StringLiteral(const SourceLocation &loc, const QualType &qt, const std::string &str)
     : Expr(loc, qt), value(str) {}
+
+ImplicitCastExpr::ImplicitCastExpr(const SourceLocation &loc, Expr *from, const QualType &to, ImplicitKind cKind)
+    : Expr(loc, to), fromExpr(from), castKind(cKind) {}
+
+ImplicitCastExpr::ImplicitKind ImplicitCastExpr::inferArithCastKind(BuiltinType *from, BuiltinType *to) {
+    if (from->isInteger() && to->isInteger()) {
+        return ImplicitCastExpr::INTEGRAL_CAST;
+    } else if (from->isFloating() && to->isFloating()) {
+        return ImplicitCastExpr::FLOATING_CAST;
+    } else {
+        return ImplicitCastExpr::INTEGRAL_TO_FLOATING;
+    }
+}
 
 void ASTDumper::visitUnaryExpr(UnaryExpr *unary) {
     out << "UnaryExpr <" << srcLocToPos(unary->srcLoc) << "> ";
@@ -69,20 +122,23 @@ void ASTDumper::visitUnaryExpr(UnaryExpr *unary) {
     default:
         break;
     }
-    out << prefix << "`-- ";
-    prefix.append("    ");
+
+    out << prefix << "`--";
+    prefix.append("   ");
     unary->operand->accept(this);
-    prefix.erase(prefix.size() - 4);
+    prefix.erase(prefix.size() - 3);
 }
 
 void ASTDumper::visitSizeofExpr(SizeofExpr *sizeofExpr) {
-    out << "SizeofExpr <" << srcLocToPos(sizeofExpr->srcLoc) << "> sizeof ";
+    auto repr_pair = sizeofExpr->qtype.repr();
+    out << "SizeofExpr <" << srcLocToPos(sizeofExpr->srcLoc) << "> '";
+    out << repr_pair.first << repr_pair.second << "' sizeof ";
     if (sizeofExpr->sizeOfKind == SizeofExpr::UNARY_EXPR) {
         out << '\n';
-        out << prefix << "`-- ";
-        prefix.append("    ");
+        out << prefix << "`--";
+        prefix.append("   ");
         sizeofExpr->arg.expr->accept(this);
-        prefix.erase(prefix.size() - 4);
+        prefix.erase(prefix.size() - 3);
     } else if (sizeofExpr->sizeOfKind == SizeofExpr::TYPE_NAME) {
         auto repr_pair = sizeofExpr->arg.type->repr();
         out << '\'' << repr_pair.first << repr_pair.second << "'\n";
@@ -90,7 +146,9 @@ void ASTDumper::visitSizeofExpr(SizeofExpr *sizeofExpr) {
 }
 
 void ASTDumper::visitBinaryExpr(BinaryExpr *binary) {
-    out << "BinaryExpr <" << srcLocToPos(binary->srcLoc) << "> ";
+    auto repr_pair = binary->qtype.repr();
+    out << "BinaryExpr <" << srcLocToPos(binary->srcLoc) << "> '";
+    out << repr_pair.first << repr_pair.second << "' ";
     switch (binary->op) {
     case ADD:
         out << "'+'\n";
@@ -155,34 +213,35 @@ void ASTDumper::visitBinaryExpr(BinaryExpr *binary) {
     default:
         break;
     }
-    out << prefix << "|-- ";
-    prefix.append("|   ");
-    binary->lhs->accept(this);
-    prefix.erase(prefix.size() - 4);
 
-    out << prefix << "`-- ";
-    prefix.append("    ");
+    out << prefix << "|--";
+    prefix.append("|  ");
+    binary->lhs->accept(this);
+    prefix.erase(prefix.size() - 3);
+
+    out << prefix << "`--";
+    prefix.append("   ");
     binary->rhs->accept(this);
-    prefix.erase(prefix.size() - 4);
+    prefix.erase(prefix.size() - 3);
 }
 
 void ASTDumper::visitTernaryExpr(TernaryExpr *ternary) {
     out << "TernaryExpr <" << srcLocToPos(ternary->srcLoc) << ">\n";
 
-    out << prefix << "|-- ";
-    prefix.append("|   ");
+    out << prefix << "|--";
+    prefix.append("|  ");
     ternary->condExpr->accept(this);
-    prefix.erase(prefix.size() - 4);
+    prefix.erase(prefix.size() - 3);
 
-    out << prefix << "|-- ";
-    prefix.append("|   ");
+    out << prefix << "|--";
+    prefix.append("|  ");
     ternary->trueExpr->accept(this);
-    prefix.erase(prefix.size() - 4);
+    prefix.erase(prefix.size() - 3);
 
-    out << prefix << "`-- ";
-    prefix.append("    ");
+    out << prefix << "`--";
+    prefix.append("   ");
     ternary->falseExpr->accept(this);
-    prefix.erase(prefix.size() - 4);
+    prefix.erase(prefix.size() - 3);
 }
 
 void ASTDumper::visitIntegerConstant(IntegerConstant *integer) {
@@ -210,6 +269,37 @@ void ASTDumper::visitStringLiteral(StringLiteral *string) {
 }
 
 void ASTDumper::visitDeclRefExpr(DeclRefExpr *declRef) {
+}
+
+void ASTDumper::visitImplicitCastExpr(ImplicitCastExpr *implicitCast) {
+    auto repr_pair = implicitCast->qtype.repr();
+    out << "ImplicitCastExpr <" << srcLocToPos(implicitCast->srcLoc) << "> '";
+    out << repr_pair.first << repr_pair.second << "' ";
+    switch (implicitCast->castKind) {
+    case ImplicitCastExpr::INTEGRAL_CAST:
+        out << "<IntegralCast>\n";
+        break;
+    case ImplicitCastExpr::FLOATING_CAST:
+        out << "<FloatingCast>\n";
+        break;
+    case ImplicitCastExpr::INTEGRAL_TO_FLOATING:
+        out << "<IntegralToFloating>\n";
+        break;
+    case ImplicitCastExpr::LVALUE_TO_RVALUE:
+        out << "<LValueToRValue>\n";
+        break;
+    case ImplicitCastExpr::ARRAY_DECAY:
+        out << "<ArrayToPointerDecay>\n";
+        break;
+    case ImplicitCastExpr::FUNCTION_DECAY:
+        out << "<FunctionToPointerDecay>\n";
+        break;
+    }
+
+    out << prefix << "`--";
+    prefix.append("   ");
+    implicitCast->fromExpr->accept(this);
+    prefix.erase(prefix.size() - 3);
 }
 
 void ASTDumper::visitVarDecl(VarDecl *varDecl) {

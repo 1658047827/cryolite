@@ -137,7 +137,7 @@ public:
     // All kinds of builtin arithmetic type is gotten by getBuiltinType.
     // Pointers of same builtin type point to the same static object.
     // So we can use raw pointer casually.
-    static BuiltinType *usualArithConv(Type *ltype, Type *rtype);
+    static BuiltinType *usualArithConv(BuiltinType *l, BuiltinType *r);
 
     // kind - Bit flags.
     unsigned int builtinKind;

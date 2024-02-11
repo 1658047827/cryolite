@@ -11,6 +11,8 @@ class CharacterConstant;
 class StringLiteral;
 class DeclRefExpr;
 
+class ImplicitCastExpr;
+
 class VarDecl;
 
 class Visitor {
@@ -24,6 +26,8 @@ public:
     virtual void visitCharacterConstant(CharacterConstant *character) = 0;
     virtual void visitStringLiteral(StringLiteral *string) = 0;
     virtual void visitDeclRefExpr(DeclRefExpr *declRef) = 0;
+
+    virtual void visitImplicitCastExpr(ImplicitCastExpr *implicitCast) = 0;
 
     virtual void visitVarDecl(VarDecl *varDecl) = 0;
 };

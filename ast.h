@@ -116,7 +116,8 @@ public:
     Expr *rhs;
 
 private:
-    // TODO: type check
+    // TODO: Finish type checking.
+    void checkAdditiveOperator();
 };
 
 // Currently, only the conditional expression is ternary.
@@ -186,6 +187,27 @@ class MemberExpr : public Expr {
 };
 
 class CastExpr : public Expr {
+};
+
+class ImplicitCastExpr : public Expr {
+public:
+    enum ImplicitKind {
+        INTEGRAL_CAST,
+        FLOATING_CAST,
+        INTEGRAL_TO_FLOATING,
+        LVALUE_TO_RVALUE,
+        ARRAY_DECAY,    // Array to pointer decay.
+        FUNCTION_DECAY, // Function to pointer decay.
+    };
+
+    ImplicitCastExpr(const SourceLocation &loc, Expr *from, const QualType &to, ImplicitKind cKind);
+
+    void accept(Visitor *v) { v->visitImplicitCastExpr(this); }
+
+    static ImplicitKind inferArithCastKind(BuiltinType *from, BuiltinType *to);
+
+    Expr *fromExpr;
+    ImplicitKind castKind;
 };
 
 /**
@@ -268,6 +290,8 @@ public:
     void visitCharacterConstant(CharacterConstant *character);
     void visitStringLiteral(StringLiteral *string);
     void visitDeclRefExpr(DeclRefExpr *declRef);
+
+    void visitImplicitCastExpr(ImplicitCastExpr *implicitCast);
 
     void visitVarDecl(VarDecl *varDecl);
 

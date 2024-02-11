@@ -30,8 +30,8 @@ F helper(double *arg, int arr[static const volatile restrict 4]) {
     ull a[10] = {
         sizeof(struct Edge), // If struct is not complete, then error.
         sizeof(int *()),
-        sizeof(1 + 3.0),
-        sizeof(int),
+        sizeof(1.0F + 3.0),
+        sizeof(1ULL + 3),
         sizeof(void),
         sizeof(F),
         sizeof(helper),
@@ -46,6 +46,11 @@ F helper(double *arg, int arr[static const volatile restrict 4]) {
 int function(int k) {
     return k++;
 }
+
+struct BitField {
+    unsigned char a : 1;
+    unsigned char b : 7;
+};
 
 int main() {
     enum Qualifier q = CONST;
@@ -64,5 +69,6 @@ int main() {
     // func(0, 0);
     helper(0, 0);
     function(10);
+    (3.14L + 114.514F) - (sizeof(44L) - 'a');
     return 0;
 }
