@@ -1,8 +1,8 @@
 #ifndef _CRYOLITE_TYPE_H_
 #define _CRYOLITE_TYPE_H_
 
-#include <vector>
 #include <string>
+#include <vector>
 
 class Expr;
 
@@ -77,6 +77,19 @@ protected:
     VoidType() : Type(TypeKind::VOID, false, 1ULL) {}
 };
 
+/**
+ * BuiltinType - Arithmetic type.
+ *
+ * 1. TODO: Support bool type.
+ *
+ * 2. Temporarily, we specify 'char' as 8 bits, 'short' as 16 bits, 'int' as 32 bits,
+ * 'long' as 32 bits, 'long long' as 64 bits, 'float' as 32 bits, 'double' as 64 bits
+ * and 'long double' as 64 bits. Compiler typically provides options to allow users
+ * to control the width of integer types, which may be implemented in the future.
+ *
+ * 3. Temporarily, char is considered as signed char. Compile option to control this
+ * will be implemented in the future.
+ */
 class BuiltinType : public Type {
 public:
     enum BuiltinSpec : unsigned int {
@@ -107,11 +120,27 @@ public:
     static bool isDouble(unsigned int flags);
     static bool isLongDouble(unsigned int flags);
 
+    bool isInteger();
+    bool isFloating();
+
     std::pair<std::string, std::string> repr();
     size_t getSize() { return sizeCache; }
 
+    // convRank - [C99 6.3.1.1p1]
+    int convRank();
+
+    // integerPromote - [C99 6.3.1.1p2]
+    // Make sure that t is an integer type.
+    static BuiltinType *integerPromote(BuiltinType *t);
+
+    // usualArithConv - [C99 6.3.1.8] Usual arithmetic conversions.
+    // All kinds of builtin arithmetic type is gotten by getBuiltinType.
+    // Pointers of same builtin type point to the same static object.
+    // So we can use raw pointer casually.
+    static BuiltinType *usualArithConv(Type *ltype, Type *rtype);
+
     // kind - Bit flags.
-    unsigned int kind;
+    unsigned int builtinKind;
 
 protected:
     BuiltinType(unsigned int flags, size_t size);

@@ -1,5 +1,7 @@
 #include "type.h"
+#include "ast.h"
 #include <algorithm>
+#include <cassert>
 
 std::pair<std::string, std::string> QualType::repr() {
     // TODO: A proper way to print qualifiers.
@@ -19,7 +21,7 @@ VoidType *VoidType::getVoidType() {
 }
 
 BuiltinType::BuiltinType(unsigned int flags, size_t size)
-    : Type(TypeKind::BUILTIN, true, size), kind(flags) {}
+    : Type(TypeKind::BUILTIN, true, size), builtinKind(flags) {}
 
 const unsigned int shortVec[4] = {
     BuiltinType::SHORT,
@@ -76,14 +78,12 @@ BuiltinType *BuiltinType::getBuiltinType(unsigned int flags) {
     static BuiltinType *unsignedShortType = new BuiltinType((UNSIGNED | SHORT), 2);
     static BuiltinType *intType = new BuiltinType(INT, 4);
     static BuiltinType *unsignedIntType = new BuiltinType((UNSIGNED | INT), 4);
-    // TODO: The size of (unsigned) long?
     static BuiltinType *longType = new BuiltinType(LONG, 4);
     static BuiltinType *unsignedLongType = new BuiltinType((UNSIGNED | LONG), 4);
     static BuiltinType *longLongType = new BuiltinType(LONGLONG, 8);
     static BuiltinType *unsignedLongLongType = new BuiltinType((UNSIGNED | LONGLONG), 8);
     static BuiltinType *floatType = new BuiltinType(FLOAT, 4);
     static BuiltinType *doubleType = new BuiltinType(DOUBLE, 8);
-    // TODO: The size of long double?
     static BuiltinType *longDoubleType = new BuiltinType((LONG | DOUBLE), 8);
 
     if (isChar(flags)) return charType;
@@ -159,9 +159,17 @@ bool BuiltinType::isLongDouble(unsigned int flags) {
     return flags == (LONG | DOUBLE);
 }
 
+bool BuiltinType::isInteger() {
+    return builtinKind & (CHAR | SHORT | INT | LONG | LONGLONG);
+}
+
+bool BuiltinType::isFloating() {
+    return builtinKind & (FLOAT | DOUBLE);
+}
+
 std::pair<std::string, std::string> BuiltinType::repr() {
     std::string s;
-    switch (kind) {
+    switch (builtinKind) {
     case CHAR:
         s = "char";
         break;
@@ -206,6 +214,95 @@ std::pair<std::string, std::string> BuiltinType::repr() {
         break;
     }
     return std::make_pair(s, "");
+}
+
+int BuiltinType::convRank() {
+    switch (builtinKind) {
+    // TODO: Support bool.
+    case CHAR:
+    case (SIGNED | CHAR):
+    case (UNSIGNED | CHAR):
+        return 2;
+    case SHORT:
+    case (UNSIGNED | SHORT):
+        return 3;
+    case INT:
+    case (UNSIGNED | INT):
+        return 4;
+    case LONG:
+    case (UNSIGNED | LONG):
+        return 5;
+    case LONGLONG:
+    case (UNSIGNED | LONGLONG):
+        return 6;
+    case FLOAT:
+        return 7;
+    case DOUBLE:
+        return 8;
+    case (LONG | DOUBLE):
+        return 9;
+    default:
+        assert(0);
+    }
+}
+
+BuiltinType *BuiltinType::integerPromote(BuiltinType *t) {
+    if (t->convRank() < getBuiltinType(INT)->convRank()) {
+        return getBuiltinType(INT);
+    } else {
+        return t;
+    }
+    // TODO: What if the width of 'int' is the same as that of 'short'?
+}
+
+BuiltinType *BuiltinType::usualArithConv(Type *ltype, Type *rtype) {
+    assert(ltype->kind == TypeKind::BUILTIN && rtype->kind == TypeKind::BUILTIN);
+    BuiltinType *l = dynamic_cast<BuiltinType *>(ltype);
+    BuiltinType *r = dynamic_cast<BuiltinType *>(rtype);
+
+    // If either operand has a floating-point type, then the operand with the lower conversion rank
+    // is converted to a type with the same rank as the other operand.
+    if (l->builtinKind == (LONG | DOUBLE))
+        return l;
+    if (r->builtinKind == (LONG | DOUBLE))
+        return r;
+
+    if (l->builtinKind == DOUBLE)
+        return l;
+    if (r->builtinKind == DOUBLE)
+        return r;
+
+    if (l->builtinKind == FLOAT)
+        return l;
+    if (r->builtinKind == FLOAT)
+        return r;
+
+    // If both operands are integers, integer promotion is first performed on both operands.
+    BuiltinType *t1 = integerPromote(l);
+    BuiltinType *t2 = integerPromote(r);
+
+    if (t1 == t2) {
+        return t1;
+    } else if ((t1->builtinKind & UNSIGNED) == (t2->builtinKind & UNSIGNED)) {
+        // if T1 and T2 are both signed integer types or both unsigned integer types,
+        // C is the type of greater integer conversion rank.
+        return t1->convRank() > t2->convRank() ? t1 : t2;
+    } else {
+        // One type between T1 and T2 is an signed integer type S,
+        // the other type is an unsigned integer type U.
+        if (t1->builtinKind & UNSIGNED)
+            std::swap(t1, t2);
+        // Now T1 is signed, T2 is unsigned.
+
+        if (t2->convRank() >= t1->convRank()) {
+            return t2;
+        } else if (t1->getSize() > t2->getSize()) {
+            return t1;
+        } else {
+            // Return the unsigned integer type corresponding to T1(S).
+            return getBuiltinType(UNSIGNED | t1->builtinKind);
+        }
+    }
 }
 
 // The completeness of a pointer is independent of the definition status of the data type it points to.
