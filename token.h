@@ -92,10 +92,10 @@ public:
     bool isFloat;
 
     bool isIntegerLiteral() const {
-        return !saw_period && !saw_exponent;
+        return !sawPeriod && !sawExponent;
     }
     bool isFloatingLiteral() const {
-        return saw_period || saw_exponent;
+        return sawPeriod || sawExponent;
     }
     bool hasSuffix() const {
         return suffixBegin != thisTokEnd;
@@ -111,7 +111,7 @@ private:
 
     unsigned radix;
 
-    bool saw_exponent, saw_period;
+    bool sawExponent, sawPeriod;
 
     void parseNumberStartingWithZero(SourceLocation TokLoc);
 

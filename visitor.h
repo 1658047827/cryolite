@@ -15,6 +15,8 @@ class ImplicitCastExpr;
 
 class VarDecl;
 
+class BreakStmt;
+
 class Visitor {
 public:
     virtual void visitUnaryExpr(UnaryExpr *unary) = 0;
@@ -30,6 +32,8 @@ public:
     virtual void visitImplicitCastExpr(ImplicitCastExpr *implicitCast) = 0;
 
     virtual void visitVarDecl(VarDecl *varDecl) = 0;
+
+    virtual void visitBreakStmt(BreakStmt *breakStmt) = 0;
 };
 
 #endif

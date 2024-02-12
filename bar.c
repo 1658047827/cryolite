@@ -38,12 +38,12 @@ F helper(double *arg, int arr[static const volatile restrict 4]) {
         sizeof(long),
     };
     for (int i = 0; i < 8; ++i)
-        ;
+        break;
     // printf("a[%d]: %d\n", i, a[i]);
     return 0;
 }
 
-int function(int k) {
+inline signed double function(int k) {
     return k++;
 }
 
@@ -52,9 +52,11 @@ struct BitField {
     unsigned char b : 7;
 };
 
+int lol, ac = 0;
+
 int main() {
     enum Qualifier q = CONST;
-    int n = 10;
+    int n = 10, m = 100;
     int arr[n]; // VLA
     (const int *){0, 1}[0];
     float floatArr[4 + 6 * 11][sizeof(struct Node)];

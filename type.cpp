@@ -10,9 +10,9 @@ std::pair<std::string, std::string> QualType::repr() {
     //     s += "volatile ";
     // if (isRestrict())
     //     s += "restrict ";
-    auto repr_pair = type->repr();
-    // repr_pair.first = s + repr_pair.first;
-    return repr_pair;
+    auto reprPair = type->repr();
+    // reprPair.first = s + reprPair.first;
+    return reprPair;
 }
 
 VoidType *VoidType::getVoidType() {
@@ -313,14 +313,14 @@ PointerType::PointerType(const QualType &p)
     : Type(TypeKind::POINTER, true, 8), pointee(p) {}
 
 std::pair<std::string, std::string> PointerType::repr() {
-    auto repr_pair = pointee.repr();
+    auto reprPair = pointee.repr();
     // Handle things like 'int (*A)[4];' correctly.
     if (pointee.type->kind == TypeKind::ARRAY) {
-        repr_pair.first.push_back('(');
-        repr_pair.second.insert(0, ")");
+        reprPair.first.push_back('(');
+        reprPair.second.insert(0, ")");
     }
-    repr_pair.first.push_back('*');
-    return repr_pair;
+    reprPair.first.push_back('*');
+    return reprPair;
 }
 
 ArrayType::ArrayType(const QualType &type, ArrayKind kind, Expr *expr)
@@ -330,15 +330,15 @@ ConstantArrayType::ConstantArrayType(const QualType &type, size_t size, Expr *ex
     : ArrayType(type, CONSTANT, expr), size(size) {}
 
 std::pair<std::string, std::string> ConstantArrayType::repr() {
-    auto repr_pair = elemType.repr();
+    auto reprPair = elemType.repr();
     // TODO: [C99 6.7.5.2] Support arrays like "int A[static restrict 4]" which has
     // index type qualifier(s) and static size. These are only allowed on function parameters.
     // We can refer to TypePrinter.cpp in the Clang source code.
     std::string tmp = "[";
     tmp.append(std::to_string(size));
     tmp.push_back(']');
-    repr_pair.second.insert(0, tmp);
-    return repr_pair;
+    reprPair.second.insert(0, tmp);
+    return reprPair;
 }
 
 size_t ConstantArrayType::getSize() {

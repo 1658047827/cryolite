@@ -2,6 +2,144 @@
 #include "diagnostic.h"
 #include <cassert>
 
+unsigned DeclSpec::getParsedSpecifiers() {
+    unsigned ret = 0;
+    if (storageClassSpec != SCS_UNSPECIFIED)
+        ret |= PQ_STORAGE_CLASS_SPECIFIER;
+    if (typeQualifiers != TQ_UNSPECIFIED)
+        ret |= PQ_TYPE_QUALIFIER;
+    if (hasTypeSpecifier())
+        ret |= PQ_TYPE_SPECIFIER;
+    if (fsInlineSpecified)
+        ret |= PQ_FUNCTION_SPECIFIER;
+    return ret;
+}
+
+bool DeclSpec::setStorageClassSpec(SCS s, SourceLocation loc) {
+    if (storageClassSpec != SCS_UNSPECIFIED) {
+        error(loc, "invalid declaration specifier combination");
+        return true;
+    }
+    storageClassSpec = s;
+    storageClassSpecLoc = loc;
+    return false;
+}
+
+bool DeclSpec::setTypeSpecWidth(TSW w, SourceLocation loc) {
+    if (typeSpecWidth != TSW_UNSPECIFIED &&
+        // Only allow turning long -> long long.
+        (w != TSW_LONGLONG || typeSpecWidth != TSW_LONG)) {
+        error(loc, "invalid declaration specifier combination");
+        return true;
+    }
+    typeSpecWidth = w;
+    tswLoc = loc;
+    return false;
+}
+
+bool DeclSpec::setTypeSpecSign(TSS s, SourceLocation loc) {
+    if (typeSpecSign != TSS_UNSPECIFIED) {
+        error(loc, "invalid declaration specifier combination");
+        return true;
+    }
+    typeSpecSign = s;
+    tssLoc = loc;
+    return false;
+}
+
+bool DeclSpec::setTypeSpecType(TST t, SourceLocation loc, bool owned) {
+    if (typeSpecType != TST_UNSPECIFIED) {
+        error(loc, "invalid declaration specifier combination");
+        return true;
+    }
+    typeSpecType = t;
+    tstLoc = loc;
+    typeSpecOwned = owned;
+    return false;
+}
+
+bool DeclSpec::setTypeSpecError() {
+    typeSpecType = TST_ERROR;
+    tstLoc = SourceLocation();
+    return false;
+}
+
+bool DeclSpec::setTypeQual(TQ t, SourceLocation loc) {
+    if (typeQualifiers & t) {
+        error(loc, "duplicate declaration specifier");
+        return true;
+    }
+    typeQualifiers |= t;
+    switch (t) {
+    case TQ_CONST:
+        tqConstLoc = loc;
+        break;
+    case TQ_RESTRICT:
+        tqRestrictLoc = loc;
+        break;
+    case TQ_VOLATILE:
+        tqVolatileLoc = loc;
+        break;
+    default:
+        assert(0 && "Unknown type qualifier");
+    }
+    return false;
+}
+
+bool DeclSpec::setFunctionSpecInline(SourceLocation loc) {
+    // Warning 'inline inline'.
+    if (fsInlineSpecified) {
+        warning(loc, "duplicate 'inline' declaration specifier");
+    }
+    fsInlineSpecified = true;
+    fsInlineLoc = loc;
+    return false;
+}
+
+void DeclSpec::finish() {
+    // signed/unsigned are only valid with int/char.
+    if (typeSpecSign != TSS_UNSPECIFIED) {
+        if (typeSpecType == TST_UNSPECIFIED)
+            typeSpecType = TST_INT; // unsigned -> unsigned int, signed -> signed int.
+        else if (typeSpecType != TST_INT && typeSpecType != TST_CHAR) {
+            error(tssLoc, "invalid sign specifier");
+            // signed float -> float.
+            typeSpecSign = TSS_UNSPECIFIED;
+        }
+    }
+
+    // Validate the width of the type.
+    switch (typeSpecWidth) {
+    case TSW_UNSPECIFIED:
+        break;
+    case TSW_SHORT:    // short int
+    case TSW_LONGLONG: // long long int
+        if (typeSpecType == TST_UNSPECIFIED)
+            typeSpecType = TST_INT; // short -> short int, long long -> long long int.
+        else if (typeSpecType != TST_INT) {
+            error(tswLoc, typeSpecWidth == TSW_SHORT ? "invalid short specifier"
+                                                     : "invalid long long specifier");
+            typeSpecType = TST_INT;
+        }
+        break;
+    case TSW_LONG: // long double, long int
+        if (typeSpecType == TST_UNSPECIFIED)
+            typeSpecType = TST_INT; // long -> long int.
+        else if (typeSpecType != TST_INT && typeSpecType != TST_DOUBLE) {
+            error(tswLoc, "invalid long specifier");
+            typeSpecType = TST_INT;
+        }
+        break;
+    }
+}
+
+bool DeclSpec::isMissingDeclaratorOk() {
+    return (typeSpecType == TST_UNION ||
+            typeSpecType == TST_STRUCT ||
+            typeSpecType == TST_ENUM) &&
+           storageClassSpec != SCS_TYPEDEF;
+}
+
 unsigned int parseIntegerSuffix(NumericLiteralParser &parser) {
     // Integer constants are implicitly of type int by default.
     unsigned int ret = BuiltinType::INT;
@@ -375,7 +513,7 @@ SizeofExpr *Parser::parseSizeof() {
     TokenSeqConstIter nxt = std::next(cursor, 1);
     if (isKind(cursor, TK_LPAR) && isFirstOfTypeName(nxt)) {
         ++cursor; // Consume the '('.
-        QualType *qt = parseTypeName();
+        QualType qt = parseTypeName();
         expect(cursor, TK_RPAR);
         ++cursor; // Consume the ')'.
         return new SizeofExpr(loc, qt);
@@ -537,6 +675,32 @@ StringLiteral *Parser::parseStringLiterals() {
     return new StringLiteral(loc, QualType(constArrT), val);
 }
 
-QualType *Parser::parseTypeName() {
+/**
+ * declaration-specifiers:
+ *     storage-class-specifier declaration-specifiers{opt}
+ *     type-specifier declaration-specifiers{opt}
+ *     type-qualifier declaration-specifiers{opt}
+ *     function-specifier declaration-specifiers{opt}
+ */
+void Parser::parseDeclarationSpecifiers(DeclSpec &ds) {
+    while (true) {
+        bool isInvalid = false;
+
+        switch ((*cursor)->getKind()) {
+        // storage-class-specifier
+        case TK_TYPEDEF:
+            /* code */
+            break;
+
+        default:
+            break;
+        }
+    }
+}
+
+void Parser::parseSpecifierQualifierList(DeclSpec &ds) {
+}
+
+QualType Parser::parseTypeName() {
     return nullptr;
 }

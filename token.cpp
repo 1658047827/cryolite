@@ -183,8 +183,8 @@ TokenSeqConstIter TokenSequence::cEnd() {
 NumericLiteralParser::NumericLiteralParser(const char *begin, const char *end, const SourceLocation &loc)
     : thisTokBegin(begin), thisTokEnd(end) {
     s = digitsBegin = begin;
-    saw_exponent = false;
-    saw_period = false;
+    sawExponent = false;
+    sawPeriod = false;
     isLong = false;
     isUnsigned = false;
     isLongLong = false;
@@ -206,13 +206,13 @@ NumericLiteralParser::NumericLiteralParser(const char *begin, const char *end, c
             return;
         } else if (*s == '.') {
             ++s;
-            saw_period = true;
+            sawPeriod = true;
             s = skipDigits(s);
         }
         if (*s == 'e' || *s == 'E') { // exponent
             const char *exponent = s;
             ++s;
-            saw_exponent = true;
+            sawExponent = true;
             if (*s == '+' || *s == '-') ++s; // sign
             const char *first_non_digit = skipDigits(s);
             if (first_non_digit != s) {
@@ -292,7 +292,7 @@ void NumericLiteralParser::parseNumberStartingWithZero(SourceLocation loc) {
             // Done.
         } else if (*s == '.') {
             s++;
-            saw_period = true;
+            sawPeriod = true;
             s = skipHexDigits(s);
         }
         // A binary exponent can appear with or with a '.'. If dotted, the
@@ -300,7 +300,7 @@ void NumericLiteralParser::parseNumberStartingWithZero(SourceLocation loc) {
         if (*s == 'p' || *s == 'P') {
             const char *Exponent = s;
             s++;
-            saw_exponent = true;
+            sawExponent = true;
             if (*s == '+' || *s == '-') s++; // sign
             const char *first_non_digit = skipDigits(s);
             if (first_non_digit == s) {
@@ -309,7 +309,7 @@ void NumericLiteralParser::parseNumberStartingWithZero(SourceLocation loc) {
                 return;
             }
             s = first_non_digit;
-        } else if (saw_period) {
+        } else if (sawPeriod) {
             error(loc, "hexconstant requires exponent");
             hadError = true;
         }
@@ -364,14 +364,14 @@ void NumericLiteralParser::parseNumberStartingWithZero(SourceLocation loc) {
     if (*s == '.') {
         s++;
         radix = 10;
-        saw_period = true;
+        sawPeriod = true;
         s = skipDigits(s); // Skip suffix.
     }
     if (*s == 'e' || *s == 'E') { // exponent
         const char *Exponent = s;
         s++;
         radix = 10;
-        saw_exponent = true;
+        sawExponent = true;
         if (*s == '+' || *s == '-') s++; // sign
         const char *first_non_digit = skipDigits(s);
         if (first_non_digit != s) {
