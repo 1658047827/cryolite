@@ -43,7 +43,7 @@ F helper(double *arg, int arr[static const volatile restrict 4]) {
     return 0;
 }
 
-inline signed double function(int k) {
+inline long int long function(int k) {
     return k++;
 }
 

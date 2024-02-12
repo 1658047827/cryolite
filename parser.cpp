@@ -685,16 +685,119 @@ StringLiteral *Parser::parseStringLiterals() {
 void Parser::parseDeclarationSpecifiers(DeclSpec &ds) {
     while (true) {
         bool isInvalid = false;
+        SourceLocation loc = (*cursor)->getLoc();
 
         switch ((*cursor)->getKind()) {
+        default:
+        DoneWithDeclSpec:
+            ds.finish();
+            return;
+
+        // typdef-name
+        case TK_IDENTIFIER: {
+            // This identifier can only be a typedef name if we haven't already seen
+            // a type-specifier. Without this check we misparse:
+            // typedef int X; struct Y { short X; }; as 'short int'.
+            if (ds.hasTypeSpecifier())
+                goto DoneWithDeclSpec;
+
+            // TODO: getTypeName like Clang, and DeclSpec needs a void *typeRep.
+
+            isInvalid = ds.setTypeSpecType(DeclSpec::TST_TYPENAME, loc);
+            if (isInvalid) break;
+
+            ++cursor; // Consume the identifier.
+
+            continue;
+        }
+
         // storage-class-specifier
         case TK_TYPEDEF:
-            /* code */
+            isInvalid = ds.setStorageClassSpec(DeclSpec::SCS_TYPEDEF, loc);
+            break;
+        case TK_EXTERN:
+            isInvalid = ds.setStorageClassSpec(DeclSpec::SCS_EXTERN, loc);
+            break;
+        case TK_STATIC:
+            isInvalid = ds.setStorageClassSpec(DeclSpec::SCS_STATIC, loc);
+            break;
+        case TK_AUTO:
+            isInvalid = ds.setStorageClassSpec(DeclSpec::SCS_AUTO, loc);
+            break;
+        case TK_REGISTER:
+            isInvalid = ds.setStorageClassSpec(DeclSpec::SCS_REGISTER, loc);
             break;
 
-        default:
+        // function-specifier
+        case TK_INLINE:
+            isInvalid = ds.setFunctionSpecInline(loc);
+            break;
+
+        // type-specifier
+        case TK_SHORT:
+            isInvalid = ds.setTypeSpecWidth(DeclSpec::TSW_SHORT, loc);
+            break;
+        case TK_LONG:
+            if (ds.typeSpecWidth != DeclSpec::TSW_LONG)
+                isInvalid = ds.setTypeSpecWidth(DeclSpec::TSW_LONG, loc);
+            else
+                isInvalid = ds.setTypeSpecWidth(DeclSpec::TSW_LONGLONG, loc);
+            break;
+        case TK_SIGNED:
+            isInvalid = ds.setTypeSpecSign(DeclSpec::TSS_SIGNED, loc);
+            break;
+        case TK_UNSIGNED:
+            isInvalid = ds.setTypeSpecSign(DeclSpec::TSS_UNSIGNED, loc);
+            break;
+        case TK_VOID:
+            isInvalid = ds.setTypeSpecType(DeclSpec::TST_VOID, loc);
+            break;
+        case TK_CHAR:
+            isInvalid = ds.setTypeSpecType(DeclSpec::TST_CHAR, loc);
+            break;
+        case TK_INT:
+            isInvalid = ds.setTypeSpecType(DeclSpec::TST_INT, loc);
+            break;
+        case TK_FLOAT:
+            isInvalid = ds.setTypeSpecType(DeclSpec::TST_FLOAT, loc);
+            break;
+        case TK_DOUBLE:
+            isInvalid = ds.setTypeSpecType(DeclSpec::TST_DOUBLE, loc);
+            break;
+        // TODO: Supprt bool.
+
+        // record-specifier
+        case TK_STRUCT:
+        case TK_UNION: {
+            TokenKind k = (*cursor)->getKind();
+            ++cursor;
+            parseRecordSpecifier(k, loc, ds);
+            continue;
+        }
+
+        // enum-specifier
+        case TK_ENUM:
+            ++cursor;
+            parseEnumSpecifier(loc, ds);
+            continue;
+
+        // type-qualifier
+        case TK_CONST:
+            isInvalid = ds.setTypeQual(DeclSpec::TQ_CONST, loc);
+            break;
+        case TK_RESTRICT:
+            isInvalid = ds.setTypeQual(DeclSpec::TQ_RESTRICT, loc);
+            break;
+        case TK_VOLATILE:
+            isInvalid = ds.setTypeQual(DeclSpec::TQ_VOLATILE, loc);
             break;
         }
+
+        // If the specifier wasn't legal, issue a diagnostic.
+        if (isInvalid) {
+            error(loc, "");
+        }
+        ++cursor;
     }
 }
 

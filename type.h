@@ -212,6 +212,7 @@ public:
 // Struct or union
 class RecordType : public Type {
 public:
+    
 };
 
 class EnumType : public Type {

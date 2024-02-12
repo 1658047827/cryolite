@@ -127,7 +127,7 @@ public:
     bool setStorageClassSpec(SCS s, SourceLocation loc);
     bool setTypeSpecWidth(TSW w, SourceLocation loc);
     bool setTypeSpecSign(TSS s, SourceLocation loc);
-    bool setTypeSpecType(TST t, SourceLocation loc, bool owned);
+    bool setTypeSpecType(TST t, SourceLocation loc, bool owned = false);
     bool setTypeSpecError();
     bool setTypeQual(TQ t, SourceLocation loc);
     bool setFunctionSpecInline(SourceLocation loc);
@@ -197,6 +197,8 @@ public:
     /**
      * Declarations
      */
+    void parseEnumSpecifier(SourceLocation loc, DeclSpec &ds);
+    void parseRecordSpecifier(TokenKind tagKind, SourceLocation loc, DeclSpec &ds);
     void parseDeclarationSpecifiers(DeclSpec &ds);
     void parseSpecifierQualifierList(DeclSpec &ds);
     QualType parseTypeName();
