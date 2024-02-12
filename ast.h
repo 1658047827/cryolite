@@ -222,9 +222,14 @@ public:
 };
 
 class EmptyDecl : public Decl {
+public:
 };
 
+/**
+ * FunctionDecl - For function declaration and definition.
+ */
 class FunctionDecl : public Decl {
+public:
 };
 
 class VarDecl : public Decl {
@@ -251,12 +256,14 @@ public:
 };
 
 class DeclStmt : public Stmt {
+public:
+    std::vector<Decl *> decls;
 };
 
 class BreakStmt : public Stmt {
 public:
     BreakStmt(const SourceLocation &loc) : Stmt(loc) {}
-    
+
     void accept(Visitor *v) { v->visitBreakStmt(this); }
 };
 
@@ -312,8 +319,8 @@ public:
     void visitBreakStmt(BreakStmt *breakStmt);
 
     // Helper functions.
-    void printChild(Node *node);
-    void printLastChild(Node *node);
+    void dumpChild(Node *node);
+    void dumpLastChild(Node *node);
 
     // prefix - Indentation of every line.
     std::string prefix;

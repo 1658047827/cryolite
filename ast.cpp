@@ -125,26 +125,26 @@ void ASTDumper::visitUnaryExpr(UnaryExpr *unary) {
     default:
         break;
     }
-    printLastChild(unary->operand);
+    dumpLastChild(unary->operand);
 }
 
 void ASTDumper::visitSizeofExpr(SizeofExpr *sizeofExpr) {
-    auto repr_pair = sizeofExpr->qtype.repr();
+    auto reprPair = sizeofExpr->qtype.repr();
     out << "SizeofExpr <" << srcLocToPos(sizeofExpr->srcLoc) << "> '";
-    out << repr_pair.first << repr_pair.second << "' sizeof ";
+    out << reprPair.first << reprPair.second << "' sizeof ";
     if (sizeofExpr->sizeofKind == SizeofExpr::UNARY_EXPR) {
         out << '\n';
-        printLastChild(sizeofExpr->arg.expr);
+        dumpLastChild(sizeofExpr->arg.expr);
     } else if (sizeofExpr->sizeofKind == SizeofExpr::TYPE_NAME) {
-        auto repr_pair = sizeofExpr->arg.type.repr();
-        out << '\'' << repr_pair.first << repr_pair.second << "'\n";
+        auto reprPair = sizeofExpr->arg.type.repr();
+        out << '\'' << reprPair.first << reprPair.second << "'\n";
     }
 }
 
 void ASTDumper::visitBinaryExpr(BinaryExpr *binary) {
-    auto repr_pair = binary->qtype.repr();
+    auto reprPair = binary->qtype.repr();
     out << "BinaryExpr <" << srcLocToPos(binary->srcLoc) << "> '";
-    out << repr_pair.first << repr_pair.second << "' ";
+    out << reprPair.first << reprPair.second << "' ";
     switch (binary->op) {
     case ADD:
         out << "'+'\n";
@@ -209,48 +209,48 @@ void ASTDumper::visitBinaryExpr(BinaryExpr *binary) {
     default:
         break;
     }
-    printChild(binary->lhs);
-    printLastChild(binary->rhs);
+    dumpChild(binary->lhs);
+    dumpLastChild(binary->rhs);
 }
 
 void ASTDumper::visitTernaryExpr(TernaryExpr *ternary) {
     out << "TernaryExpr <" << srcLocToPos(ternary->srcLoc) << ">\n";
-    printChild(ternary->condExpr);
-    printChild(ternary->trueExpr);
-    printLastChild(ternary->falseExpr);
+    dumpChild(ternary->condExpr);
+    dumpChild(ternary->trueExpr);
+    dumpLastChild(ternary->falseExpr);
 }
 
 void ASTDumper::visitIntegerConstant(IntegerConstant *integer) {
-    auto repr_pair = integer->qtype.repr();
+    auto reprPair = integer->qtype.repr();
     out << "IntegerConstant <" << srcLocToPos(integer->srcLoc) << "> '";
-    out << repr_pair.first << repr_pair.second << "' " << integer->value << '\n';
+    out << reprPair.first << reprPair.second << "' " << integer->value << '\n';
 }
 
 void ASTDumper::visitFloatingConstant(FloatingConstant *floating) {
-    auto repr_pair = floating->qtype.repr();
+    auto reprPair = floating->qtype.repr();
     out << "FloatingConstant <" << srcLocToPos(floating->srcLoc) << "> '";
-    out << repr_pair.first << repr_pair.second << "' " << floating->value << '\n';
+    out << reprPair.first << reprPair.second << "' " << floating->value << '\n';
 }
 
 void ASTDumper::visitCharacterConstant(CharacterConstant *character) {
-    auto repr_pair = character->qtype.repr();
+    auto reprPair = character->qtype.repr();
     out << "CharacterConstant <" << srcLocToPos(character->srcLoc) << "> '";
-    out << repr_pair.first << repr_pair.second << "' " << character->value << '\n';
+    out << reprPair.first << reprPair.second << "' " << character->value << '\n';
 }
 
 void ASTDumper::visitStringLiteral(StringLiteral *string) {
-    auto repr_pair = string->qtype.repr();
+    auto reprPair = string->qtype.repr();
     out << "StringLiteral <" << srcLocToPos(string->srcLoc) << "> '";
-    out << repr_pair.first << repr_pair.second << "' \"" << string->value << "\"\n";
+    out << reprPair.first << reprPair.second << "' \"" << string->value << "\"\n";
 }
 
 void ASTDumper::visitDeclRefExpr(DeclRefExpr *declRef) {
 }
 
 void ASTDumper::visitImplicitCastExpr(ImplicitCastExpr *implicitCast) {
-    auto repr_pair = implicitCast->qtype.repr();
+    auto reprPair = implicitCast->qtype.repr();
     out << "ImplicitCastExpr <" << srcLocToPos(implicitCast->srcLoc) << "> '";
-    out << repr_pair.first << repr_pair.second << "' ";
+    out << reprPair.first << reprPair.second << "' ";
     switch (implicitCast->castKind) {
     case ImplicitCastExpr::INTEGRAL_CAST:
         out << "<IntegralCast>\n";
@@ -271,7 +271,7 @@ void ASTDumper::visitImplicitCastExpr(ImplicitCastExpr *implicitCast) {
         out << "<FunctionToPointerDecay>\n";
         break;
     }
-    printLastChild(implicitCast->fromExpr);
+    dumpLastChild(implicitCast->fromExpr);
 }
 
 void ASTDumper::visitVarDecl(VarDecl *varDecl) {
@@ -281,14 +281,14 @@ void ASTDumper::visitBreakStmt(BreakStmt *breakStmt) {
     out << "BreakStmt <" << srcLocToPos(breakStmt->srcLoc) << ">\n";
 }
 
-void ASTDumper::printChild(Node *node) {
+void ASTDumper::dumpChild(Node *node) {
     out << prefix << "|--";
     prefix.append("|  ");
     node->accept(this);
     prefix.erase(prefix.size() - 3);
 }
 
-void ASTDumper::printLastChild(Node *node) {
+void ASTDumper::dumpLastChild(Node *node) {
     out << prefix << "`--";
     prefix.append("   ");
     node->accept(this);
