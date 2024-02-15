@@ -140,6 +140,135 @@ bool DeclSpec::isMissingDeclaratorOk() {
            storageClassSpec != SCS_TYPEDEF;
 }
 
+DeclaratorChunk DeclaratorChunk::getPointer(unsigned char typeQuals, SourceLocation loc) {
+    DeclaratorChunk dc;
+    dc.chunkKind = POINTER;
+    dc.loc = loc;
+    dc.ptr.typeQuals = typeQuals;
+    return dc;
+}
+
+DeclaratorChunk DeclaratorChunk::getArray(unsigned char typeQuals,
+                                          bool isStatic,
+                                          bool isStar,
+                                          void *numElts,
+                                          SourceLocation loc) {
+    DeclaratorChunk dc;
+    dc.chunkKind = ARRAY;
+    dc.loc = loc;
+    dc.arr.typeQuals = typeQuals;
+    dc.arr.hasStaic = isStatic;
+    dc.arr.isStar = isStar;
+    dc.arr.numElts = numElts;
+    return dc;
+}
+
+DeclaratorChunk DeclaratorChunk::getFunction(unsigned char typeQuals,
+                                             bool hasProto,
+                                             bool isVariadic,
+                                             SourceLocation loc) {
+    DeclaratorChunk dc;
+    dc.chunkKind = FUNCTION;
+    dc.loc = loc;
+    dc.fun.hasPrototype = hasProto;
+    dc.fun.isVariadic = isVariadic;
+    dc.fun.typeQuals = typeQuals;
+    return dc;
+}
+
+QualType convertDeclSpecToType(const DeclSpec &ds, SourceLocation loc, bool &isInvalid) {
+    QualType result;
+    switch (ds.typeSpecType) {
+    case DeclSpec::TST_VOID:
+        result.type = VoidType::getVoidType();
+        break;
+    case DeclSpec::TST_CHAR:
+        if (ds.typeSpecSign == DeclSpec::TSS_UNSPECIFIED)
+            result.type = BuiltinType::getBuiltinType(BuiltinType::CHAR);
+        else if (ds.typeSpecSign == DeclSpec::TSS_SIGNED)
+            result.type = BuiltinType::getBuiltinType(BuiltinType::SIGNED | BuiltinType::CHAR);
+        else {
+            assert(ds.typeSpecSign == DeclSpec::TSS_UNSIGNED && "Unknown TSS value");
+            result.type = BuiltinType::getBuiltinType(BuiltinType::UNSIGNED | BuiltinType::CHAR);
+        }
+        break;
+    case DeclSpec::TST_UNSPECIFIED:
+        if (!ds.hasTypeSpecifier()) {
+            error(loc, "missing type specifier");
+        }
+    // Fall through
+    case DeclSpec::TST_INT: {
+        if (ds.typeSpecSign != DeclSpec::TSS_UNSIGNED) {
+            switch (ds.typeSpecWidth) {
+            case DeclSpec::TSW_UNSPECIFIED:
+                result.type = BuiltinType::getBuiltinType(BuiltinType::INT);
+                break;
+            case DeclSpec::TSW_SHORT:
+                result.type = BuiltinType::getBuiltinType(BuiltinType::SHORT);
+                break;
+            case DeclSpec::TSW_LONG:
+                result.type = BuiltinType::getBuiltinType(BuiltinType::LONG);
+                break;
+            case DeclSpec::TSW_LONGLONG:
+                result.type = BuiltinType::getBuiltinType(BuiltinType::LONGLONG);
+                break;
+            }
+        } else {
+            switch (ds.typeSpecWidth) {
+            case DeclSpec::TSW_UNSPECIFIED:
+                result.type = BuiltinType::getBuiltinType(BuiltinType::UNSIGNED | BuiltinType::INT);
+                break;
+            case DeclSpec::TSW_SHORT:
+                result.type = BuiltinType::getBuiltinType(BuiltinType::UNSIGNED | BuiltinType::SHORT);
+                break;
+            case DeclSpec::TSW_LONG:
+                result.type = BuiltinType::getBuiltinType(BuiltinType::UNSIGNED | BuiltinType::LONG);
+                break;
+            case DeclSpec::TSW_LONGLONG:
+                result.type = BuiltinType::getBuiltinType(BuiltinType::UNSIGNED | BuiltinType::LONGLONG);
+                break;
+            }
+        }
+        break;
+    }
+    case DeclSpec::TST_FLOAT:
+        result.type = BuiltinType::getBuiltinType(BuiltinType::FLOAT);
+        break;
+    case DeclSpec::TST_DOUBLE:
+        if (ds.typeSpecWidth == DeclSpec::TSW_LONG)
+            result.type = BuiltinType::getBuiltinType(BuiltinType::LONG | BuiltinType::DOUBLE);
+        else
+            result.type = BuiltinType::getBuiltinType(BuiltinType::DOUBLE);
+        break;
+    case DeclSpec::TST_BOOL:
+        // TODO: Support bool.
+        break;
+    case DeclSpec::TST_ENUM:
+    case DeclSpec::TST_UNION:
+    case DeclSpec::TST_STRUCT: {
+
+        break;
+    }
+    case DeclSpec::TST_TYPENAME: {
+    }
+    }
+}
+
+QualType getTypeForDeclarator(Declarator &d) {
+    QualType t;
+    switch (d.kind) {
+    case Declarator::DK_ABSTRACT:
+    case Declarator::DK_NORMAL: {
+        const DeclSpec &ds = d.ds;
+        bool isInvalid = false;
+        t = convertDeclSpecToType(ds, d.identifierLoc, isInvalid);
+        if (isInvalid)
+            d.invalidType = true;
+        break;
+    }
+    }
+}
+
 unsigned int parseIntegerSuffix(NumericLiteralParser &parser) {
     // Integer constants are implicitly of type int by default.
     unsigned int ret = BuiltinType::INT;
@@ -795,7 +924,7 @@ void Parser::parseDeclarationSpecifiers(DeclSpec &ds) {
 
         // If the specifier wasn't legal, issue a diagnostic.
         if (isInvalid) {
-            error(loc, "");
+            error(loc, "illegal declaration specifiers");
         }
         ++cursor;
     }
@@ -805,5 +934,152 @@ void Parser::parseSpecifierQualifierList(DeclSpec &ds) {
 }
 
 QualType Parser::parseTypeName() {
-    return nullptr;
+    // Parse the common declaration-specifiers piece.
+    DeclSpec ds;
+    parseSpecifierQualifierList(ds);
+
+    // Parse the abstract-declarator, if present.
+    Declarator declaratorInfo(ds, Declarator::TYPE_NAME_CONTEXT);
+    parseDeclarator(declaratorInfo);
+
+    if (declaratorInfo.isInvalidType())
+        return QualType(nullptr);
+}
+
+void Parser::parseEnumSpecifier(SourceLocation loc, DeclSpec &ds) {
+}
+
+void Parser::parseRecordSpecifier(TokenKind tagKind, SourceLocation loc, DeclSpec &ds) {
+    DeclSpec::TST tagType;
+    if (tagKind == TK_STRUCT)
+        tagType = DeclSpec::TST_STRUCT;
+    else if (tagKind == TK_UNION)
+        tagType = DeclSpec::TST_UNION;
+    else
+        assert(0 && "Not a record specifier");
+
+    std::string name = "";
+    SourceLocation nameLoc;
+    if (isKind(cursor, TK_IDENTIFIER)) {
+        name = (*cursor)->getStr();
+        nameLoc = (*cursor)->getLoc();
+        ++cursor;
+    }
+
+    std::string tagUseKind;
+    if (isKind(cursor, TK_LBRACE))
+        tagUseKind = "definition";
+    else if (isKind(cursor, TK_SEMI))
+        tagUseKind = "declaration";
+    else
+        tagUseKind = "reference";
+
+    if (name.empty() && tagUseKind != "definition") {
+        error(loc, "declaration or reference to an anonymous record");
+        // Skip the rest of this declarator, up until the comma or semicolon.
+        while (!isKind(cursor, TK_COMMA) && !isKind(cursor, TK_SEMI))
+            ++cursor;
+    }
+
+    bool Owned = false;
+    parseStructUnionBody();
+}
+
+void Parser::parseDeclarator(Declarator &d) {
+    // This implements the 'declarator' production in the C grammar, then checks
+    // for well-formedness and issues diagnostics.
+    parseDeclaratorInternal(d, &Parser::parseDirectDeclarator);
+}
+
+DeclGroup *Parser::parseDeclaration(Declarator::TheContext context) {
+}
+
+/**
+ * parseDeclaratorInternal - Parse a C declarator. The direct-declarator
+ * is parsed by the function passed to it.
+ */
+void Parser::parseDeclaratorInternal(Declarator &d, void (Parser::*directDeclParser)(Declarator &)) {
+    TokenKind tokKind = (*cursor)->getKind();
+    // Not a pointer.
+    if (tokKind != TokenKind::TK_STAR) {
+        if (directDeclParser)
+            (this->*directDeclParser)(d);
+        return;
+    }
+
+    // Otherwise, '*' -> pointer.
+    SourceLocation loc = (*cursor)->getLoc();
+    ++cursor; // Consume the '*'.
+
+    DeclSpec ds;
+    parseTypeQualifierListOpt(ds);
+    // Recursively parse the declarator.
+    parseDeclaratorInternal(d, directDeclParser);
+    // Remember that we parsed a pointer type, and remember the type-quals.
+    d.declTypeInfo.push_back(DeclaratorChunk::getPointer(ds.typeQualifiers, loc));
+}
+
+void Parser::parseDirectDeclarator(Declarator &d) {
+    if (isKind(cursor, TK_IDENTIFIER) && d.mayHaveIdentifier()) {
+        d.setIdentifier((*cursor)->getStr(), (*cursor)->getLoc());
+        ++cursor;
+    } else if (isKind(cursor, TK_LPAR)) {
+        // e.g.: "char (*x)" or "int (*y)(float)"
+        parseParenDeclarator(d);
+    } else if (d.mayOmitIdentifier()) {
+        d.setIdentifier("", (*cursor)->getLoc());
+    } else {
+        if (d.context == Declarator::MEMBER_CONTEXT)
+            error((*cursor)->getLoc(), "expected member name or semicolon");
+        else
+            error((*cursor)->getLoc(), "expected identifier after '('");
+        d.setIdentifier("", (*cursor)->getLoc());
+        d.invalidType = true;
+    }
+
+    while (true) {
+        if (isKind(cursor, TK_LPAR)) {
+            // TODO: ref Clang
+        } else if (isKind(cursor, TK_LSQB)) {
+            parseBracketDeclarator(d);
+        } else {
+            break;
+        }
+    }
+}
+
+DeclGroup *Parser::parseInitDeclaratorListAfterFirstDeclarator(Declarator &d) {}
+
+void Parser::parseTypeQualifierListOpt(DeclSpec &ds) {
+    while (true) {
+        bool isInvalid = false;
+        SourceLocation loc = (*cursor)->getLoc();
+
+        switch ((*cursor)->getKind()) {
+        case TK_CONST:
+            isInvalid = ds.setTypeQual(DeclSpec::TQ_CONST, loc);
+            break;
+        case TK_VOLATILE:
+            isInvalid = ds.setTypeQual(DeclSpec::TQ_VOLATILE, loc);
+            break;
+        case TK_RESTRICT:
+            isInvalid = ds.setTypeQual(DeclSpec::TQ_RESTRICT, loc);
+            break;
+        default:
+            ds.finish();
+            return;
+        }
+
+        // If the specifier combination wasn't legal, issue a diagnostic.
+        if (isInvalid) {
+            error(loc, "illegal type qualifier combination");
+        }
+        ++cursor; // Remember to consume token.
+    }
+}
+
+void Parser::parseParenDeclarator(Declarator &d) {
+}
+
+void Parser::parseBracketDeclarator(Declarator &d) {
 }

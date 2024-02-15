@@ -348,3 +348,6 @@ size_t ConstantArrayType::getSize() {
         return sizeCache = elemType.type->getSize() * size;
     }
 }
+
+FunctionType::FunctionType(const QualType &type, bool variadic, bool isInline)
+    : Type(TypeKind::FUNCTION, true, 1), retType(type), isVariadic(variadic), fsInlineSpecified(isInline) {}

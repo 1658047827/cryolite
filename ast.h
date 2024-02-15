@@ -8,6 +8,7 @@
 #include <vector>
 
 class Decl;
+class CompoundStmt;
 
 class Node {
 public:
@@ -230,6 +231,9 @@ public:
  */
 class FunctionDecl : public Decl {
 public:
+    QualType prototype;
+    std::vector<void *> paramVarDecls;
+    CompoundStmt *stmts;
 };
 
 class VarDecl : public Decl {
@@ -242,6 +246,11 @@ class EnumDecl : public Decl {
 };
 
 class TypedefDecl : public Decl {
+};
+
+class FieldDecl : public Decl {
+public:
+    
 };
 
 class RecordDecl : public Decl {

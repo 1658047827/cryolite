@@ -193,26 +193,23 @@ public:
  * e.g.:
  * "int foo(int)", "float bar()" or "long func(char *, int)"
  * Old-style function, which has no information available about its arguments,
- * is totally not supported.
+ * is totally not supported. So all prototypes are complete.
  */
 class FunctionType : public Type {
 public:
-    enum FuncSpec : unsigned char {
-        INLINE = 1 << 0,
-    };
+    FunctionType(const QualType &type, bool variadic = false, bool isInline = false);
 
-    bool hasDef() { return complete; }
     size_t getSize() { return 1ULL; }
 
     QualType retType;
     std::vector<QualType> params;
-    unsigned char funcSpecs;
+    bool isVariadic;
+    bool fsInlineSpecified;
 };
 
 // Struct or union
 class RecordType : public Type {
 public:
-    
 };
 
 class EnumType : public Type {

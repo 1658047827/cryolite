@@ -13,6 +13,8 @@ struct SourceLocation {
     const std::string *filename;
     unsigned int line;
     unsigned int column;
+
+    bool isValid() const { return filename != nullptr && line >= 0 && column >= 0; }
 };
 
 std::string srcLocToStr(const SourceLocation &loc);

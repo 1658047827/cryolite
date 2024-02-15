@@ -2,8 +2,10 @@
 #define _CRYOLITE_PARSER_H_
 
 #include "ast.h"
+#include "idtable.h"
 #include "token.h"
 #include <bitset>
+#include <variant>
 
 using TokenBitSet = std::bitset<NUM_TOKENS>;
 
@@ -83,7 +85,7 @@ public:
     bool typeSpecOwned;
 
     // type-qualifiers
-    unsigned typeQualifiers; // Bitwise OR of TQ.
+    unsigned char typeQualifiers; // Bitwise OR of TQ.
 
     // function-specifier
     bool fsInlineSpecified;
@@ -102,7 +104,7 @@ public:
           typeQualifiers(TQ_UNSPECIFIED),
           fsInlineSpecified(false) {}
 
-    bool hasTypeSpecifier() {
+    bool hasTypeSpecifier() const {
         return typeSpecType != TST_UNSPECIFIED ||
                typeSpecWidth != TSW_UNSPECIFIED ||
                typeSpecSign != TSS_UNSPECIFIED;
@@ -145,7 +147,165 @@ public:
     bool isMissingDeclaratorOk();
 };
 
+struct DeclaratorChunk {
+    enum ChunkKind {
+        POINTER,
+        ARRAY,
+        FUNCTION
+    } chunkKind;
+    SourceLocation loc;
+
+    // enum Qualifier : unsigned char {
+    //     CONST = 1 << 0,
+    //     RESTRICT = 1 << 1,
+    //     VOLATILE = 1 << 2,
+    // };
+
+    struct PointerTypeInfo {
+        unsigned char typeQuals;
+    };
+
+    struct ArrayTypeInfo {
+        unsigned char typeQuals;
+        // hasStaic - True if this dimension included the 'static' keyword.
+        bool hasStaic;
+        // isStar - True if this dimension was [*].  In this case, NumElts is null.
+        bool isStar;
+        // numElts - The size of the array, or null if [] or [*] was specified.
+        void *numElts;
+    };
+
+    struct ParamInfo {
+        IdentifierInfo *ident;
+        SourceLocation identLoc;
+    };
+
+    struct FunctionTypeInfo {
+        unsigned char typeQuals;
+        // hasPrototype - This is true if the function had at least one typed argument.
+        bool hasPrototype;
+        // isVariadic - If this function has a prototype, and if that proto ends with ',...)'.
+        bool isVariadic;
+        std::vector<ParamInfo> argInfo;
+    };
+
+    union {
+        PointerTypeInfo ptr;
+        ArrayTypeInfo arr;
+        FunctionTypeInfo fun;
+    };
+
+    DeclaratorChunk() {}
+    DeclaratorChunk(const DeclaratorChunk &dc)
+        : chunkKind(dc.chunkKind), loc(dc.loc) {
+        switch (dc.chunkKind) {
+        case POINTER:
+            ptr = dc.ptr;
+            break;
+        case ARRAY:
+            arr = dc.arr;
+            break;
+        case FUNCTION:
+            fun = dc.fun;
+            break;
+        }
+    }
+    ~DeclaratorChunk() {}
+
+    static DeclaratorChunk getPointer(unsigned char typeQuals, SourceLocation loc);
+
+    static DeclaratorChunk getArray(unsigned char typeQuals,
+                                    bool isStatic,
+                                    bool isStar,
+                                    void *numElts,
+                                    SourceLocation loc);
+
+    static DeclaratorChunk getFunction(unsigned char typeQuals,
+                                       bool hasProto,
+                                       bool isVariadic,
+                                       SourceLocation loc);
+};
+
+class Declarator {
+public:
+    enum TheContext {
+        FILE_CONTEXT,      // File scope declaration.
+        PROTOTYPE_CONTEXT, // Within a function prototype.
+        TYPE_NAME_CONTEXT, // Abstract declarator for types.
+        MEMBER_CONTEXT,    // Struct/Union field.
+        BLOCK_CONTEXT,     // Declaration within a block in a function.
+        FOR_CONTEXT,       // Declaration within first part of a for loop.
+    };
+
+    enum DeclaratorKind {
+        DK_ABSTRACT, // An abstract declarator (has no identifier)
+        DK_NORMAL    // A normal declarator (has an identifier).
+    };
+
+    // ds - The declaration specifiers that this declarator was declared with.
+    const DeclSpec &ds;
+    std::string identifier;
+    SourceLocation identifierLoc;
+    // context - Where we are parsing this declarator.
+    TheContext context;
+    // kind - What kind of declarator this is.
+    DeclaratorKind kind;
+    std::vector<DeclaratorChunk> declTypeInfo;
+    bool invalidType;
+    // groupingParens - Set by Parser::ParseParenDeclarator().
+    bool groupingParens;
+
+    Declarator(const DeclSpec &ds, TheContext c)
+        : ds(ds), context(c), kind(DK_ABSTRACT),
+          invalidType(ds.typeSpecType == DeclSpec::TST_ERROR),
+          groupingParens(false) {}
+
+    /**
+     * mayOmitIdentifier - Return true if the identifier is either optional or
+     * not allowed. This is true for typenames, prototypes.
+     */
+    bool mayOmitIdentifier() {
+        return context == TYPE_NAME_CONTEXT || context == PROTOTYPE_CONTEXT;
+    }
+
+    /**
+     * mayHaveIdentifier - Return true if the identifier is either optional or
+     * required. This is true for normal declarators and prototypes, but not
+     * typenames.
+     */
+    bool mayHaveIdentifier() {
+        return context != TYPE_NAME_CONTEXT;
+    }
+
+    /**
+     * isPastIdentifier - Return true if we have parsed beyond the point where
+     * the name would appear. (This may happen even if we haven't actually parsed
+     * a name, perhaps because this context doesn't require one.)
+     */
+    bool isPastIdentifier() { return identifierLoc.isValid(); }
+
+    /**
+     * hasName - Whether this declarator has a name, which is an identifier.
+     */
+    bool hasName() { return kind != DK_ABSTRACT; }
+
+    void setIdentifier(const std::string &id, SourceLocation loc) {
+        identifier = id;
+        identifierLoc = loc;
+        if (id.size() > 0)
+            kind = DK_NORMAL;
+        else
+            kind = DK_ABSTRACT;
+    }
+
+    bool isInvalidType() { return invalidType || ds.typeSpecType == DeclSpec::TST_ERROR; }
+};
+
+QualType convertDeclSpecToType(const DeclSpec &ds, SourceLocation loc, bool &isInvalid);
+QualType getTypeForDeclarator(Declarator &d);
+
 struct DeclGroup {
+public:
     std::vector<Decl *> decls;
 };
 
@@ -197,17 +357,24 @@ public:
     /**
      * Declarations
      */
+    DeclGroup *parseDeclaration(Declarator::TheContext context);
+    void parseDeclarator(Declarator &d);
+    void parseParenDeclarator(Declarator &d);
+    void parseBracketDeclarator(Declarator &d);
+    void parseDeclaratorInternal(Declarator &d, void (Parser::*directDeclParser)(Declarator &));
+    void parseDirectDeclarator(Declarator &d);
+    DeclGroup *parseInitDeclaratorListAfterFirstDeclarator(Declarator &d);
     void parseEnumSpecifier(SourceLocation loc, DeclSpec &ds);
     void parseRecordSpecifier(TokenKind tagKind, SourceLocation loc, DeclSpec &ds);
+    void parseStructUnionBody(SourceLocation loc, DeclSpec::TST);
     void parseDeclarationSpecifiers(DeclSpec &ds);
     void parseSpecifierQualifierList(DeclSpec &ds);
+    void parseTypeQualifierListOpt(DeclSpec &ds);
     QualType parseTypeName();
 
     /**
      * Statements and blocks
      */
-    Stmt *parseBreakStmt();
-    Stmt *parseContinueStmt();
 
     /**
      * External definitions
