@@ -3,9 +3,16 @@
 typedef unsigned long long ull;
 ;
 
+const int w = 10;
+
 struct Node {
-    int id;
+    int id: ' ';
     char *name;
+    struct Internal {
+        int length;
+        int width;
+    };
+    float;
 };
 
 enum Qualifier {
@@ -40,6 +47,12 @@ F helper(double *arg, int arr[static const volatile restrict 4]) {
     for (int i = 0; i < 8; ++i)
         break;
     // printf("a[%d]: %d\n", i, a[i]);
+    // struct KFC becomes incomplete outside this function.
+    struct KFC {
+        int Thursday;
+        int crazy;
+    };
+    struct KFC kfc;
     return 0;
 }
 
@@ -53,6 +66,12 @@ struct BitField {
 };
 
 int lol, ac = 0;
+
+void bar(int a[*]);
+
+void bar(int a[]) {
+    return;
+}
 
 int main() {
     enum Qualifier q = CONST;

@@ -250,10 +250,31 @@ class TypedefDecl : public Decl {
 
 class FieldDecl : public Decl {
 public:
-    
+    FieldDecl(const SourceLocation &loc, QualType qt, const std::string &name = "", Expr *bitWidth = nullptr, unsigned offset = 0);
+
+    void accept(Visitor *v) { v->visitFieldDecl(this); }
+
+    QualType type;
+    // bitWidth - Bit-field declaration, declares a member with explicit width, in bits.
+    // Adjacent bit-field members may be packed to share and straddle the individual bytes.
+    // If struct member is declared normally, bitWidth will be set to nullptr.
+    Expr *bitWidth;
+    // offset - The offset of a member within a structure.
+    unsigned offset;
+    std::string fieldName;
 };
 
 class RecordDecl : public Decl {
+public:
+    RecordDecl(const SourceLocation &loc, bool isStruct = true, std::string name = "");
+
+    void accept(Visitor *v) { v->visitRecordDecl(this); }
+
+    // isStruct - True if this record is a struct, false if this record is an union.
+    bool isStruct;
+    std::string recordName;
+    // fields - A vector of FieldDecl/RecordDecl.
+    std::vector<Decl *> fields;
 };
 
 /**
@@ -324,6 +345,8 @@ public:
     void visitImplicitCastExpr(ImplicitCastExpr *implicitCast);
 
     void visitVarDecl(VarDecl *varDecl);
+    void visitFieldDecl(FieldDecl *fieldDecl);
+    void visitRecordDecl(RecordDecl *recordDecl);
 
     void visitBreakStmt(BreakStmt *breakStmt);
 

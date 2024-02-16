@@ -298,7 +298,7 @@ BuiltinType *BuiltinType::usualArithConv(BuiltinType *l, BuiltinType *r) {
 
         if (t2->convRank() >= t1->convRank()) {
             return t2;
-        } else if (t1->getSize() > t2->getSize()) {
+        } else if (t1->getTypeSize() > t2->getTypeSize()) {
             return t1;
         } else {
             // Return the unsigned integer type corresponding to T1(S).
@@ -341,13 +341,19 @@ std::pair<std::string, std::string> ConstantArrayType::repr() {
     return reprPair;
 }
 
-size_t ConstantArrayType::getSize() {
-    if (sizeCache != 0) {
-        return sizeCache;
+size_t ConstantArrayType::getTypeSize() {
+    if (typeSize != 0) {
+        return typeSize;
     } else {
-        return sizeCache = elemType.type->getSize() * size;
+        return typeSize = elemType.type->getTypeSize() * size;
     }
 }
 
-FunctionType::FunctionType(const QualType &type, bool variadic, bool isInline)
-    : Type(TypeKind::FUNCTION, true, 1), retType(type), isVariadic(variadic), fsInlineSpecified(isInline) {}
+FunctionType::FunctionType(const QualType &type, bool variadic)
+    : Type(TypeKind::FUNCTION, true, 1), retType(type), isVariadic(variadic) {}
+
+std::pair<std::string, std::string> RecordType::repr() {
+    std::string rcd = decl->isStruct ? "struct " : "union ";
+    rcd += decl->recordName;
+    return make_pair(rcd, "");
+}

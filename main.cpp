@@ -14,8 +14,12 @@ int main(int argc, char *argv[]) {
     std::cout << std::endl;
     Parser parser(ts);
     // TransUnit *root = parser.parseTranslationUnit();
-    Expr *expr = parser.parseExpression();
+    // Expr *expr = parser.parseExpression();
+    DeclSpec ds;
+    parser.parseDeclarationSpecifiers(ds);
     ASTDumper *astDumper = new ASTDumper(std::cout);
-    expr->accept(astDumper);
+    // expr->accept(astDumper);
+    RecordDecl *d = static_cast<RecordDecl *>(ds.typeRep);
+    d->accept(astDumper);
     return 0;
 }

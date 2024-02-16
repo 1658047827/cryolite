@@ -89,6 +89,12 @@ ImplicitCastExpr::ImplicitKind ImplicitCastExpr::inferArithCastKind(BuiltinType 
     }
 }
 
+FieldDecl::FieldDecl(const SourceLocation &loc, QualType qt, const std::string &name, Expr *bitWidth, unsigned offset)
+    : Decl(loc), type(qt), fieldName(name), bitWidth(bitWidth), offset(offset) {}
+
+RecordDecl::RecordDecl(const SourceLocation &loc, bool isStruct, std::string name)
+    : Decl(loc), isStruct(isStruct), recordName(name) {}
+
 void ASTDumper::visitUnaryExpr(UnaryExpr *unary) {
     out << "UnaryExpr <" << srcLocToPos(unary->srcLoc) << "> ";
     switch (unary->op) {
@@ -275,6 +281,23 @@ void ASTDumper::visitImplicitCastExpr(ImplicitCastExpr *implicitCast) {
 }
 
 void ASTDumper::visitVarDecl(VarDecl *varDecl) {
+}
+
+void ASTDumper::visitFieldDecl(FieldDecl *fieldDecl) {
+    auto reprPair = fieldDecl->type.repr();
+    out << "FieldDecl <" << srcLocToPos(fieldDecl->srcLoc) << "> ";
+    out << fieldDecl->fieldName << " '";
+    out << reprPair.first << reprPair.second << "' \n";
+}
+
+void ASTDumper::visitRecordDecl(RecordDecl *recordDecl) {
+    out << "RecordDecl <" << srcLocToPos(recordDecl->srcLoc) << "> ";
+    out << "struct " << recordDecl->recordName << '\n';
+    // TODO: Check and print definition.
+    for (size_t i = 0, e = recordDecl->fields.size(); i < e - 1; ++i) {
+        dumpChild(recordDecl->fields[i]);
+    }
+    dumpLastChild(recordDecl->fields.back());
 }
 
 void ASTDumper::visitBreakStmt(BreakStmt *breakStmt) {

@@ -14,6 +14,8 @@ class DeclRefExpr;
 class ImplicitCastExpr;
 
 class VarDecl;
+class FieldDecl;
+class RecordDecl;
 
 class BreakStmt;
 
@@ -32,6 +34,8 @@ public:
     virtual void visitImplicitCastExpr(ImplicitCastExpr *implicitCast) = 0;
 
     virtual void visitVarDecl(VarDecl *varDecl) = 0;
+    virtual void visitFieldDecl(FieldDecl *fieldDecl) = 0;
+    virtual void visitRecordDecl(RecordDecl *recordDecl) = 0;
 
     virtual void visitBreakStmt(BreakStmt *breakStmt) = 0;
 };

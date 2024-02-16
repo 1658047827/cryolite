@@ -5,6 +5,8 @@
 #include <vector>
 
 class Expr;
+class RecordDecl;
+class EnumDecl;
 
 enum TypeKind {
     VOID,
@@ -17,8 +19,8 @@ enum TypeKind {
 
 class Type {
 public:
-    Type(TypeKind kind, bool complete = true, size_t szCache = 0ULL)
-        : kind(kind), complete(complete), sizeCache(szCache) {}
+    Type(TypeKind kind, bool complete = true, size_t typeSize = 0ULL)
+        : kind(kind), complete(complete), typeSize(typeSize) {}
 
     // repr - Return two string, "left-string + IDENTIFIER + right-string"
     // constitutes the type declaration for this IDENTIFIER. e.g.:
@@ -27,15 +29,15 @@ public:
     // double ( * IDENTIFIER ) ( float )
     // int IDENTIFIER [ 10 ]
     virtual std::pair<std::string, std::string> repr() = 0;
-    virtual size_t getSize() = 0;
+    virtual size_t getTypeSize() = 0;
 
     TypeKind kind;
     // complete - A type is considered incomplete if its size or structure is unknown at a particular point in time.
     bool complete;
-    // sizeCache - To get the size of a specific type, we should call getSize().
-    // getSize() will calculate the size and save the result in sizeCache.
-    // If sizeCache!=0, getSize() will return sizeCache directly.
-    size_t sizeCache;
+    // typeSize - To get the size of a specific type, we should call getTypeSize().
+    // getTypeSize() will calculate the size and save the result in typeSize.
+    // If typeSize!=0, getTypeSize() will return typeSize directly.
+    size_t typeSize;
 };
 
 /**
@@ -70,7 +72,7 @@ class VoidType : public Type {
 public:
     static VoidType *getVoidType();
     std::pair<std::string, std::string> repr() { return std::make_pair("void", ""); }
-    size_t getSize() { return 1ULL; }
+    size_t getTypeSize() { return 1ULL; }
 
 protected:
     // void is incomplete.
@@ -124,7 +126,7 @@ public:
     bool isFloating();
 
     std::pair<std::string, std::string> repr();
-    size_t getSize() { return sizeCache; }
+    size_t getTypeSize() { return typeSize; }
 
     // convRank - [C99 6.3.1.1p1]
     int convRank();
@@ -151,7 +153,7 @@ public:
     PointerType(const QualType &p);
 
     std::pair<std::string, std::string> repr();
-    size_t getSize() { return sizeCache; }
+    size_t getTypeSize() { return typeSize; }
 
     QualType pointee;
 };
@@ -178,7 +180,7 @@ public:
     ConstantArrayType(const QualType &type, size_t size, Expr *expr = nullptr);
 
     std::pair<std::string, std::string> repr();
-    size_t getSize();
+    size_t getTypeSize();
 
     // size - The length of the array, the quantity of elements.
     size_t size;
@@ -197,23 +199,30 @@ public:
  */
 class FunctionType : public Type {
 public:
-    FunctionType(const QualType &type, bool variadic = false, bool isInline = false);
+    FunctionType(const QualType &type, bool variadic = false);
 
-    size_t getSize() { return 1ULL; }
+    size_t getTypeSize() { return 1ULL; }
 
     QualType retType;
     std::vector<QualType> params;
     bool isVariadic;
-    bool fsInlineSpecified;
 };
 
 // Struct or union
 class RecordType : public Type {
 public:
+    // TODO: Completeness, typeSize.
+    RecordType(RecordDecl *d) : Type(TypeKind::RECORD), decl(d) {}
+
+    std::pair<std::string, std::string> repr();
+    size_t getTypeSize() { return 0ULL; }
+
+    RecordDecl *decl;
 };
 
 class EnumType : public Type {
 public:
+    EnumDecl *decl;
 };
 
 #endif

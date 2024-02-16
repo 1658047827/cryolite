@@ -2,15 +2,12 @@
 #define _CRYOLITE_PARSER_H_
 
 #include "ast.h"
-#include "idtable.h"
+#include "scope.h"
 #include "token.h"
 #include <bitset>
 #include <variant>
 
 using TokenBitSet = std::bitset<NUM_TOKENS>;
-
-class Scope {
-};
 
 class DeclSpec {
 public:
@@ -90,6 +87,9 @@ public:
     // function-specifier
     bool fsInlineSpecified;
 
+    // typeRep - For a typedef or struct, it might contain the declaration for these.
+    void *typeRep;
+
     SourceLocation storageClassSpecLoc;
     SourceLocation tswLoc, tscLoc, tssLoc, tstLoc;
     SourceLocation tqConstLoc, tqRestrictLoc, tqVolatileLoc;
@@ -129,7 +129,7 @@ public:
     bool setStorageClassSpec(SCS s, SourceLocation loc);
     bool setTypeSpecWidth(TSW w, SourceLocation loc);
     bool setTypeSpecSign(TSS s, SourceLocation loc);
-    bool setTypeSpecType(TST t, SourceLocation loc, bool owned = false);
+    bool setTypeSpecType(TST t, SourceLocation loc, void *rep = nullptr, bool owned = false);
     bool setTypeSpecError();
     bool setTypeQual(TQ t, SourceLocation loc);
     bool setFunctionSpecInline(SourceLocation loc);
@@ -301,6 +301,13 @@ public:
     bool isInvalidType() { return invalidType || ds.typeSpecType == DeclSpec::TST_ERROR; }
 };
 
+struct FieldDeclarator {
+    Declarator d;
+    Expr *bitFieldWidth;
+    explicit FieldDeclarator(DeclSpec &ds)
+        : d(ds, Declarator::MEMBER_CONTEXT), bitFieldWidth(nullptr) {}
+};
+
 QualType convertDeclSpecToType(const DeclSpec &ds, SourceLocation loc, bool &isInvalid);
 QualType getTypeForDeclarator(Declarator &d);
 
@@ -357,6 +364,15 @@ public:
     /**
      * Declarations
      */
+    enum TagUseKind {
+        DEFINITION,
+        DECLARATION,
+        REFERENCE
+    };
+    void parseRecordSpecifier(SourceLocation loc, DeclSpec &ds);
+
+    void parseDeclarationSpecifiers(DeclSpec &ds);
+
     DeclGroup *parseDeclaration(Declarator::TheContext context);
     void parseDeclarator(Declarator &d);
     void parseParenDeclarator(Declarator &d);
@@ -365,9 +381,10 @@ public:
     void parseDirectDeclarator(Declarator &d);
     DeclGroup *parseInitDeclaratorListAfterFirstDeclarator(Declarator &d);
     void parseEnumSpecifier(SourceLocation loc, DeclSpec &ds);
-    void parseRecordSpecifier(TokenKind tagKind, SourceLocation loc, DeclSpec &ds);
-    void parseStructUnionBody(SourceLocation loc, DeclSpec::TST);
-    void parseDeclarationSpecifiers(DeclSpec &ds);
+
+    RecordDecl *parseStructUnionBody(SourceLocation loc, DeclSpec::TST specType);
+    void parseStructDeclaration(DeclSpec &ds, std::vector<FieldDeclarator> &fields);
+
     void parseSpecifierQualifierList(DeclSpec &ds);
     void parseTypeQualifierListOpt(DeclSpec &ds);
     QualType parseTypeName();

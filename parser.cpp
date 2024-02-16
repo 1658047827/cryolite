@@ -47,12 +47,13 @@ bool DeclSpec::setTypeSpecSign(TSS s, SourceLocation loc) {
     return false;
 }
 
-bool DeclSpec::setTypeSpecType(TST t, SourceLocation loc, bool owned) {
+bool DeclSpec::setTypeSpecType(TST t, SourceLocation loc, void *rep, bool owned) {
     if (typeSpecType != TST_UNSPECIFIED) {
         error(loc, "invalid declaration specifier combination");
         return true;
     }
     typeSpecType = t;
+    typeRep = rep;
     tstLoc = loc;
     typeSpecOwned = owned;
     return false;
@@ -244,14 +245,25 @@ QualType convertDeclSpecToType(const DeclSpec &ds, SourceLocation loc, bool &isI
         // TODO: Support bool.
         break;
     case DeclSpec::TST_ENUM:
+        // TODO
+        break;
     case DeclSpec::TST_UNION:
     case DeclSpec::TST_STRUCT: {
-
+        Decl *d = static_cast<Decl *>(ds.typeRep);
+        RecordDecl *rd = dynamic_cast<RecordDecl *>(d);
+        result.type = new RecordType(rd);
         break;
     }
     case DeclSpec::TST_TYPENAME: {
+        // TODO
     }
     }
+
+    // Apply const/volatile/restrict qualifiers to T.
+    if (unsigned typeQuals = ds.typeQualifiers) {
+    }
+
+    return result;
 }
 
 QualType getTypeForDeclarator(Declarator &d) {
@@ -267,6 +279,23 @@ QualType getTypeForDeclarator(Declarator &d) {
         break;
     }
     }
+
+    // TODO
+    for (unsigned i = 0, e = d.declTypeInfo.size(); i != e; ++i) {
+        DeclaratorChunk &declType = d.declTypeInfo[e - i - 1];
+        switch (declType.chunkKind) {
+        case DeclaratorChunk::POINTER:
+            break;
+        case DeclaratorChunk::ARRAY:
+            break;
+        case DeclaratorChunk::FUNCTION:
+            break;
+        default:
+            break;
+        }
+    }
+
+    return t;
 }
 
 unsigned int parseIntegerSuffix(NumericLiteralParser &parser) {
@@ -898,9 +927,7 @@ void Parser::parseDeclarationSpecifiers(DeclSpec &ds) {
         // record-specifier
         case TK_STRUCT:
         case TK_UNION: {
-            TokenKind k = (*cursor)->getKind();
-            ++cursor;
-            parseRecordSpecifier(k, loc, ds);
+            parseRecordSpecifier(loc, ds);
             continue;
         }
 
@@ -931,6 +958,11 @@ void Parser::parseDeclarationSpecifiers(DeclSpec &ds) {
 }
 
 void Parser::parseSpecifierQualifierList(DeclSpec &ds) {
+    // specifier-qualifier-list is a subset of declaration-specifiers.
+    // Just parse declaration-specifiers and complain about extra stuff.
+    parseDeclarationSpecifiers(ds);
+
+    // TODO
 }
 
 QualType Parser::parseTypeName() {
@@ -949,16 +981,19 @@ QualType Parser::parseTypeName() {
 void Parser::parseEnumSpecifier(SourceLocation loc, DeclSpec &ds) {
 }
 
-void Parser::parseRecordSpecifier(TokenKind tagKind, SourceLocation loc, DeclSpec &ds) {
+void Parser::parseRecordSpecifier(SourceLocation loc, DeclSpec &ds) {
     DeclSpec::TST tagType;
-    if (tagKind == TK_STRUCT)
+    TokenKind k = (*cursor)->getKind();
+    ++cursor; // Consume struct-or-union.
+    if (k == TK_STRUCT)
         tagType = DeclSpec::TST_STRUCT;
-    else if (tagKind == TK_UNION)
+    else if (k == TK_UNION)
         tagType = DeclSpec::TST_UNION;
     else
         assert(0 && "Not a record specifier");
 
-    std::string name = "";
+    // Parse the (optional) record name.
+    std::string name;
     SourceLocation nameLoc;
     if (isKind(cursor, TK_IDENTIFIER)) {
         name = (*cursor)->getStr();
@@ -966,23 +1001,30 @@ void Parser::parseRecordSpecifier(TokenKind tagKind, SourceLocation loc, DeclSpe
         ++cursor;
     }
 
-    std::string tagUseKind;
+    // There are three options here.
+    // If we have 'struct foo;', then this is a forward declaration.
+    // If we have 'struct foo {...' then this is a definition.
+    // Otherwise we have something like 'struct foo x', a reference.
+    TagUseKind tagUseKind;
     if (isKind(cursor, TK_LBRACE))
-        tagUseKind = "definition";
+        tagUseKind = DEFINITION;
     else if (isKind(cursor, TK_SEMI))
-        tagUseKind = "declaration";
+        tagUseKind = DECLARATION;
     else
-        tagUseKind = "reference";
+        tagUseKind = REFERENCE;
 
-    if (name.empty() && tagUseKind != "definition") {
-        error(loc, "declaration or reference to an anonymous record");
+    if (name.empty() && tagUseKind != DEFINITION) {
+        error(loc, "illegal anonymous record");
         // Skip the rest of this declarator, up until the comma or semicolon.
         while (!isKind(cursor, TK_COMMA) && !isKind(cursor, TK_SEMI))
             ++cursor;
+        return;
     }
 
     bool Owned = false;
-    parseStructUnionBody();
+    RecordDecl *record = parseStructUnionBody(loc, tagType);
+    record->recordName = name;
+    ds.setTypeSpecType(tagType, loc, record);
 }
 
 void Parser::parseDeclarator(Declarator &d) {
@@ -1082,4 +1124,66 @@ void Parser::parseParenDeclarator(Declarator &d) {
 }
 
 void Parser::parseBracketDeclarator(Declarator &d) {
+}
+
+RecordDecl *Parser::parseStructUnionBody(SourceLocation loc, DeclSpec::TST specType) {
+    RecordDecl *rd = new RecordDecl(loc, specType == DeclSpec::TST_STRUCT);
+    SourceLocation lBraceLoc = (*cursor)->getLoc();
+    ++cursor;
+
+    std::vector<FieldDeclarator> fieldDeclarators;
+
+    while (!isKind(cursor, TK_RBRACE)) {
+        // Each iteration of this loop reads one struct-declaration.
+        DeclSpec ds;
+        fieldDeclarators.clear();
+        parseStructDeclaration(ds, fieldDeclarators);
+        for (auto &fd : fieldDeclarators) {
+            QualType qt = getTypeForDeclarator(fd.d);
+            FieldDecl *field = new FieldDecl(fd.d.identifierLoc, qt, fd.d.identifier, fd.bitFieldWidth);
+            rd->fields.push_back(field);
+        }
+
+        if (isKind(cursor, TK_SEMI))
+            ++cursor;
+    }
+
+    return rd;
+}
+
+void Parser::parseStructDeclaration(DeclSpec &ds, std::vector<FieldDeclarator> &fields) {
+    // Parse the common specifier-qualifiers-list piece.
+    SourceLocation dsLoc = (*cursor)->getLoc();
+    parseSpecifierQualifierList(ds);
+
+    // A free-standing declaration specifier.
+    if (isKind(cursor, TK_SEMI)) {
+        warning(dsLoc, "declaration does not declare a member");
+        return;
+    }
+
+    // Read struct-declarators until we find the semicolon.
+    fields.emplace_back(ds);
+    while (true) {
+        FieldDeclarator &declaratorInfo = fields.back();
+
+        // struct-declarator:
+        //     declarator
+        //     declarator{opt} ':' constant-expression
+        if (!isKind(cursor, TK_COLON))
+            parseDeclarator(declaratorInfo.d);
+        if (isKind(cursor, TK_COLON)) {
+            ++cursor;
+            Expr *res = parseConditionalExpression();
+            declaratorInfo.bitFieldWidth = res;
+        }
+
+        // Meet the end of struct-declarator-list.
+        if (!isKind(cursor, TK_COMMA))
+            return;
+
+        ++cursor; // Consume the comma.
+
+        fields.emplace_back(ds);
+    }
 }

@@ -45,6 +45,10 @@ public:
     SourceLocation getLoc();
     std::string getStr();
     std::string toString();
+
+    bool is(TokenKind k) const { return kind == k; }
+    bool isNot(TokenKind k) const { return kind != k; }
+
     void hideSetAdd(std::string &tokenStr);
     bool hideSetHas(std::string &tokenStr);
 
