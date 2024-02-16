@@ -1024,6 +1024,7 @@ void Parser::parseRecordSpecifier(SourceLocation loc, DeclSpec &ds) {
     bool Owned = false;
     RecordDecl *record = parseStructUnionBody(loc, tagType);
     record->recordName = name;
+    record->isDef = tagUseKind == DEFINITION;
     ds.setTypeSpecType(tagType, loc, record);
 }
 
@@ -1138,6 +1139,12 @@ RecordDecl *Parser::parseStructUnionBody(SourceLocation loc, DeclSpec::TST specT
         DeclSpec ds;
         fieldDeclarators.clear();
         parseStructDeclaration(ds, fieldDeclarators);
+
+        if (ds.typeSpecType == DeclSpec::TST_STRUCT || ds.typeSpecType == DeclSpec::TST_UNION) {
+            RecordDecl *r = static_cast<RecordDecl *>(ds.typeRep);
+            rd->fields.push_back(r);
+        }
+
         for (auto &fd : fieldDeclarators) {
             QualType qt = getTypeForDeclarator(fd.d);
             FieldDecl *field = new FieldDecl(fd.d.identifierLoc, qt, fd.d.identifier, fd.bitFieldWidth);
@@ -1148,6 +1155,7 @@ RecordDecl *Parser::parseStructUnionBody(SourceLocation loc, DeclSpec::TST specT
             ++cursor;
     }
 
+    ++cursor; // Consume the '}'.
     return rd;
 }
 

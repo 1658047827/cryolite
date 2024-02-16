@@ -6,12 +6,12 @@ typedef unsigned long long ull;
 const int w = 10;
 
 struct Node {
-    int id: ' ';
+    int id : ' ';
     char *name;
     struct Internal {
         int length;
         int width;
-    };
+    } internal;
     float;
 };
 

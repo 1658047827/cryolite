@@ -3,4 +3,7 @@ struct Node {
     int id;
     double val;
     int next;
+    struct Extra {
+        char *msg;
+    } extra;
 }

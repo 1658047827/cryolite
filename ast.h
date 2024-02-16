@@ -266,12 +266,14 @@ public:
 
 class RecordDecl : public Decl {
 public:
-    RecordDecl(const SourceLocation &loc, bool isStruct = true, std::string name = "");
+    RecordDecl(const SourceLocation &loc, bool isStruct = true, bool isDef = true, std::string name = "");
 
     void accept(Visitor *v) { v->visitRecordDecl(this); }
 
     // isStruct - True if this record is a struct, false if this record is an union.
     bool isStruct;
+    // isDef -
+    bool isDef;
     std::string recordName;
     // fields - A vector of FieldDecl/RecordDecl.
     std::vector<Decl *> fields;
