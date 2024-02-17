@@ -403,7 +403,6 @@ public:
     TransUnit *parseTranslationUnit();
 
 private:
-    inline bool isKind(TokenSeqConstIter &iter, TokenKind kind);
     void expect(TokenSeqConstIter &iter, TokenKind kind);
     void initBitSet();
     template <typename... Args>

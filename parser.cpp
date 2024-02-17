@@ -324,10 +324,6 @@ unsigned int parseFloatingSuffix(NumericLiteralParser &parser) {
     return ret;
 }
 
-inline bool Parser::isKind(TokenSeqConstIter &iter, TokenKind kind) {
-    return (*iter)->getKind() == kind;
-}
-
 void Parser::expect(TokenSeqConstIter &iter, TokenKind kind) {
     if ((*iter)->getKind() != kind) {
         error((*iter)->getLoc(), "expected '" + tokenKind2Str.at(kind) + "'");
@@ -808,7 +804,7 @@ StringLiteral *Parser::parseStringLiterals() {
     std::string val;
     // Continuous string literals like "hello" " world" produces
     // a single string literal "hello world".
-    while (isKind(cursor, TK_STRING_LITERAL)) {
+    while (tok.is(TK_STRING_LITERAL)) {
         std::string tmp = tok.getStr();
         // Remove "".
         tmp.erase(0, 1);
@@ -984,7 +980,7 @@ void Parser::parseRecordSpecifier(SourceLocation loc, DeclSpec &ds) {
     // Parse the (optional) record name.
     std::string name;
     SourceLocation nameLoc;
-    if (isKind(cursor, TK_IDENTIFIER)) {
+    if (tok.is(TK_IDENTIFIER)) {
         name = tok.getStr();
         nameLoc = consumeToken();
     }
@@ -994,9 +990,9 @@ void Parser::parseRecordSpecifier(SourceLocation loc, DeclSpec &ds) {
     // If we have 'struct foo {...' then this is a definition.
     // Otherwise we have something like 'struct foo x', a reference.
     TagUseKind tagUseKind;
-    if (isKind(cursor, TK_LBRACE))
+    if (tok.is(TK_LBRACE))
         tagUseKind = DEFINITION;
-    else if (isKind(cursor, TK_SEMI))
+    else if (tok.is(TK_SEMI))
         tagUseKind = DECLARATION;
     else
         tagUseKind = REFERENCE;
@@ -1004,7 +1000,7 @@ void Parser::parseRecordSpecifier(SourceLocation loc, DeclSpec &ds) {
     if (name.empty() && tagUseKind != DEFINITION) {
         error(loc, "illegal anonymous record");
         // Skip the rest of this declarator, up until the comma or semicolon.
-        while (!isKind(cursor, TK_COMMA) && !isKind(cursor, TK_SEMI))
+        while (tok.isNot(TK_COMMA) && tok.isNot(TK_SEMI))
             consumeToken();
         return;
     }
@@ -1050,10 +1046,10 @@ void Parser::parseDeclaratorInternal(Declarator &d, void (Parser::*directDeclPar
 }
 
 void Parser::parseDirectDeclarator(Declarator &d) {
-    if (isKind(cursor, TK_IDENTIFIER) && d.mayHaveIdentifier()) {
+    if (tok.is(TK_IDENTIFIER) && d.mayHaveIdentifier()) {
         d.setIdentifier(tok.getStr(), tok.getLoc());
         consumeToken();
-    } else if (isKind(cursor, TK_LPAR)) {
+    } else if (tok.is(TK_LPAR)) {
         // e.g.: "char (*x)" or "int (*y)(float)"
         parseParenDeclarator(d);
     } else if (d.mayOmitIdentifier()) {
@@ -1068,9 +1064,9 @@ void Parser::parseDirectDeclarator(Declarator &d) {
     }
 
     while (true) {
-        if (isKind(cursor, TK_LPAR)) {
+        if (tok.is(TK_LPAR)) {
             // TODO: ref Clang
-        } else if (isKind(cursor, TK_LSQB)) {
+        } else if (tok.is(TK_LSQB)) {
             parseBracketDeclarator(d);
         } else {
             break;
@@ -1120,7 +1116,7 @@ RecordDecl *Parser::parseStructUnionBody(SourceLocation loc, DeclSpec::TST specT
 
     std::vector<FieldDeclarator> fieldDeclarators;
 
-    while (!isKind(cursor, TK_RBRACE)) {
+    while (tok.isNot(TK_RBRACE)) {
         // Each iteration of this loop reads one struct-declaration.
         DeclSpec ds;
         fieldDeclarators.clear();
@@ -1137,7 +1133,7 @@ RecordDecl *Parser::parseStructUnionBody(SourceLocation loc, DeclSpec::TST specT
             rd->fields.push_back(field);
         }
 
-        if (isKind(cursor, TK_SEMI))
+        if (tok.is(TK_SEMI))
             consumeToken();
     }
 
@@ -1151,7 +1147,7 @@ void Parser::parseStructDeclaration(DeclSpec &ds, std::vector<FieldDeclarator> &
     parseSpecifierQualifierList(ds);
 
     // A free-standing declaration specifier.
-    if (isKind(cursor, TK_SEMI)) {
+    if (tok.is(TK_SEMI)) {
         warning(dsLoc, "declaration does not declare a member");
         return;
     }
@@ -1164,16 +1160,16 @@ void Parser::parseStructDeclaration(DeclSpec &ds, std::vector<FieldDeclarator> &
         // struct-declarator:
         //     declarator
         //     declarator{opt} ':' constant-expression
-        if (!isKind(cursor, TK_COLON))
+        if (tok.isNot(TK_COLON))
             parseDeclarator(declaratorInfo.d);
-        if (isKind(cursor, TK_COLON)) {
+        if (tok.is(TK_COLON)) {
             consumeToken();
             Expr *res = parseConditionalExpression();
             declaratorInfo.bitFieldWidth = res;
         }
 
         // Meet the end of struct-declarator-list.
-        if (!isKind(cursor, TK_COMMA))
+        if (tok.isNot(TK_COMMA))
             return;
 
         consumeToken(); // Consume the comma.
