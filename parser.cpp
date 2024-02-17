@@ -330,7 +330,7 @@ inline bool Parser::isKind(TokenSeqConstIter &iter, TokenKind kind) {
 
 void Parser::expect(TokenSeqConstIter &iter, TokenKind kind) {
     if ((*iter)->getKind() != kind) {
-        error((*iter)->getLoc(), "expected '" + tokenKind2Str.at(kind) + "' here");
+        error((*iter)->getLoc(), "expected '" + tokenKind2Str.at(kind) + "'");
     }
 }
 
@@ -408,7 +408,7 @@ Expr *Parser::parseAssignmentExpression() {
     // Because this is a right-associative expression, we cannot use a loop structure
     // in the same manner as we do with left-associative expressions.
     BinaryOpKind op;
-    switch ((*cursor)->getKind()) {
+    switch (tok.getKind()) {
     case TK_EQUAL:
         op = BinaryOpKind::ASSIGN;
         break;
@@ -446,8 +446,7 @@ Expr *Parser::parseAssignmentExpression() {
         // Now it seems to be a single conditional expression.
         return lhs;
     }
-    SourceLocation loc = (*cursor)->getLoc();
-    ++cursor;
+    SourceLocation loc = consumeToken();
     Expr *rhs = parseAssignmentExpression();
     // Break compound assignment into two BinaryExprs.
     // e.g.: a += b => a = a + b
@@ -459,12 +458,11 @@ Expr *Parser::parseAssignmentExpression() {
 
 Expr *Parser::parseConditionalExpression() {
     Expr *condExpr = parseLogicalOrExpression();
-    if (isKind(cursor, TK_QUESTION)) {
-        SourceLocation loc = (*cursor)->getLoc();
-        ++cursor;
+    if (tok.is(TK_QUESTION)) {
+        SourceLocation loc = consumeToken();
         Expr *trueExpr = parseExpression();
         expect(cursor, TK_COLON);
-        ++cursor;
+        consumeToken();
         Expr *falseExpr = parseConditionalExpression();
         return new TernaryExpr(loc, condExpr, trueExpr, falseExpr);
     }
@@ -473,9 +471,8 @@ Expr *Parser::parseConditionalExpression() {
 
 Expr *Parser::parseSimpleBinaryExpression(Expr *(Parser::*parseTerm)(), TokenKind kind, BinaryOpKind op) {
     Expr *lhs = (this->*parseTerm)();
-    while (isKind(cursor, kind)) {
-        SourceLocation loc = (*cursor)->getLoc();
-        ++cursor;
+    while (tok.is(kind)) {
+        SourceLocation loc = consumeToken();
         Expr *rhs = (this->*parseTerm)();
         lhs = new BinaryExpr(loc, op, lhs, rhs);
     }
@@ -506,7 +503,7 @@ Expr *Parser::parseEqualityExpression() {
     Expr *lhs = parseRelationalExpression();
     while (true) {
         BinaryOpKind op;
-        switch ((*cursor)->getKind()) {
+        switch (tok.getKind()) {
         case TK_EQUALEQUAL:
             op = BinaryOpKind::EQUAL;
             break;
@@ -516,8 +513,7 @@ Expr *Parser::parseEqualityExpression() {
         default:
             return lhs;
         }
-        SourceLocation loc = (*cursor)->getLoc();
-        ++cursor;
+        SourceLocation loc = consumeToken();
         Expr *rhs = parseRelationalExpression();
         lhs = new BinaryExpr(loc, op, lhs, rhs);
     }
@@ -527,7 +523,7 @@ Expr *Parser::parseRelationalExpression() {
     Expr *lhs = parseShiftExpression();
     while (true) {
         BinaryOpKind op;
-        switch ((*cursor)->getKind()) {
+        switch (tok.getKind()) {
         case TK_LESS:
             op = BinaryOpKind::LESS;
             break;
@@ -543,8 +539,7 @@ Expr *Parser::parseRelationalExpression() {
         default:
             return lhs;
         }
-        SourceLocation loc = (*cursor)->getLoc();
-        ++cursor;
+        SourceLocation loc = consumeToken();
         Expr *rhs = parseShiftExpression();
         lhs = new BinaryExpr(loc, op, lhs, rhs);
     }
@@ -554,7 +549,7 @@ Expr *Parser::parseShiftExpression() {
     Expr *lhs = parseAdditiveExpression();
     while (true) {
         BinaryOpKind op;
-        switch ((*cursor)->getKind()) {
+        switch (tok.getKind()) {
         case TK_LESSLESS:
             op = BinaryOpKind::SHL;
             break;
@@ -564,8 +559,7 @@ Expr *Parser::parseShiftExpression() {
         default:
             return lhs;
         }
-        SourceLocation loc = (*cursor)->getLoc();
-        ++cursor;
+        SourceLocation loc = consumeToken();
         Expr *rhs = parseAdditiveExpression();
         lhs = new BinaryExpr(loc, op, lhs, rhs);
     }
@@ -575,7 +569,7 @@ Expr *Parser::parseAdditiveExpression() {
     Expr *lhs = parseMultiplicativeExpression();
     while (true) {
         BinaryOpKind op;
-        switch ((*cursor)->getKind()) {
+        switch (tok.getKind()) {
         case TK_PLUS:
             op = BinaryOpKind::ADD;
             break;
@@ -585,8 +579,7 @@ Expr *Parser::parseAdditiveExpression() {
         default:
             return lhs;
         }
-        SourceLocation loc = (*cursor)->getLoc();
-        ++cursor;
+        SourceLocation loc = consumeToken();
         Expr *rhs = parseMultiplicativeExpression();
         lhs = new BinaryExpr(loc, op, lhs, rhs);
     }
@@ -596,7 +589,7 @@ Expr *Parser::parseMultiplicativeExpression() {
     Expr *lhs = parseCastExpression();
     while (true) {
         BinaryOpKind op;
-        switch ((*cursor)->getKind()) {
+        switch (tok.getKind()) {
         case TK_STAR:
             op = BinaryOpKind::MUL;
             break;
@@ -609,8 +602,7 @@ Expr *Parser::parseMultiplicativeExpression() {
         default:
             return lhs;
         }
-        SourceLocation loc = (*cursor)->getLoc();
-        ++cursor;
+        SourceLocation loc = consumeToken();
         Expr *rhs = parseCastExpression();
         lhs = new BinaryExpr(loc, op, lhs, rhs);
     }
@@ -618,7 +610,7 @@ Expr *Parser::parseMultiplicativeExpression() {
 
 Expr *Parser::parseCastExpression() {
     TokenSeqConstIter nxt = std::next(cursor, 1);
-    if (isKind(cursor, TK_LPAR) && isFirstOfTypeName(nxt)) {
+    if (tok.is(TK_LPAR) && isFirstOfTypeName(nxt)) {
         // TODO
         return nullptr;
     } else {
@@ -627,7 +619,7 @@ Expr *Parser::parseCastExpression() {
 }
 
 Expr *Parser::parseUnaryExpression() {
-    switch ((*cursor)->getKind()) {
+    switch (tok.getKind()) {
     case TK_PLUSPLUS:
         return parsePrefixIncrementOrDecrement(UnaryOpKind::PREINC);
     case TK_MINUSMINUS:
@@ -652,28 +644,25 @@ Expr *Parser::parseUnaryExpression() {
 }
 
 UnaryExpr *Parser::parsePrefixIncrementOrDecrement(UnaryOpKind op) {
-    SourceLocation loc = (*cursor)->getLoc();
-    ++cursor;
+    SourceLocation loc = consumeToken();
     Expr *operand = parseUnaryExpression();
     return new UnaryExpr(loc, op, operand);
 }
 
 UnaryExpr *Parser::parseUnaryOperatorExpression(UnaryOpKind op) {
-    SourceLocation loc = (*cursor)->getLoc();
-    ++cursor; // Consume the unary operator.
+    SourceLocation loc = consumeToken(); // Consume the unary operator.
     Expr *expr = parseCastExpression();
     return new UnaryExpr(loc, op, expr);
 }
 
 SizeofExpr *Parser::parseSizeof() {
-    SourceLocation loc = (*cursor)->getLoc();
-    ++cursor; // Consume the SIZEOF.
+    SourceLocation loc = consumeToken(); // Consume the SIZEOF.
     TokenSeqConstIter nxt = std::next(cursor, 1);
-    if (isKind(cursor, TK_LPAR) && isFirstOfTypeName(nxt)) {
-        ++cursor; // Consume the '('.
+    if (tok.is(TK_LPAR) && isFirstOfTypeName(nxt)) {
+        consumeToken(); // Consume the '('.
         QualType qt = parseTypeName();
         expect(cursor, TK_RPAR);
-        ++cursor; // Consume the ')'.
+        consumeToken(); // Consume the ')'.
         return new SizeofExpr(loc, qt);
     } else {
         Expr *expr = parseUnaryExpression();
@@ -685,7 +674,7 @@ Expr *Parser::parsePostfixExpression() {
     // Postfix expression, which always starts with a compound literal or primary expression,
     // is followed by a series of suffixes like '++', '--', '->', '.' etc.
     Expr *expr;
-    if (isKind(cursor, TK_LPAR) && isFirstOfTypeName(cursor)) {
+    if (tok.is(TK_LPAR) && isFirstOfTypeName(cursor)) {
         expr = parseCompoundLiteral();
     } else {
         expr = parsePrimaryExpression();
@@ -695,21 +684,21 @@ Expr *Parser::parsePostfixExpression() {
 
 Expr *Parser::parsePostfixExpressionSuffix(Expr *expr) {
     while (true) {
-        switch ((*cursor)->getKind()) {
+        switch (tok.getKind()) {
         case TK_LSQB:
         case TK_LPAR:
         case TK_DOT:
         case TK_ARROW:
         case TK_PLUSPLUS:
-            expr = new UnaryExpr((*cursor)->getLoc(), POSINC, expr);
+            expr = new UnaryExpr(tok.getLoc(), POSINC, expr);
             break;
         case TK_MINUSMINUS:
-            expr = new UnaryExpr((*cursor)->getLoc(), POSDEC, expr);
+            expr = new UnaryExpr(tok.getLoc(), POSDEC, expr);
             break;
         default:
             return expr;
         }
-        ++cursor;
+        consumeToken();
     }
 }
 
@@ -725,13 +714,13 @@ Expr *Parser::parseArraySubscripting() {
 
 Expr *Parser::parsePrimaryExpression() {
     Expr *ret;
-    SourceLocation loc = (*cursor)->getLoc();
-    switch ((*cursor)->getKind()) {
+    SourceLocation loc = tok.getLoc();
+    switch (tok.getKind()) {
     case TK_IDENTIFIER:
         return parseIdentifier();
     case TK_NUMERIC_CONSTANT: {
-        std::string tok = (*cursor)->getStr();
-        NumericLiteralParser parser(tok.data(), tok.data() + tok.size(), loc);
+        std::string s = tok.getStr();
+        NumericLiteralParser parser(s.data(), s.data() + s.size(), loc);
         if (parser.hadError) {
             // TODO: A better way?
             return nullptr;
@@ -758,26 +747,26 @@ DeclRefExpr *Parser::parseIdentifier() {
 
 Expr *Parser::parseParenthesesExpression() {
     expect(cursor, TK_LPAR);
-    ++cursor;
+    consumeToken();
     Expr *expr = parseExpression();
     expect(cursor, TK_RPAR);
     // Maintain consistency: after parseXXX, cursor always points to next token.
-    ++cursor;
+    consumeToken();
     return expr;
 }
 
 IntegerConstant *Parser::parseIntegerConstant(NumericLiteralParser &parser) {
-    SourceLocation loc = (*cursor)->getLoc();
-    std::string tok = (*cursor)->getStr();
+    SourceLocation loc = tok.getLoc();
+    std::string s = tok.getStr();
     unsigned long long val = 0;
     size_t idx = 0;
     try {
-        val = std::stoull(tok, &idx, parser.getRadix());
+        val = std::stoull(s, &idx, parser.getRadix());
     } catch (const std::out_of_range &e) {
         error(loc, "integer constant too large");
         val = 0;
     }
-    ++cursor; // Maintain consistency.
+    consumeToken(); // Maintain consistency.
     // TODO: Automatically determine the type based on the size of the integer constant.
     unsigned int builtinTypeFlags = parseIntegerSuffix(parser);
     BuiltinType *builtinType = BuiltinType::getBuiltinType(builtinTypeFlags);
@@ -785,17 +774,17 @@ IntegerConstant *Parser::parseIntegerConstant(NumericLiteralParser &parser) {
 }
 
 FloatingConstant *Parser::parseFloatingConstant(NumericLiteralParser &parser) {
-    SourceLocation loc = (*cursor)->getLoc();
-    std::string tok = (*cursor)->getStr();
+    SourceLocation loc = tok.getLoc();
+    std::string s = tok.getStr();
     long double val;
     size_t idx = 0;
     try {
-        val = std::stold(tok, &idx);
+        val = std::stold(s, &idx);
     } catch (const std::out_of_range &e) {
         error(loc, "floating constant too large");
         val = 0.0;
     }
-    ++cursor; // Maintain consistency.
+    consumeToken(); // Maintain consistency.
     // TODO: Automatically determine the type based on the size of the floating constant.
     unsigned int builtinTypeFlags = parseFloatingSuffix(parser);
     BuiltinType *builtinType = BuiltinType::getBuiltinType(builtinTypeFlags);
@@ -803,29 +792,29 @@ FloatingConstant *Parser::parseFloatingConstant(NumericLiteralParser &parser) {
 }
 
 CharacterConstant *Parser::parseCharacterConstant() {
-    SourceLocation loc = (*cursor)->getLoc();
-    std::string tok = (*cursor)->getStr(); // "'c'"
+    SourceLocation loc = tok.getLoc();
+    std::string s = tok.getStr(); // "'c'"
     unsigned int val;
     // TODO: Support more kinds of character constants.
-    val = tok[1];
-    ++cursor; // Maintain consistency.
+    val = s[1];
+    consumeToken(); // Maintain consistency.
     BuiltinType *builtinType = BuiltinType::getBuiltinType(BuiltinType::INT);
     return new CharacterConstant(loc, QualType(builtinType), val);
 }
 
 StringLiteral *Parser::parseStringLiterals() {
     // TODO: Support more kinds of string literals.
-    SourceLocation loc = (*cursor)->getLoc();
+    SourceLocation loc = tok.getLoc();
     std::string val;
     // Continuous string literals like "hello" " world" produces
     // a single string literal "hello world".
     while (isKind(cursor, TK_STRING_LITERAL)) {
-        std::string tmp = (*cursor)->getStr();
+        std::string tmp = tok.getStr();
         // Remove "".
         tmp.erase(0, 1);
         tmp.pop_back();
         val.append(tmp);
-        ++cursor;
+        consumeToken();
     }
     size_t sz = val.size() + 1; // '\0'
     BuiltinType *charT = BuiltinType::getBuiltinType(BuiltinType::CHAR);
@@ -843,9 +832,9 @@ StringLiteral *Parser::parseStringLiterals() {
 void Parser::parseDeclarationSpecifiers(DeclSpec &ds) {
     while (true) {
         bool isInvalid = false;
-        SourceLocation loc = (*cursor)->getLoc();
+        SourceLocation loc = tok.getLoc();
 
-        switch ((*cursor)->getKind()) {
+        switch (tok.getKind()) {
         default:
         DoneWithDeclSpec:
             ds.finish();
@@ -864,7 +853,7 @@ void Parser::parseDeclarationSpecifiers(DeclSpec &ds) {
             isInvalid = ds.setTypeSpecType(DeclSpec::TST_TYPENAME, loc);
             if (isInvalid) break;
 
-            ++cursor; // Consume the identifier.
+            consumeToken(); // Consume the identifier.
 
             continue;
         }
@@ -933,7 +922,7 @@ void Parser::parseDeclarationSpecifiers(DeclSpec &ds) {
 
         // enum-specifier
         case TK_ENUM:
-            ++cursor;
+            consumeToken();
             parseEnumSpecifier(loc, ds);
             continue;
 
@@ -953,7 +942,7 @@ void Parser::parseDeclarationSpecifiers(DeclSpec &ds) {
         if (isInvalid) {
             error(loc, "illegal declaration specifiers");
         }
-        ++cursor;
+        consumeToken();
     }
 }
 
@@ -983,8 +972,8 @@ void Parser::parseEnumSpecifier(SourceLocation loc, DeclSpec &ds) {
 
 void Parser::parseRecordSpecifier(SourceLocation loc, DeclSpec &ds) {
     DeclSpec::TST tagType;
-    TokenKind k = (*cursor)->getKind();
-    ++cursor; // Consume struct-or-union.
+    TokenKind k = tok.getKind();
+    consumeToken(); // Consume struct-or-union.
     if (k == TK_STRUCT)
         tagType = DeclSpec::TST_STRUCT;
     else if (k == TK_UNION)
@@ -996,9 +985,8 @@ void Parser::parseRecordSpecifier(SourceLocation loc, DeclSpec &ds) {
     std::string name;
     SourceLocation nameLoc;
     if (isKind(cursor, TK_IDENTIFIER)) {
-        name = (*cursor)->getStr();
-        nameLoc = (*cursor)->getLoc();
-        ++cursor;
+        name = tok.getStr();
+        nameLoc = consumeToken();
     }
 
     // There are three options here.
@@ -1017,7 +1005,7 @@ void Parser::parseRecordSpecifier(SourceLocation loc, DeclSpec &ds) {
         error(loc, "illegal anonymous record");
         // Skip the rest of this declarator, up until the comma or semicolon.
         while (!isKind(cursor, TK_COMMA) && !isKind(cursor, TK_SEMI))
-            ++cursor;
+            consumeToken();
         return;
     }
 
@@ -1042,7 +1030,7 @@ DeclGroup *Parser::parseDeclaration(Declarator::TheContext context) {
  * is parsed by the function passed to it.
  */
 void Parser::parseDeclaratorInternal(Declarator &d, void (Parser::*directDeclParser)(Declarator &)) {
-    TokenKind tokKind = (*cursor)->getKind();
+    TokenKind tokKind = tok.getKind();
     // Not a pointer.
     if (tokKind != TokenKind::TK_STAR) {
         if (directDeclParser)
@@ -1051,8 +1039,7 @@ void Parser::parseDeclaratorInternal(Declarator &d, void (Parser::*directDeclPar
     }
 
     // Otherwise, '*' -> pointer.
-    SourceLocation loc = (*cursor)->getLoc();
-    ++cursor; // Consume the '*'.
+    SourceLocation loc = consumeToken(); // Consume the '*'.
 
     DeclSpec ds;
     parseTypeQualifierListOpt(ds);
@@ -1064,19 +1051,19 @@ void Parser::parseDeclaratorInternal(Declarator &d, void (Parser::*directDeclPar
 
 void Parser::parseDirectDeclarator(Declarator &d) {
     if (isKind(cursor, TK_IDENTIFIER) && d.mayHaveIdentifier()) {
-        d.setIdentifier((*cursor)->getStr(), (*cursor)->getLoc());
-        ++cursor;
+        d.setIdentifier(tok.getStr(), tok.getLoc());
+        consumeToken();
     } else if (isKind(cursor, TK_LPAR)) {
         // e.g.: "char (*x)" or "int (*y)(float)"
         parseParenDeclarator(d);
     } else if (d.mayOmitIdentifier()) {
-        d.setIdentifier("", (*cursor)->getLoc());
+        d.setIdentifier("", tok.getLoc());
     } else {
         if (d.context == Declarator::MEMBER_CONTEXT)
-            error((*cursor)->getLoc(), "expected member name or semicolon");
+            error(tok.getLoc(), "expected member name or semicolon");
         else
-            error((*cursor)->getLoc(), "expected identifier after '('");
-        d.setIdentifier("", (*cursor)->getLoc());
+            error(tok.getLoc(), "expected identifier after '('");
+        d.setIdentifier("", tok.getLoc());
         d.invalidType = true;
     }
 
@@ -1096,9 +1083,9 @@ DeclGroup *Parser::parseInitDeclaratorListAfterFirstDeclarator(Declarator &d) {}
 void Parser::parseTypeQualifierListOpt(DeclSpec &ds) {
     while (true) {
         bool isInvalid = false;
-        SourceLocation loc = (*cursor)->getLoc();
+        SourceLocation loc = tok.getLoc();
 
-        switch ((*cursor)->getKind()) {
+        switch (tok.getKind()) {
         case TK_CONST:
             isInvalid = ds.setTypeQual(DeclSpec::TQ_CONST, loc);
             break;
@@ -1117,7 +1104,7 @@ void Parser::parseTypeQualifierListOpt(DeclSpec &ds) {
         if (isInvalid) {
             error(loc, "illegal type qualifier combination");
         }
-        ++cursor; // Remember to consume token.
+        consumeToken(); // Remember to consume token.
     }
 }
 
@@ -1129,8 +1116,7 @@ void Parser::parseBracketDeclarator(Declarator &d) {
 
 RecordDecl *Parser::parseStructUnionBody(SourceLocation loc, DeclSpec::TST specType) {
     RecordDecl *rd = new RecordDecl(loc, specType == DeclSpec::TST_STRUCT);
-    SourceLocation lBraceLoc = (*cursor)->getLoc();
-    ++cursor;
+    SourceLocation lBraceLoc = consumeToken();
 
     std::vector<FieldDeclarator> fieldDeclarators;
 
@@ -1152,16 +1138,16 @@ RecordDecl *Parser::parseStructUnionBody(SourceLocation loc, DeclSpec::TST specT
         }
 
         if (isKind(cursor, TK_SEMI))
-            ++cursor;
+            consumeToken();
     }
 
-    ++cursor; // Consume the '}'.
+    consumeToken(); // Consume the '}'.
     return rd;
 }
 
 void Parser::parseStructDeclaration(DeclSpec &ds, std::vector<FieldDeclarator> &fields) {
     // Parse the common specifier-qualifiers-list piece.
-    SourceLocation dsLoc = (*cursor)->getLoc();
+    SourceLocation dsLoc = tok.getLoc();
     parseSpecifierQualifierList(ds);
 
     // A free-standing declaration specifier.
@@ -1181,7 +1167,7 @@ void Parser::parseStructDeclaration(DeclSpec &ds, std::vector<FieldDeclarator> &
         if (!isKind(cursor, TK_COLON))
             parseDeclarator(declaratorInfo.d);
         if (isKind(cursor, TK_COLON)) {
-            ++cursor;
+            consumeToken();
             Expr *res = parseConditionalExpression();
             declaratorInfo.bitFieldWidth = res;
         }
@@ -1190,7 +1176,7 @@ void Parser::parseStructDeclaration(DeclSpec &ds, std::vector<FieldDeclarator> &
         if (!isKind(cursor, TK_COMMA))
             return;
 
-        ++cursor; // Consume the comma.
+        consumeToken(); // Consume the comma.
 
         fields.emplace_back(ds);
     }

@@ -319,7 +319,11 @@ public:
 class Parser {
 public:
     Parser(TokenSequence &ts)
-        : tksq(ts), cursor(ts.cBegin()) { initBitSet(); }
+        : tksq(ts) {
+        cursor = ts.cBegin();
+        tok = **cursor;
+        initBitSet();
+    }
 
     /**
      * Expressions
@@ -408,6 +412,21 @@ private:
     }
     bool isInBitSet(TokenBitSet &bitset, TokenSeqConstIter &iter);
     bool isFirstOfTypeName(TokenSeqConstIter &iter);
+
+    // consumeToken - Move cursor to the next one and return the location of the consumed token.
+    SourceLocation consumeToken() {
+        prevTokenLoc = tok.getLoc();
+        ++cursor;
+        tok = **cursor;
+        return prevTokenLoc;
+    }
+
+    // tok - The current token we are peeking ahead.
+    // All parsing methods assume that this is valid.
+    Token tok;
+
+    // prevTokenLoc - The location of the token we previously consumed.
+    SourceLocation prevTokenLoc;
 
     TokenSequence &tksq;
     TokenSeqConstIter cursor;

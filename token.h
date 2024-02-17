@@ -34,8 +34,8 @@ static const std::unordered_map<TokenKind, std::string> tokenKind2Str{
 
 class Token {
 public:
-    Token(const TokenKind &kind, SourceLocation &loc)
-        : kind(kind), loc(loc) {}
+    Token() : kind(TokenKind::TK_UNKNOWN) {}
+    Token(const TokenKind &kind, SourceLocation &loc) : kind(kind), loc(loc) {}
     Token(const TokenKind &kind, SourceLocation &loc, const std::string &str)
         : kind(kind), loc(loc), str(str) {}
 
