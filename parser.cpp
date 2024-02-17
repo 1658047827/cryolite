@@ -61,6 +61,7 @@ bool DeclSpec::setTypeSpecType(TST t, SourceLocation loc, void *rep, bool owned)
 
 bool DeclSpec::setTypeSpecError() {
     typeSpecType = TST_ERROR;
+    typeRep = nullptr;
     tstLoc = SourceLocation();
     return false;
 }
@@ -947,7 +948,21 @@ void Parser::parseSpecifierQualifierList(DeclSpec &ds) {
     // Just parse declaration-specifiers and complain about extra stuff.
     parseDeclarationSpecifiers(ds);
 
-    // TODO
+    unsigned specs = ds.getParsedSpecifiers();
+    if (specs == DeclSpec::PQ_NONE) {
+        error(tok.getLoc(), "require type specifier or type qualifier");
+        ds.setTypeSpecError();
+    }
+    if (specs & DeclSpec::PQ_STORAGE_CLASS_SPECIFIER) {
+        if (ds.storageClassSpecLoc.isValid())
+            error(ds.storageClassSpecLoc, "storage class specifier is not allowed");
+        ds.clearStorageClassSpecs();
+    }
+    if (specs & DeclSpec::PQ_FUNCTION_SPECIFIER) {
+        if (ds.fsInlineSpecified)
+            error(ds.fsInlineLoc, "function specifier is not allowed");
+        ds.clearFunctionSpecs();
+    }
 }
 
 QualType Parser::parseTypeName() {
@@ -1165,6 +1180,7 @@ void Parser::parseStructDeclaration(DeclSpec &ds, std::vector<FieldDeclarator> &
         if (tok.is(TK_COLON)) {
             consumeToken();
             Expr *res = parseConditionalExpression();
+            // TODO: Check if this expr is constant.
             declaratorInfo.bitFieldWidth = res;
         }
 

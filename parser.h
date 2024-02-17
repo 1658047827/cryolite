@@ -61,8 +61,8 @@ public:
     };
 
     /**
-     * ParsedSpecifiers - Flags to query which specifiers were applied. This is
-     * returned by getParsedSpecifiers.
+     * ParsedSpecifiers - Flags to query which specifiers were applied.
+     * This is returned by getParsedSpecifiers.
      */
     enum ParsedSpecifiers {
         PQ_NONE = 0,
@@ -103,6 +103,16 @@ public:
           typeSpecOwned(false),
           typeQualifiers(TQ_UNSPECIFIED),
           fsInlineSpecified(false) {}
+
+    void clearStorageClassSpecs() {
+        storageClassSpec = SCS_UNSPECIFIED;
+        storageClassSpecLoc = SourceLocation();
+    }
+
+    void clearFunctionSpecs() {
+        fsInlineSpecified = false;
+        fsInlineLoc = SourceLocation();
+    }
 
     bool hasTypeSpecifier() const {
         return typeSpecType != TST_UNSPECIFIED ||
