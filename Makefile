@@ -29,7 +29,7 @@ type.o: type.cpp type.h
 ast.o: ast.cpp ast.h token.h type.h visitor.h
 	$(CXX) $(CXXFLAGS) -c $<
 
-main.o: main.cpp lexer.h parser.h
+main.o: main.cpp lexer.h parser.h diagnostic.h
 	$(CXX) $(CXXFLAGS) -c $<
 
 clean:

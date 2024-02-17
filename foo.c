@@ -6,4 +6,5 @@ struct Node {
     struct Extra {
         char *msg;
     } extra;
+    float;
 }
