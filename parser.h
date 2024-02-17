@@ -430,6 +430,18 @@ private:
         return prevTokenLoc;
     }
 
+    // skipUntil - Read tokens until we get to the specified token, then consume
+    // it (unless dontConsume is true). Because we cannot guarantee that the
+    // token will ever occur, this skips to the next token, or to some likely
+    // good stopping point. If stopAtSemi is true, skipping will stop at a ';'.
+    //
+    // If skipUntil finds the specified token, it returns true, otherwise it
+    // returns false.
+    bool skipUntil(TokenKind t, bool stopAtSemi = true, bool dontConsume = false) {
+        return skipUntil(&t, 1, stopAtSemi, dontConsume);
+    }
+    bool skipUntil(const TokenKind *toks, unsigned numToks, bool stopAtSemi = true, bool dontConsume = false);
+
     // tok - The current token we are peeking ahead.
     // All parsing methods assume that this is valid.
     Token tok;

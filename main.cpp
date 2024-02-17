@@ -20,8 +20,8 @@ int main(int argc, char *argv[]) {
     parser.parseDeclarationSpecifiers(ds);
     ASTDumper *astDumper = new ASTDumper(std::cout);
     // expr->accept(astDumper);
-    // RecordDecl *d = static_cast<RecordDecl *>(ds.typeRep);
-    // d->accept(astDumper);
+    RecordDecl *d = static_cast<RecordDecl *>(ds.typeRep);
+    d->accept(astDumper);
 
     diagCount();
     return 0;

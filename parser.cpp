@@ -368,6 +368,30 @@ bool Parser::isFirstOfTypeName(TokenSeqConstIter &iter) {
     return isInBitSet(firstOfSpecifierQualifier, iter);
 }
 
+bool Parser::skipUntil(const TokenKind *toks, unsigned numToks, bool stopAtSemi, bool dontConsume) {
+    while (true) {
+        for (unsigned i = 0; i != numToks; ++i) {
+            if (tok.is(toks[i])) {
+                if (!dontConsume)
+                    consumeToken();
+                return true;
+            }
+        }
+
+        switch (tok.getKind()) {
+        case TK_EOF:
+            return false;
+        case TK_SEMI:
+            if (stopAtSemi)
+                return false;
+            // fall through
+        default:
+            consumeToken();
+            break;
+        }
+    }
+}
+
 TransUnit *Parser::parseTranslationUnit() {
     return nullptr;
 }
@@ -740,6 +764,7 @@ Expr *Parser::parsePrimaryExpression() {
 }
 
 DeclRefExpr *Parser::parseIdentifier() {
+    return nullptr;
 }
 
 Expr *Parser::parseParenthesesExpression() {
@@ -976,6 +1001,8 @@ QualType Parser::parseTypeName() {
 
     if (declaratorInfo.isInvalidType())
         return QualType(nullptr);
+
+    return QualType();
 }
 
 void Parser::parseEnumSpecifier(SourceLocation loc, DeclSpec &ds) {
@@ -1034,6 +1061,7 @@ void Parser::parseDeclarator(Declarator &d) {
 }
 
 DeclGroup *Parser::parseDeclaration(Declarator::TheContext context) {
+    return nullptr;
 }
 
 /**
@@ -1089,7 +1117,9 @@ void Parser::parseDirectDeclarator(Declarator &d) {
     }
 }
 
-DeclGroup *Parser::parseInitDeclaratorListAfterFirstDeclarator(Declarator &d) {}
+DeclGroup *Parser::parseInitDeclaratorListAfterFirstDeclarator(Declarator &d) {
+    return nullptr;
+}
 
 void Parser::parseTypeQualifierListOpt(DeclSpec &ds) {
     while (true) {
@@ -1128,7 +1158,6 @@ void Parser::parseBracketDeclarator(Declarator &d) {
 RecordDecl *Parser::parseStructUnionBody(SourceLocation loc, DeclSpec::TST specType) {
     RecordDecl *rd = new RecordDecl(loc, specType == DeclSpec::TST_STRUCT);
     SourceLocation lBraceLoc = consumeToken();
-
     std::vector<FieldDeclarator> fieldDeclarators;
 
     while (tok.isNot(TK_RBRACE)) {
@@ -1137,19 +1166,21 @@ RecordDecl *Parser::parseStructUnionBody(SourceLocation loc, DeclSpec::TST specT
         fieldDeclarators.clear();
         parseStructDeclaration(ds, fieldDeclarators);
 
-        if (ds.typeSpecType == DeclSpec::TST_STRUCT || ds.typeSpecType == DeclSpec::TST_UNION) {
-            RecordDecl *r = static_cast<RecordDecl *>(ds.typeRep);
-            rd->fields.push_back(r);
-        }
-
         for (auto &fd : fieldDeclarators) {
             QualType qt = getTypeForDeclarator(fd.d);
             FieldDecl *field = new FieldDecl(fd.d.identifierLoc, qt, fd.d.identifier, fd.bitFieldWidth);
             rd->fields.push_back(field);
         }
 
-        if (tok.is(TK_SEMI))
+        if (tok.is(TK_SEMI)) {
             consumeToken();
+        } else if (tok.is(TK_RBRACE)) {
+            error(tok.getLoc(), "expected ';' at end of declaration list");
+            break;
+        } else {
+            error(tok.getLoc(), "expected ';' at end of declaration list");
+            skipUntil(TK_RBRACE, true, true);
+        }
     }
 
     consumeToken(); // Consume the '}'.
