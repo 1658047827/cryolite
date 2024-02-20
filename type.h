@@ -31,6 +31,8 @@ public:
     virtual std::pair<std::string, std::string> repr() = 0;
     virtual size_t getTypeSize() = 0;
 
+    bool isArithmeticType() const;
+
     TypeKind kind;
     // complete - A type is considered incomplete if its size or structure is unknown at a particular point in time.
     bool complete;
@@ -54,9 +56,12 @@ public:
     QualType() : type(nullptr), quals(0) {}
     QualType(Type *type, unsigned char quals = 0) : type(type), quals(quals) {}
 
-    bool isConst() { return quals & CONST; }
-    bool isRestrict() { return quals & RESTRICT; }
-    bool isVolatile() { return quals & VOLATILE; }
+    Type &operator*() const { return *type; }
+    Type *operator->() const { return type; }
+
+    bool isConstQualified() const { return quals & CONST; }
+    bool isRestrictQualified() const { return quals & RESTRICT; }
+    bool isVolatileQualified() const { return quals & VOLATILE; }
 
     std::pair<std::string, std::string> repr();
 
@@ -85,7 +90,7 @@ protected:
  * 1. TODO: Support bool type.
  *
  * 2. Temporarily, we specify 'char' as 8 bits, 'short' as 16 bits, 'int' as 32 bits,
- * 'long' as 32 bits, 'long long' as 64 bits, 'float' as 32 bits, 'double' as 64 bits
+ * 'long' as 64 bits, 'long long' as 64 bits, 'float' as 32 bits, 'double' as 64 bits
  * and 'long double' as 64 bits. Compiler typically provides options to allow users
  * to control the width of integer types, which may be implemented in the future.
  *
@@ -94,36 +99,12 @@ protected:
  */
 class BuiltinType : public Type {
 public:
-    enum BuiltinSpec : unsigned int {
-        CHAR = 1 << 0,
-        SHORT = 1 << 1,
-        INT = 1 << 2,
-        LONG = 1 << 3,
-        LONGLONG = 1 << 4,
-        FLOAT = 1 << 5,
-        DOUBLE = 1 << 6,
-        SIGNED = 1 << 7,
-        UNSIGNED = 1 << 8
+    enum BuiltinKind {
+#define BUILTIN(T, SIZE, REPR) T,
+#include "builtinType.def"
     };
 
-    static BuiltinType *getBuiltinType(unsigned int flags);
-    static bool isChar(unsigned int flags);
-    static bool isSignedChar(unsigned int flags);
-    static bool isUnsignedChar(unsigned int flags);
-    static bool isShort(unsigned int flags);
-    static bool isUnsignedShort(unsigned int flags);
-    static bool isInt(unsigned int flags);
-    static bool isUnsignedInt(unsigned int flags);
-    static bool isLong(unsigned int flags);
-    static bool isUnsignedLong(unsigned int flags);
-    static bool isLongLong(unsigned int flags);
-    static bool isUnsignedLongLong(unsigned int flags);
-    static bool isFloat(unsigned int flags);
-    static bool isDouble(unsigned int flags);
-    static bool isLongDouble(unsigned int flags);
-
-    bool isInteger();
-    bool isFloating();
+    static BuiltinType *getBuiltinType(BuiltinKind kind);
 
     std::pair<std::string, std::string> repr();
     size_t getTypeSize() { return typeSize; }
@@ -141,11 +122,10 @@ public:
     // So we can use raw pointer casually.
     static BuiltinType *usualArithConv(BuiltinType *l, BuiltinType *r);
 
-    // kind - Bit flags.
-    unsigned int builtinKind;
+    BuiltinKind builtinKind;
 
 protected:
-    BuiltinType(unsigned int flags, size_t size);
+    BuiltinType(BuiltinKind kind, size_t size);
 };
 
 class PointerType : public Type {
