@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
     ts.print(std::cout);
     std::cout << std::endl;
     Parser parser(ts);
-    TransUnit *root = parser.parseTranslationUnit();
+    // TransUnit *root = parser.parseTranslationUnit();
     // Expr *expr = parser.parseExpression();
     DeclSpec ds;
     parser.parseDeclarationSpecifiers(ds);

@@ -1,0 +1,23 @@
+#ifndef BUILTIN
+#define BUILTIN(T, SIZE, REPR)
+#endif
+
+BUILTIN(BOOL, 1, "bool")
+BUILTIN(UNSIGNED_CHAR, 1, "unsigned char")
+BUILTIN(UNSIGNED_SHORT, 2, "unsigned short")
+BUILTIN(UNSIGNED_INT, 4, "unsigned int")
+BUILTIN(UNSIGNED_LONG, 8, "unsigned long")
+BUILTIN(UNSIGNED_LONG_LONG, 8, "unsigned long long")
+
+BUILTIN(CHAR, 1, "char")
+BUILTIN(SIGNED_CHAR, 1, "signed char")
+BUILTIN(SHORT, 2, "short")
+BUILTIN(INT, 4, "int")
+BUILTIN(LONG, 8, "long")
+BUILTIN(LONG_LONG, 8, "long long")
+
+BUILTIN(FLOAT, 4, "float")
+BUILTIN(DOUBLE, 8, "double")
+BUILTIN(LONG_DOUBLE, 8, "long double")
+
+#undef BUILTIN
