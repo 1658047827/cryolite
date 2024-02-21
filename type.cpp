@@ -7,6 +7,17 @@ bool Type::isArithmeticType() const {
     return kind == TypeKind::ARITH;
 }
 
+bool Type::isSignedIntegerType() {
+    if (kind != TypeKind::ARITH && kind != TypeKind::ENUM)
+        return false;
+    if (const auto *bt = dynamic_cast<ArithType *>(this))
+        return bt->getArithKind() >= ArithType::CHAR_S &&
+               bt->getArithKind() <= ArithType::LONG_LONG;
+    if (const auto *et = dynamic_cast<EnumType *>(this))
+        return et->getDecl()->getIntegerType()->isSignedIntegerType();
+    return false;
+}
+
 std::pair<std::string, std::string> QualType::repr() {
     // TODO: A proper way to print qualifiers.
     // std::string s = isConstQualified() ? "const " : "";
@@ -24,7 +35,7 @@ VoidType *VoidType::getVoidType() {
     return voidType;
 }
 
-ArithType::ArithType(ArithKind kind, size_t size)
+ArithType::ArithType(ArithKind kind, std::size_t size)
     : Type(TypeKind::ARITH, true, size), arithKind(kind) {}
 
 ArithType *ArithType::getArithType(ArithKind kind) {
@@ -33,7 +44,7 @@ ArithType *ArithType::getArithType(ArithKind kind) {
 
     switch (kind) {
 #define ARITH(T, SIZE, REPR) \
-    case T:                    \
+    case T:                  \
         return T##_TYPE;
 #include "arithType.def"
     default:
@@ -45,8 +56,8 @@ std::pair<std::string, std::string> ArithType::repr() {
     std::string s;
     switch (arithKind) {
 #define ARITH(T, SIZE, REPR) \
-    case T:                    \
-        s = REPR;              \
+    case T:                  \
+        s = REPR;            \
         break;
 #include "arithType.def"
     default:
@@ -58,7 +69,8 @@ std::pair<std::string, std::string> ArithType::repr() {
 int ArithType::convRank() {
     switch (arithKind) {
     // TODO: Support bool.
-    case CHAR:
+    case CHAR_S:
+    case CHAR_U:
     case SIGNED_CHAR:
     case UNSIGNED_CHAR:
         return 2;
@@ -161,7 +173,7 @@ std::pair<std::string, std::string> PointerType::repr() {
 ArrayType::ArrayType(const QualType &type, ArrayKind kind, Expr *expr)
     : Type(TypeKind::ARRAY), elemType(type), arrKind(kind), sizeExpr(expr) {}
 
-ConstantArrayType::ConstantArrayType(const QualType &type, size_t size, Expr *expr)
+ConstantArrayType::ConstantArrayType(const QualType &type, std::size_t size, Expr *expr)
     : ArrayType(type, CONSTANT, expr), size(size) {}
 
 std::pair<std::string, std::string> ConstantArrayType::repr() {
@@ -176,7 +188,7 @@ std::pair<std::string, std::string> ConstantArrayType::repr() {
     return reprPair;
 }
 
-size_t ConstantArrayType::getTypeSize() {
+std::size_t ConstantArrayType::getTypeSize() {
     if (typeSize != 0) {
         return typeSize;
     } else {

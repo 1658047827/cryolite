@@ -15,11 +15,12 @@ enum TypeKind {
     ARRAY,
     FUNCTION,
     RECORD,
+    ENUM
 };
 
 class Type {
 public:
-    Type(TypeKind kind, bool complete = true, size_t typeSize = 0ULL)
+    Type(TypeKind kind, bool complete = true, std::size_t typeSize = 0ULL)
         : kind(kind), complete(complete), typeSize(typeSize) {}
 
     // repr - Return two string, "left-string + IDENTIFIER + right-string"
@@ -29,9 +30,10 @@ public:
     // double ( * IDENTIFIER ) ( float )
     // int IDENTIFIER [ 10 ]
     virtual std::pair<std::string, std::string> repr() = 0;
-    virtual size_t getTypeSize() = 0;
+    virtual std::size_t getTypeSize() = 0;
 
     bool isArithmeticType() const;
+    bool isSignedIntegerType();
 
     template <typename T>
     const T *getAs() const {
@@ -49,7 +51,7 @@ public:
     // typeSize - To get the size of a specific type, we should call getTypeSize().
     // getTypeSize() will calculate the size and save the result in typeSize.
     // If typeSize!=0, getTypeSize() will return typeSize directly.
-    size_t typeSize;
+    std::size_t typeSize;
 };
 
 /**
@@ -99,9 +101,9 @@ class VoidType : public Type {
 public:
     static VoidType *getVoidType();
     std::pair<std::string, std::string> repr() { return std::make_pair("void", ""); }
-    size_t getTypeSize() { return 1ULL; }
+    std::size_t getTypeSize() { return 1ULL; }
 
-protected:
+private:
     // void is incomplete.
     VoidType() : Type(TypeKind::VOID, false, 1ULL) {}
 };
@@ -109,14 +111,12 @@ protected:
 /**
  * ArithType - Arithmetic type.
  *
- * 1. TODO: Support bool type.
- *
- * 2. Temporarily, we specify 'char' as 8 bits, 'short' as 16 bits, 'int' as 32 bits,
+ * 1. Temporarily, we specify 'char' as 8 bits, 'short' as 16 bits, 'int' as 32 bits,
  * 'long' as 64 bits, 'long long' as 64 bits, 'float' as 32 bits, 'double' as 64 bits
  * and 'long double' as 64 bits. Compiler typically provides options to allow users
  * to control the width of integer types, which may be implemented in the future.
  *
- * 3. Temporarily, char is considered as signed char. Compile option to control this
+ * 2. Temporarily, char is considered as signed char. Compile option to control this
  * will be implemented in the future.
  */
 class ArithType : public Type {
@@ -129,7 +129,7 @@ public:
     static ArithType *getArithType(ArithKind kind);
 
     std::pair<std::string, std::string> repr();
-    size_t getTypeSize() { return typeSize; }
+    std::size_t getTypeSize() { return typeSize; }
 
     // convRank - [C99 6.3.1.1p1]
     int convRank();
@@ -149,7 +149,7 @@ public:
 private:
     ArithKind arithKind;
 
-    ArithType(ArithKind kind, size_t size);
+    ArithType(ArithKind kind, std::size_t size);
 };
 
 class PointerType : public Type {
@@ -157,7 +157,7 @@ public:
     PointerType(const QualType &p);
 
     std::pair<std::string, std::string> repr();
-    size_t getTypeSize() { return typeSize; }
+    std::size_t getTypeSize() { return typeSize; }
 
     QualType pointee;
 };
@@ -181,13 +181,13 @@ public:
 
 class ConstantArrayType : public ArrayType {
 public:
-    ConstantArrayType(const QualType &type, size_t size, Expr *expr = nullptr);
+    ConstantArrayType(const QualType &type, std::size_t size, Expr *expr = nullptr);
 
     std::pair<std::string, std::string> repr();
-    size_t getTypeSize();
+    std::size_t getTypeSize();
 
     // size - The length of the array, the quantity of elements.
-    size_t size;
+    std::size_t size;
 };
 
 class VariableArrayType : public ArrayType {
@@ -205,7 +205,7 @@ class FunctionType : public Type {
 public:
     FunctionType(const QualType &type, bool variadic = false);
 
-    size_t getTypeSize() { return 1ULL; }
+    std::size_t getTypeSize() { return 1ULL; }
 
     QualType retType;
     std::vector<QualType> params;
@@ -221,7 +221,7 @@ public:
     RecordDecl *getDecl() const { return decl; }
 
     std::pair<std::string, std::string> repr();
-    size_t getTypeSize() { return 0ULL; }
+    std::size_t getTypeSize() { return 0ULL; }
 
 private:
     RecordDecl *decl;
