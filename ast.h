@@ -26,6 +26,9 @@ class Expr : public Node {
 public:
     Expr(const SourceLocation &loc, const QualType &qt) : Node(loc), qtype(qt) {}
 
+    QualType getQualType() const { return qtype; }
+
+private:
     QualType qtype;
 };
 
@@ -117,11 +120,6 @@ public:
     BinaryOpKind op;
     Expr *lhs;
     Expr *rhs;
-
-private:
-    // TODO: Finish type checking.
-    void checkAdditiveOperator();
-    void checkMultiplicativeOperator();
 };
 
 // Currently, only the conditional expression is ternary.
@@ -208,7 +206,7 @@ public:
 
     void accept(Visitor *v) { v->visitImplicitCastExpr(this); }
 
-    static ImplicitKind inferArithCastKind(BuiltinType *from, BuiltinType *to);
+    static ImplicitKind inferArithCastKind(ArithType *from, ArithType *to);
 
     Expr *fromExpr;
     ImplicitKind castKind;
@@ -243,6 +241,11 @@ public:
 };
 
 class EnumDecl : public Decl {
+public:
+    QualType getPromotionType() const { return promotionType; }
+
+private:
+    QualType promotionType;
 };
 
 class TypedefDecl : public Decl {
@@ -272,7 +275,7 @@ public:
 
     // isStruct - True if this record is a struct, false if this record is an union.
     bool isStruct;
-    // isDef -
+    // isDef - Whether this declaration is a definition.
     bool isDef;
     std::string recordName;
     // fields - A vector of FieldDecl/RecordDecl.
@@ -330,6 +333,35 @@ public:
     std::vector<Decl *> externDecls;
 };
 
+/**
+ * AST context
+ */
+class ASTContext {
+    std::vector<Type *> types;
+
+public:
+    // C builtin types.
+    QualType voidTy;
+    QualType boolTy;
+    QualType charTy;
+    QualType signedCharTy, shortTy, intTy, longTy, longLongTy;
+    QualType unsignedCharTy, unsignedShortTy, unsignedIntTy, unsignedLongTy, unsignedLongLongTy;
+    QualType floatTy, doubleTy, longDoubleTy;
+
+    ASTContext();
+
+    bool isPromotableIntegerType(QualType t);
+    QualType isPromotableBitField(Expr *e);
+
+private:
+    void initBuiltinTypes();
+    void initVoidType(QualType &r);
+    void initArithType(QualType &r, ArithType::ArithKind k);
+};
+
+/**
+ * AST dumper
+ */
 class ASTDumper : public Visitor {
 public:
     ASTDumper(std::ostream &os) : out(os) {}
