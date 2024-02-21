@@ -4,7 +4,7 @@
 #include <cassert>
 
 bool Type::isArithmeticType() const {
-    return kind == TypeKind::BUILTIN;
+    return kind == TypeKind::ARITH;
 }
 
 std::pair<std::string, std::string> QualType::repr() {
@@ -24,39 +24,39 @@ VoidType *VoidType::getVoidType() {
     return voidType;
 }
 
-BuiltinType::BuiltinType(BuiltinKind kind, size_t size)
-    : Type(TypeKind::BUILTIN, true, size), builtinKind(kind) {}
+ArithType::ArithType(ArithKind kind, size_t size)
+    : Type(TypeKind::ARITH, true, size), arithKind(kind) {}
 
-BuiltinType *BuiltinType::getBuiltinType(BuiltinKind kind) {
-#define BUILTIN(T, SIZE, REPR) static BuiltinType *T##_TYPE = new BuiltinType(T, SIZE);
-#include "builtinType.def"
+ArithType *ArithType::getArithType(ArithKind kind) {
+#define ARITH(T, SIZE, REPR) static BuiltinType *T##_TYPE = new BuiltinType(T, SIZE);
+#include "arithType.def"
 
     switch (kind) {
-#define BUILTIN(T, SIZE, REPR) \
+#define ARITH(T, SIZE, REPR) \
     case T:                    \
         return T##_TYPE;
-#include "builtinType.def"
+#include "arithType.def"
     default:
         assert(0 && "Unknown builtin type");
     }
 }
 
-std::pair<std::string, std::string> BuiltinType::repr() {
+std::pair<std::string, std::string> ArithType::repr() {
     std::string s;
-    switch (builtinKind) {
-#define BUILTIN(T, SIZE, REPR) \
+    switch (arithKind) {
+#define ARITH(T, SIZE, REPR) \
     case T:                    \
         s = REPR;              \
         break;
-#include "builtinType.def"
+#include "arithType.def"
     default:
         assert(0 && "Unknown builtin type");
     }
     return std::make_pair(s, "");
 }
 
-int BuiltinType::convRank() {
-    switch (builtinKind) {
+int ArithType::convRank() {
+    switch (arithKind) {
     // TODO: Support bool.
     case CHAR:
     case SIGNED_CHAR:
@@ -85,49 +85,49 @@ int BuiltinType::convRank() {
     }
 }
 
-BuiltinType *BuiltinType::integerPromote(BuiltinType *t) {
-    if (t->convRank() < getBuiltinType(INT)->convRank()) {
-        return getBuiltinType(INT);
+ArithType *ArithType::integerPromote(ArithType *t) {
+    if (t->convRank() < getArithType(INT)->convRank()) {
+        return getArithType(INT);
     } else {
         return t;
     }
     // TODO: What if the width of 'int' is the same as that of 'short'?
 }
 
-BuiltinType *BuiltinType::usualArithConv(BuiltinType *l, BuiltinType *r) {
-    assert(l->kind == TypeKind::BUILTIN && r->kind == TypeKind::BUILTIN);
+ArithType *ArithType::usualArithConv(ArithType *l, ArithType *r) {
+    assert(l->kind == TypeKind::ARITH && r->kind == TypeKind::ARITH);
 
     // If either operand has a floating-point type, then the operand with the lower conversion rank
     // is converted to a type with the same rank as the other operand.
-    if (l->builtinKind == (LONG | DOUBLE))
+    if (l->arithKind == (LONG | DOUBLE))
         return l;
-    if (r->builtinKind == (LONG | DOUBLE))
+    if (r->arithKind == (LONG | DOUBLE))
         return r;
 
-    if (l->builtinKind == DOUBLE)
+    if (l->arithKind == DOUBLE)
         return l;
-    if (r->builtinKind == DOUBLE)
+    if (r->arithKind == DOUBLE)
         return r;
 
-    if (l->builtinKind == FLOAT)
+    if (l->arithKind == FLOAT)
         return l;
-    if (r->builtinKind == FLOAT)
+    if (r->arithKind == FLOAT)
         return r;
 
     // If both operands are integers, integer promotion is first performed on both operands.
-    BuiltinType *t1 = integerPromote(l);
-    BuiltinType *t2 = integerPromote(r);
+    ArithType *t1 = integerPromote(l);
+    ArithType *t2 = integerPromote(r);
 
     if (t1 == t2) {
         return t1;
-    } else if ((t1->builtinKind & UNSIGNED) == (t2->builtinKind & UNSIGNED)) {
+    } else if ((t1->arithKind & UNSIGNED) == (t2->arithKind & UNSIGNED)) {
         // if T1 and T2 are both signed integer types or both unsigned integer types,
         // C is the type of greater integer conversion rank.
         return t1->convRank() > t2->convRank() ? t1 : t2;
     } else {
         // One type between T1 and T2 is an signed integer type S,
         // the other type is an unsigned integer type U.
-        if (t1->builtinKind & UNSIGNED)
+        if (t1->arithKind & UNSIGNED)
             std::swap(t1, t2);
         // Now T1 is signed(S), T2 is unsigned(U).
 
@@ -137,7 +137,7 @@ BuiltinType *BuiltinType::usualArithConv(BuiltinType *l, BuiltinType *r) {
             return t1;
         } else {
             // Return the unsigned integer type corresponding to T1(S).
-            return getBuiltinType(UNSIGNED | t1->builtinKind);
+            return getArithType(UNSIGNED | t1->arithKind);
         }
     }
 }

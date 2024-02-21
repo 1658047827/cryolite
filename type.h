@@ -10,7 +10,7 @@ class EnumDecl;
 
 enum TypeKind {
     VOID,
-    BUILTIN,
+    ARITH,
     POINTER,
     ARRAY,
     FUNCTION,
@@ -32,6 +32,16 @@ public:
     virtual size_t getTypeSize() = 0;
 
     bool isArithmeticType() const;
+
+    template <typename T>
+    const T *getAs() const {
+        static_assert(!std::is_same(T, ArrayType), "ArrayType cannot be used with getAs");
+        // If this is directly a T type, return it.
+        if (const auto *ty = dynamic_cast<T *>(this))
+            return ty;
+        // TODO: Ref Clang Type.h
+        return nullptr;
+    }
 
     TypeKind kind;
     // complete - A type is considered incomplete if its size or structure is unknown at a particular point in time.
@@ -56,6 +66,8 @@ public:
     QualType() : type(nullptr), quals(0) {}
     QualType(Type *type, unsigned char quals = 0) : type(type), quals(quals) {}
 
+    Type *getTypePtr() const { return type; }
+
     Type &operator*() const { return *type; }
     Type *operator->() const { return type; }
 
@@ -63,8 +75,18 @@ public:
     bool isRestrictQualified() const { return quals & RESTRICT; }
     bool isVolatileQualified() const { return quals & VOLATILE; }
 
+    bool isNull() const { return type == nullptr; }
+
     std::pair<std::string, std::string> repr();
 
+    bool operator==(const QualType &other) {
+        return (quals == other.quals) && (type == other.type);
+    }
+    bool operator!=(const QualType &other) {
+        return (quals != other.quals) || (type != other.type);
+    }
+
+private:
     unsigned char quals;
     Type *type;
 };
@@ -85,7 +107,7 @@ protected:
 };
 
 /**
- * BuiltinType - Arithmetic type.
+ * ArithType - Arithmetic type.
  *
  * 1. TODO: Support bool type.
  *
@@ -97,14 +119,14 @@ protected:
  * 3. Temporarily, char is considered as signed char. Compile option to control this
  * will be implemented in the future.
  */
-class BuiltinType : public Type {
+class ArithType : public Type {
 public:
-    enum BuiltinKind {
-#define BUILTIN(T, SIZE, REPR) T,
-#include "builtinType.def"
+    enum ArithKind {
+#define ARITH(T, SIZE, REPR) T,
+#include "arithType.def"
     };
 
-    static BuiltinType *getBuiltinType(BuiltinKind kind);
+    static ArithType *getArithType(ArithKind kind);
 
     std::pair<std::string, std::string> repr();
     size_t getTypeSize() { return typeSize; }
@@ -114,18 +136,20 @@ public:
 
     // integerPromote - [C99 6.3.1.1p2]
     // Make sure that t is an integer type.
-    static BuiltinType *integerPromote(BuiltinType *t);
+    static ArithType *integerPromote(ArithType *t);
 
     // usualArithConv - [C99 6.3.1.8] Usual arithmetic conversions.
-    // All kinds of builtin arithmetic type is gotten by getBuiltinType.
+    // All kinds of builtin arithmetic type is gotten by getArithType.
     // Pointers of same builtin type point to the same static object.
     // So we can use raw pointer casually.
-    static BuiltinType *usualArithConv(BuiltinType *l, BuiltinType *r);
+    static ArithType *usualArithConv(ArithType *l, ArithType *r);
 
-    BuiltinKind builtinKind;
+    ArithKind getArithKind() const { return arithKind; }
 
-protected:
-    BuiltinType(BuiltinKind kind, size_t size);
+private:
+    ArithKind arithKind;
+
+    ArithType(ArithKind kind, size_t size);
 };
 
 class PointerType : public Type {
@@ -194,14 +218,20 @@ public:
     // TODO: Completeness, typeSize.
     RecordType(RecordDecl *d) : Type(TypeKind::RECORD), decl(d) {}
 
+    RecordDecl *getDecl() const { return decl; }
+
     std::pair<std::string, std::string> repr();
     size_t getTypeSize() { return 0ULL; }
 
+private:
     RecordDecl *decl;
 };
 
 class EnumType : public Type {
 public:
+    EnumDecl *getDecl() const { return decl; }
+
+private:
     EnumDecl *decl;
 };
 
