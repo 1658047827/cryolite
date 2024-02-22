@@ -98,32 +98,22 @@ private:
 };
 
 enum BinaryOpKind {
-    ADD,      // +
-    SUB,      // -
-    MUL,      // *
-    DIV,      // /
-    MOD,      // %
-    SHL,      // <<
-    SHR,      // >>
-    LESS,     // <
-    LEQ,      // <=
-    GREATER,  // >
-    GEQ,      // >=
-    EQUAL,    // ==
-    NEQ,      // !=
-    BITAND,   // &
-    BITXOR,   // ^
-    BITOR,    // |
-    LOGICAND, // &&
-    LOGICOR,  // ||
-    ASSIGN,   // =
-    // Compound assignment will be break into two BinaryExprs.
-    COMMA, // ,
+#define BINARY(NAME, REPR) NAME,
+#include "operatorKind.def"
 };
 
 class BinaryExpr : public VisitableExpr<BinaryExpr> {
 public:
     BinaryExpr(const SourceLocation &loc, BinaryOpKind op, Expr *lhs, Expr *rhs);
+
+    bool isComparisonOp() const { return isComparisonOp(op); }
+    static bool isComparisonOp(BinaryOpKind opK) { return opK >= LESS && opK <= NEQ; }
+
+    bool isBitwiseOp() const { return isBitwiseOp(op); }
+    static bool isBitwiseOp(BinaryOpKind opK) { return opK >= BITAND && opK <= BITOR; }
+
+    std::string_view getOpStr() const { return getOpStr(op); }
+    static std::string_view getOpStr(BinaryOpKind opK);
 
     BinaryOpKind op;
     Expr *lhs;

@@ -1,0 +1,26 @@
+#ifndef BINARY
+#define BINARY(NAME, REPR)
+#endif
+
+BINARY(ADD, "+")
+BINARY(SUB, "-")
+BINARY(MUL, "*")
+BINARY(DIV, "/")
+BINARY(MOD, "%")
+BINARY(SHL, "<<")
+BINARY(SHR, ">>")
+BINARY(LESS, "<")
+BINARY(LEQ, "<=")
+BINARY(GREATER, ">")
+BINARY(GEQ, ">=")
+BINARY(EQUAL, "==")
+BINARY(NEQ, "!=")
+BINARY(BITAND, "&")
+BINARY(BITXOR, "^")
+BINARY(BITOR, "|")
+BINARY(LOGICAND, "&&")
+BINARY(LOGICOR, "||")
+BINARY(ASSIGN, "=")
+BINARY(COMMA, ",")
+
+#undef BINARY

@@ -28,6 +28,16 @@ BinaryExpr::BinaryExpr(const SourceLocation &loc, BinaryOpKind op, Expr *lhs, Ex
     : VisitableExpr<BinaryExpr>(loc, QualType()), op(op), lhs(lhs), rhs(rhs) {
 }
 
+std::string_view BinaryExpr::getOpStr(BinaryOpKind opK) {
+    switch (opK) {
+#define BINARY(NAME, REPE) \
+    case NAME:             \
+        return REPR;
+#include "operatorKind.def"
+    }
+    assert(0 && "invalid binary operator");
+}
+
 // void BinaryExpr::checkAdditiveOperator() {
 //     QualType lqt = lhs->qtype;
 //     QualType rqt = rhs->qtype;
