@@ -25,7 +25,7 @@ public:
         : kind(kind), complete(complete), typeSize(typeSize) {}
 
     // repr - Return two string, "left-string + IDENTIFIER + right-string"
-    // constitutes the type declaration for this IDENTIFIER. e.g.:
+    // constitutes the type declaration for this IDENTIFIER. e.g.
     // char ( * IDENTIFIER )
     // int * IDENTIFIER ( )
     // double ( * IDENTIFIER ) ( float )
@@ -199,7 +199,7 @@ public:
 
 /**
  * FunctionType - Represents a function prototype with parameter type info.
- * e.g.:
+ * e.g.
  * "int foo(int)", "float bar()" or "long func(char *, int)"
  * Old-style function, which has no information available about its arguments,
  * is totally not supported. So all prototypes are complete.

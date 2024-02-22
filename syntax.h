@@ -833,7 +833,7 @@ public:
  *     direct-declarator ( identifier-list{opt} )
  *
  * "direct-declarator ( identifier-list )" here is used to support old-style declarator,
- * which we don't support. e.g.:
+ * which we don't support. e.g.
  *     int old(a, b) int a; int b; { return a + b; }
  */
 class DirectDeclarator {
@@ -1013,7 +1013,7 @@ public:
  *     [ constant-expression ]
  *     . IDENTIFIER
  *
- * e.g.:
+ * e.g.
  *     struct { int a[3], b; } w[] = { [0].a = {1}, [1].a[0] = 2 };
  * [0].a meaning designator designator
  */
@@ -1181,7 +1181,7 @@ public:
  *     declaration-specifiers declarator declaration-list{opt} compound-statement
  *
  * "declaration-list" here is used to support old-style function definitions, which we don't support.
- * e.g.:
+ * e.g.
  *     int old(a, b) int a; int b; { return a + b; }
  */
 class FunctionDefinition {
