@@ -1,0 +1,19 @@
+#ifndef EXPR
+#define EXPR(CLASS)
+#endif
+
+EXPR(UnaryExpr)
+EXPR(SizeofExpr)
+EXPR(BinaryExpr)
+EXPR(TernaryExpr)
+EXPR(IntegerConstant)
+EXPR(FloatingConstant)
+EXPR(CharacterConstant)
+EXPR(StringLiteral)
+EXPR(DeclRefExpr)
+EXPR(CallExpr)
+EXPR(MemberExpr)
+EXPR(CastExpr)
+EXPR(ImplicitCastExpr)
+
+#undef EXPR

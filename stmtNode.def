@@ -1,0 +1,13 @@
+#ifndef STMT
+#define STMT(CLASS)
+#endif
+
+STMT(DeclStmt)
+STMT(BreakStmt)
+STMT(ContinueStmt)
+STMT(NullStmt)
+STMT(ExprStmt)
+STMT(CompoundStmt)
+STMT(ForStmt)
+
+#undef STMT
