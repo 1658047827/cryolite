@@ -7,6 +7,7 @@
 class Expr;
 class RecordDecl;
 class EnumDecl;
+class ArrayType;
 
 enum TypeKind {
     VOID,
@@ -36,8 +37,9 @@ public:
     bool isSignedIntegerType();
 
     template <typename T>
-    const T *getAs() const {
-        static_assert(!std::is_same(T, ArrayType), "ArrayType cannot be used with getAs");
+    const T *getAs() {
+        static_assert(!std::integral_constant < bool, std::is_same<T, ArrayType>::value || std::is_base_of<ArrayType, T>::value > ::value,
+                      "ArrayType cannot be used with getAs");
         // If this is directly a T type, return it.
         if (const auto *ty = dynamic_cast<T *>(this))
             return ty;
@@ -88,9 +90,10 @@ public:
         return (quals != other.quals) || (type != other.type);
     }
 
+    Type *type;
+
 private:
     unsigned char quals;
-    Type *type;
 };
 
 /**
@@ -136,13 +139,13 @@ public:
 
     // integerPromote - [C99 6.3.1.1p2]
     // Make sure that t is an integer type.
-    static ArithType *integerPromote(ArithType *t);
+    // static ArithType *integerPromote(ArithType *t);
 
     // usualArithConv - [C99 6.3.1.8] Usual arithmetic conversions.
     // All kinds of builtin arithmetic type is gotten by getArithType.
     // Pointers of same builtin type point to the same static object.
     // So we can use raw pointer casually.
-    static ArithType *usualArithConv(ArithType *l, ArithType *r);
+    // static ArithType *usualArithConv(ArithType *l, ArithType *r);
 
     ArithKind getArithKind() const { return arithKind; }
 

@@ -39,7 +39,7 @@ ArithType::ArithType(ArithKind kind, std::size_t size)
     : Type(TypeKind::ARITH, true, size), arithKind(kind) {}
 
 ArithType *ArithType::getArithType(ArithKind kind) {
-#define ARITH(T, SIZE, REPR) static BuiltinType *T##_TYPE = new BuiltinType(T, SIZE);
+#define ARITH(T, SIZE, REPR) static ArithType *T##_TYPE = new ArithType(T, SIZE);
 #include "arithType.def"
 
     switch (kind) {
@@ -48,7 +48,7 @@ ArithType *ArithType::getArithType(ArithKind kind) {
         return T##_TYPE;
 #include "arithType.def"
     default:
-        assert(0 && "Unknown builtin type");
+        assert(0 && "Unknown arith type");
     }
 }
 
@@ -97,62 +97,62 @@ int ArithType::convRank() {
     }
 }
 
-ArithType *ArithType::integerPromote(ArithType *t) {
-    if (t->convRank() < getArithType(INT)->convRank()) {
-        return getArithType(INT);
-    } else {
-        return t;
-    }
-    // TODO: What if the width of 'int' is the same as that of 'short'?
-}
+// ArithType *ArithType::integerPromote(ArithType *t) {
+//     if (t->convRank() < getArithType(INT)->convRank()) {
+//         return getArithType(INT);
+//     } else {
+//         return t;
+//     }
+//     // TODO: What if the width of 'int' is the same as that of 'short'?
+// }
 
-ArithType *ArithType::usualArithConv(ArithType *l, ArithType *r) {
-    assert(l->kind == TypeKind::ARITH && r->kind == TypeKind::ARITH);
+// ArithType *ArithType::usualArithConv(ArithType *l, ArithType *r) {
+//     assert(l->kind == TypeKind::ARITH && r->kind == TypeKind::ARITH);
 
-    // If either operand has a floating-point type, then the operand with the lower conversion rank
-    // is converted to a type with the same rank as the other operand.
-    if (l->arithKind == (LONG | DOUBLE))
-        return l;
-    if (r->arithKind == (LONG | DOUBLE))
-        return r;
+//     // If either operand has a floating-point type, then the operand with the lower conversion rank
+//     // is converted to a type with the same rank as the other operand.
+//     if (l->arithKind == (LONG | DOUBLE))
+//         return l;
+//     if (r->arithKind == (LONG | DOUBLE))
+//         return r;
 
-    if (l->arithKind == DOUBLE)
-        return l;
-    if (r->arithKind == DOUBLE)
-        return r;
+//     if (l->arithKind == DOUBLE)
+//         return l;
+//     if (r->arithKind == DOUBLE)
+//         return r;
 
-    if (l->arithKind == FLOAT)
-        return l;
-    if (r->arithKind == FLOAT)
-        return r;
+//     if (l->arithKind == FLOAT)
+//         return l;
+//     if (r->arithKind == FLOAT)
+//         return r;
 
-    // If both operands are integers, integer promotion is first performed on both operands.
-    ArithType *t1 = integerPromote(l);
-    ArithType *t2 = integerPromote(r);
+//     // If both operands are integers, integer promotion is first performed on both operands.
+//     ArithType *t1 = integerPromote(l);
+//     ArithType *t2 = integerPromote(r);
 
-    if (t1 == t2) {
-        return t1;
-    } else if ((t1->arithKind & UNSIGNED) == (t2->arithKind & UNSIGNED)) {
-        // if T1 and T2 are both signed integer types or both unsigned integer types,
-        // C is the type of greater integer conversion rank.
-        return t1->convRank() > t2->convRank() ? t1 : t2;
-    } else {
-        // One type between T1 and T2 is an signed integer type S,
-        // the other type is an unsigned integer type U.
-        if (t1->arithKind & UNSIGNED)
-            std::swap(t1, t2);
-        // Now T1 is signed(S), T2 is unsigned(U).
+//     if (t1 == t2) {
+//         return t1;
+//     } else if ((t1->arithKind & UNSIGNED) == (t2->arithKind & UNSIGNED)) {
+//         // if T1 and T2 are both signed integer types or both unsigned integer types,
+//         // C is the type of greater integer conversion rank.
+//         return t1->convRank() > t2->convRank() ? t1 : t2;
+//     } else {
+//         // One type between T1 and T2 is an signed integer type S,
+//         // the other type is an unsigned integer type U.
+//         if (t1->arithKind & UNSIGNED)
+//             std::swap(t1, t2);
+//         // Now T1 is signed(S), T2 is unsigned(U).
 
-        if (t2->convRank() >= t1->convRank()) {
-            return t2;
-        } else if (t1->getTypeSize() > t2->getTypeSize()) {
-            return t1;
-        } else {
-            // Return the unsigned integer type corresponding to T1(S).
-            return getArithType(UNSIGNED | t1->arithKind);
-        }
-    }
-}
+//         if (t2->convRank() >= t1->convRank()) {
+//             return t2;
+//         } else if (t1->getTypeSize() > t2->getTypeSize()) {
+//             return t1;
+//         } else {
+//             // Return the unsigned integer type corresponding to T1(S).
+//             return getArithType(UNSIGNED | t1->arithKind);
+//         }
+//     }
+// }
 
 // The completeness of a pointer is independent of the definition status of the data type it points to.
 // TODO: The size of pointer.

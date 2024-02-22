@@ -16,7 +16,7 @@ public:
 private:
     char curChar();
     char next();
-    char lookAhead(size_t n = 1);
+    char lookAhead(std::size_t n = 1);
     bool nextIs(char c);
     bool tryNext(char c);
 
@@ -29,7 +29,7 @@ private:
 
     SourceLocation curLoc;
     std::vector<char> &buffer;
-    size_t p;
+    std::size_t p;
 };
 
 int readFile(std::string &filename, std::vector<char> &buffer);

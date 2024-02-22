@@ -7,7 +7,7 @@
 
 static const std::unordered_map<std::string, TokenKind> keyword2TokenKind{
 #define KEYWORD(X, Y) {Y, TK_##X},
-#include "tokenkind.def"
+#include "tokenKind.def"
 };
 
 static inline bool isNumberBody(char c) {
@@ -261,7 +261,7 @@ char Lexer::next() {
     return buffer[p];
 }
 
-char Lexer::lookAhead(size_t n) {
+char Lexer::lookAhead(std::size_t n) {
     if (p + n >= buffer.size())
         return 0;
     return buffer[p + n];
@@ -300,7 +300,7 @@ void Lexer::skipComment() {
 }
 
 Token Lexer::lexNumericConstant() {
-    size_t begin = p;
+    std::size_t begin = p;
     SourceLocation loc = curLoc;
     char c = lookAhead();
     char prevCh = 0;
@@ -327,7 +327,7 @@ Token Lexer::lexNumericConstant() {
 }
 
 Token Lexer::lexCharConstant() {
-    size_t begin = p;
+    std::size_t begin = p;
     SourceLocation loc = curLoc;
     if (tryNext('\'')) {
         error(loc, "empty character constant");
@@ -350,7 +350,7 @@ Token Lexer::lexCharConstant() {
 }
 
 Token Lexer::lexStringLiteral() {
-    size_t begin = p;
+    std::size_t begin = p;
     SourceLocation loc = curLoc;
     char c = next();
     while (c != '\"') {
@@ -368,7 +368,7 @@ Token Lexer::lexStringLiteral() {
 }
 
 Token Lexer::lexIdentifier() {
-    size_t begin = p;
+    std::size_t begin = p;
     SourceLocation loc = curLoc;
     char c = lookAhead();
     while (c != 0) {
