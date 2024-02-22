@@ -27,5 +27,6 @@ private:
 };
 
 static void diagnoseBitwisePrecedence(BinaryOpKind opK, SourceLocation opLoc, Expr *lhs, Expr *rhs);
+static void diagnoseAdditiveInShift(BinaryOpKind opK, SourceLocation opLoc, Expr *lhs, Expr *rhs);
 
 #endif

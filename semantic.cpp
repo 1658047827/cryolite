@@ -27,14 +27,20 @@ Expr *Semantic::actOnBinaryOp(Scope *s, SourceLocation loc, BinaryOpKind op, Exp
     assert(lhs && "missing left expression");
     assert(rhs && "missing right expression");
 
-    // Emit warnings for tricky precedence issues, e.g. "bitfield & 0x4 == 0"
+    // Emit warnings for tricky precedence issues, e.g.
+    //     0x1 & 0x4 == 0
+    //     1 << 2 + 4
     if (BinaryExpr::isBitwiseOp(op))
         diagnoseBitwisePrecedence(op, loc, lhs, rhs);
+    if (op == SHL || op == SHR)
+        diagnoseAdditiveInShift(op, loc, lhs, rhs);
 
     return buildBinaryExpr(s, loc, op, lhs, rhs);
 }
 
 Expr *Semantic::buildBinaryExpr(Scope *s, SourceLocation loc, BinaryOpKind op, Expr *lhs, Expr *rhs) {
+    return new BinaryExpr(loc, op, lhs, rhs);
+
     QualType resultTy;
 
     switch (op) {
@@ -74,5 +80,21 @@ static void diagnoseBitwisePrecedence(BinaryOpKind opK, SourceLocation opLoc, Ex
     std::string_view cmpOpStr = isLeftComp ? lhsBe->getOpStr() : rhsBe->getOpStr();
     ss << BinaryExpr::getOpStr(opK) << " has lower precedence than ";
     ss << cmpOpStr << ", " << cmpOpStr << " will be evaluated first";
+    warning(opLoc, ss.str());
+}
+
+static void diagnoseAdditiveInShift(BinaryOpKind opK, SourceLocation opLoc, Expr *lhs, Expr *rhs) {
+    BinaryExpr *lhsBe = dynamic_cast<BinaryExpr *>(lhs);
+    BinaryExpr *rhsBe = dynamic_cast<BinaryExpr *>(rhs);
+
+    bool isLeftAdditive = lhsBe && lhsBe->isAdditiveOp();
+    bool isRightAdditive = rhsBe && rhsBe->isAdditiveOp();
+    if (isLeftAdditive == isRightAdditive)
+        return;
+
+    std::stringstream ss;
+    std::string_view addOpStr = isLeftAdditive ? lhsBe->getOpStr() : rhsBe->getOpStr();
+    ss << BinaryExpr::getOpStr(opK) << " has lower precedence than ";
+    ss << addOpStr << ", " << addOpStr << " will be evaluated first";
     warning(opLoc, ss.str());
 }
