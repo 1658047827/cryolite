@@ -10,11 +10,11 @@
 class Decl;
 class CompoundStmt;
 
+class ASTContext;
+
 class Node {
 public:
     Node(const SourceLocation &loc) : srcLoc(loc) {}
-
-    virtual void accept(Visitor *v) = 0;
 
     SourceLocation srcLoc;
 };
@@ -28,8 +28,22 @@ public:
 
     QualType getQualType() const { return qtype; }
 
+    virtual void accept(ExprVisitor *v) = 0;
+
+    // TODO: More evaluators, more checking, ref Clang.
+    bool evaluateAsUnsignedInt(std::size_t &evalRet, ASTContext &ctx) const;
+    bool evaluateAsFloating(long double &evalRet, ASTContext &ctx) const;
+
 private:
     QualType qtype;
+};
+
+template <typename Derived>
+class VisitableExpr : public Expr {
+public:
+    VisitableExpr(const SourceLocation &loc, const QualType &qt) : Expr(loc, qt) {}
+
+    void accept(ExprVisitor *v) { v->visit(static_cast<Derived *>(this)); }
 };
 
 enum UnaryOpKind {
@@ -46,29 +60,26 @@ enum UnaryOpKind {
     // sizeof will be handled in SizeofExpr.
 };
 
-class UnaryExpr : public Expr {
+class UnaryExpr : public VisitableExpr<UnaryExpr> {
 public:
     UnaryExpr(const SourceLocation &loc, UnaryOpKind op, Expr *expr);
 
-    void accept(Visitor *v) { v->visitUnaryExpr(this); }
-
-    UnaryOpKind op;
-    Expr *operand;
+    UnaryOpKind getOp() const { return op; }
+    Expr *getOperand() const { return operand; }
 
 private:
-    // TODO: type check
+    UnaryOpKind op;
+    Expr *operand;
 };
 
 // SizeofExpr - The 'sizeof' keyword is quite unique.
 // It is semantically closer to a unary expression, but functionally it operates on type trait.
-class SizeofExpr : public Expr {
+class SizeofExpr : public VisitableExpr<SizeofExpr> {
 public:
     enum SizeofKind {
         UNARY_EXPR,
         TYPE_NAME
     };
-
-    void accept(Visitor *v) { v->visitSizeofExpr(this); }
 
     // for "sizeof unary-expression"
     SizeofExpr(const SourceLocation &loc, Expr *expr);
@@ -84,7 +95,6 @@ public:
     SizeofKind sizeofKind;
 
 private:
-    // TODO: type check
 };
 
 enum BinaryOpKind {
@@ -111,11 +121,9 @@ enum BinaryOpKind {
     COMMA, // ,
 };
 
-class BinaryExpr : public Expr {
+class BinaryExpr : public VisitableExpr<BinaryExpr> {
 public:
     BinaryExpr(const SourceLocation &loc, BinaryOpKind op, Expr *lhs, Expr *rhs);
-
-    void accept(Visitor *v) { v->visitBinaryExpr(this); }
 
     BinaryOpKind op;
     Expr *lhs;
@@ -123,57 +131,56 @@ public:
 };
 
 // Currently, only the conditional expression is ternary.
-class TernaryExpr : public Expr {
+class TernaryExpr : public VisitableExpr<TernaryExpr> {
 public:
     TernaryExpr(const SourceLocation &loc, Expr *condExpr, Expr *trueExpr, Expr *falseExpr);
-
-    void accept(Visitor *v) { v->visitTernaryExpr(this); }
 
     Expr *condExpr;
     Expr *trueExpr;
     Expr *falseExpr;
 };
 
-class IntegerConstant : public Expr {
+class IntegerConstant : public VisitableExpr<IntegerConstant> {
 public:
-    IntegerConstant(const SourceLocation &loc, const QualType &qt, unsigned long long val);
+    IntegerConstant(const SourceLocation &loc, const QualType &qt, unsigned long long ullVal);
+    IntegerConstant(const SourceLocation &loc, const QualType &qt, signed long long sllVal);
 
-    void accept(Visitor *v) { v->visitIntegerConstant(this); }
+    unsigned long long getUnsignedValue() const { return ullValue; }
+    signed long long getSignedvalue() const { return sllValue; }
 
-    unsigned long long value;
+private:
+    union {
+        unsigned long long ullValue;
+        signed long long sllValue;
+    };
+    // Its sign can be read from qtype.
 };
 
-class FloatingConstant : public Expr {
+class FloatingConstant : public VisitableExpr<FloatingConstant> {
 public:
     FloatingConstant(const SourceLocation &loc, const QualType &qt, long double val);
-
-    void accept(Visitor *v) { v->visitFloatingConstant(this); }
 
     long double value;
 };
 
-class CharacterConstant : public Expr {
+class CharacterConstant : public VisitableExpr<CharacterConstant> {
 public:
     CharacterConstant(const SourceLocation &loc, const QualType &qt, unsigned val);
-
-    void accept(Visitor *v) { v->visitCharacterConstant(this); }
 
     unsigned value;
 };
 
-class StringLiteral : public Expr {
+class StringLiteral : public VisitableExpr<StringLiteral> {
 public:
     StringLiteral(const SourceLocation &loc, const QualType &qt, const std::string &str);
 
-    void accept(Visitor *v) { v->visitStringLiteral(this); }
-
-    std::string value;
+    std::string content;
 };
 
 // DeclRefExpr - A reference to a declared variable, function, enum, etc.
 // [C99 6.5.1p2] An identifier is a primary expression, provided it has been declared as designating an
 // object (in which case it is an lvalue) or a function (in which case it is a function designator).
-class DeclRefExpr : public Expr {
+class DeclRefExpr : public VisitableExpr<DeclRefExpr> {
 public:
     // DeclRefExpr(const SourceLocation &loc, const QualType &qt, Decl *decl);
 
@@ -182,16 +189,16 @@ public:
     // Decl *decl;
 };
 
-class CallExpr : public Expr {
+class CallExpr : public VisitableExpr<CallExpr> {
 };
 
-class MemberExpr : public Expr {
+class MemberExpr : public VisitableExpr<MemberExpr> {
 };
 
-class CastExpr : public Expr {
+class CastExpr : public VisitableExpr<CastExpr> {
 };
 
-class ImplicitCastExpr : public Expr {
+class ImplicitCastExpr : public VisitableExpr<ImplicitCastExpr> {
 public:
     enum ImplicitKind {
         INTEGRAL_CAST,
@@ -204,12 +211,37 @@ public:
 
     ImplicitCastExpr(const SourceLocation &loc, Expr *from, const QualType &to, ImplicitKind cKind);
 
-    void accept(Visitor *v) { v->visitImplicitCastExpr(this); }
+    Expr *getFromExpr() const { return fromExpr; }
+    ImplicitKind getCastKind() const { return castKind; }
 
-    static ImplicitKind inferArithCastKind(ArithType *from, ArithType *to);
+    // static ImplicitKind inferArithCastKind(ArithType *from, ArithType *to);
 
+private:
     Expr *fromExpr;
     ImplicitKind castKind;
+};
+
+template <typename ResultTy = unsigned long long>
+class IntegerExprEvaluator : public ExprVisitor {
+public:
+    IntegerExprEvaluator(const ResultTy &res) : result(res) {}
+
+    void visit(UnaryExpr *unary);
+    void visit(SizeofExpr *sizeofExpr);
+    void visit(BinaryExpr *binary);
+    void visit(TernaryExpr *ternary);
+    void visit(IntegerConstant *integer);
+    void visit(FloatingConstant *floating);
+    void visit(CharacterConstant *character);
+    void visit(StringLiteral *string);
+    void visit(DeclRefExpr *declRef);
+    void visit(CallExpr *call);
+    void visit(MemberExpr *member);
+    void visit(CastExpr *cast);
+    void visit(ImplicitCastExpr *implicitCast);
+
+private:
+    ResultTy &result;
 };
 
 /**
@@ -218,56 +250,82 @@ public:
 class Decl : public Node {
 public:
     Decl(const SourceLocation &loc) : Node(loc) {}
+
+    virtual void accept(DeclVisitor *v) = 0;
 };
 
-class EmptyDecl : public Decl {
+template <typename Derived>
+class VisitableDecl : public Decl {
+public:
+    VisitableDecl(const SourceLocation &loc) : Decl(loc) {}
+
+    void accept(DeclVisitor *v) { v->visit(static_cast<Derived *>(this)); }
+};
+
+class EmptyDecl : public VisitableDecl<EmptyDecl> {
 public:
 };
 
 /**
  * FunctionDecl - For function declaration and definition.
  */
-class FunctionDecl : public Decl {
+class FunctionDecl : public VisitableDecl<FunctionDecl> {
 public:
     QualType prototype;
     std::vector<void *> paramVarDecls;
     CompoundStmt *stmts;
 };
 
-class VarDecl : public Decl {
+class VarDecl : public VisitableDecl<VarDecl> {
 public:
     QualType type;
     std::string name;
 };
 
-class EnumDecl : public Decl {
+class EnumDecl : public VisitableDecl<EnumDecl> {
 public:
+    EnumDecl(const SourceLocation &loc) : VisitableDecl(loc) {}
+
+    QualType getIntegerType() const { return integerType; }
     QualType getPromotionType() const { return promotionType; }
 
 private:
+    // integerType - The underlying integer type.
+    QualType integerType;
+
+    // promotionType - The integer type that this enum should promote to.
     QualType promotionType;
 };
 
-class TypedefDecl : public Decl {
+class TypedefDecl : public VisitableDecl<TypedefDecl> {
 };
 
-class FieldDecl : public Decl {
+class FieldDecl : public VisitableDecl<FieldDecl> {
 public:
-    FieldDecl(const SourceLocation &loc, QualType qt, const std::string &name = "", Expr *bitWidth = nullptr, unsigned offset = 0);
+    FieldDecl(const SourceLocation &loc, QualType qt, const std::string &name = "", Expr *bitWidth = nullptr);
 
     void accept(Visitor *v) { v->visitFieldDecl(this); }
 
+    QualType getType() const { return type; }
+    // TODO: Bit-field width should be a const integer.
+    // We should check when evaluating.
+    std::size_t getBitWidthValue(ASTContext &ctx) const {
+        std::size_t evalRet;
+        bool result = bitWidth->evaluateAsUnsignedInt(evalRet, ctx);
+        return result ? evalRet : 0ULL;
+    }
+
+    std::string fieldName;
+
+private:
     QualType type;
     // bitWidth - Bit-field declaration, declares a member with explicit width, in bits.
     // Adjacent bit-field members may be packed to share and straddle the individual bytes.
     // If struct member is declared normally, bitWidth will be set to nullptr.
     Expr *bitWidth;
-    // offset - The offset of a member within a structure.
-    unsigned offset;
-    std::string fieldName;
 };
 
-class RecordDecl : public Decl {
+class RecordDecl : public VisitableDecl<RecordDecl> {
 public:
     RecordDecl(const SourceLocation &loc, bool isStruct = true, bool isDef = true, std::string name = "");
 
@@ -288,18 +346,26 @@ public:
 class Stmt : public Node {
 public:
     Stmt(const SourceLocation &loc) : Node(loc) {}
+
+    virtual void accept(StmtVisitor *v) = 0;
 };
 
-class DeclStmt : public Stmt {
+template <typename Derived>
+class VisitableStmt : public Stmt {
+public:
+    VisitableStmt(const SourceLocation &loc) : Stmt(loc) {}
+
+    void accept(StmtVisitor *v) { v->visit(static_cast<Derived *>(this)); }
+};
+
+class DeclStmt : public VisitableStmt<DeclStmt> {
 public:
     std::vector<Decl *> decls;
 };
 
-class BreakStmt : public Stmt {
+class BreakStmt : public VisitableStmt<BreakStmt> {
 public:
-    BreakStmt(const SourceLocation &loc) : Stmt(loc) {}
-
-    void accept(Visitor *v) { v->visitBreakStmt(this); }
+    BreakStmt(const SourceLocation &loc) : VisitableStmt(loc) {}
 };
 
 class ContinueStmt : public Stmt {
@@ -362,32 +428,27 @@ private:
 /**
  * AST dumper
  */
-class ASTDumper : public Visitor {
+class ASTDumper : public ExprVisitor,
+                  public DeclVisitor,
+                  public StmtVisitor {
 public:
     ASTDumper(std::ostream &os) : out(os) {}
 
-    void visitUnaryExpr(UnaryExpr *unary);
-    void visitSizeofExpr(SizeofExpr *sizeofExpr);
-    void visitBinaryExpr(BinaryExpr *binary);
-    void visitTernaryExpr(TernaryExpr *ternary);
-    void visitIntegerConstant(IntegerConstant *integer);
-    void visitFloatingConstant(FloatingConstant *floating);
-    void visitCharacterConstant(CharacterConstant *character);
-    void visitStringLiteral(StringLiteral *string);
-    void visitDeclRefExpr(DeclRefExpr *declRef);
+#define EXPR(CLASS) void visit(CLASS *e);
+#include "exprNode.def"
 
-    void visitImplicitCastExpr(ImplicitCastExpr *implicitCast);
+#define DECL(CLASS) void visit(CLASS *d);
+#include "declNode.def"
 
-    void visitVarDecl(VarDecl *varDecl);
-    void visitFieldDecl(FieldDecl *fieldDecl);
-    void visitRecordDecl(RecordDecl *recordDecl);
-
-    void visitBreakStmt(BreakStmt *breakStmt);
+    void visit(BreakStmt *breakStmt);
 
     // Helper functions.
-    void dumpChild(Node *node);
-    void dumpLastChild(Node *node);
+    template <typename ASTNode>
+    void dumpChild(ASTNode *node);
+    template <typename ASTNode>
+    void dumpLastChild(ASTNode *node);
 
+private:
     // prefix - Indentation of every line.
     std::string prefix;
     std::ostream &out;

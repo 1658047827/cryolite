@@ -1,23 +1,14 @@
 #ifndef _CRYOLITE_VISITOR_H_
 #define _CRYOLITE_VISITOR_H_
 
-class UnaryExpr;
-class SizeofExpr;
-class BinaryExpr;
-class TernaryExpr;
-class IntegerConstant;
-class FloatingConstant;
-class CharacterConstant;
-class StringLiteral;
-class DeclRefExpr;
+#define EXPR(CLASS) class CLASS;
+#include "exprNode.def"
 
-class ImplicitCastExpr;
+#define DECL(CLASS) class CLASS;
+#include "declNode.def"
 
-class VarDecl;
-class FieldDecl;
-class RecordDecl;
-
-class BreakStmt;
+#define STMT(CLASS) class CLASS;
+#include "stmtNode.def"
 
 class Visitor {
 public:
@@ -38,6 +29,23 @@ public:
     virtual void visitRecordDecl(RecordDecl *recordDecl) = 0;
 
     virtual void visitBreakStmt(BreakStmt *breakStmt) = 0;
+};
+
+class ExprVisitor {
+public:
+#define EXPR(CLASS) virtual void visit(CLASS *e) = 0;
+#include "exprNode.def"
+};
+
+class DeclVisitor {
+public:
+#define DECL(CLASS) virtual void visit(CLASS *d) = 0;
+#include "declNode.def"
+};
+
+class StmtVisitor {
+public:
+    virtual void visit(BreakStmt *breakStmt) = 0;
 };
 
 #endif

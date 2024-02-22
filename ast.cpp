@@ -1,84 +1,134 @@
 #include "ast.h"
 #include <cassert>
 
+bool Expr::evaluateAsUnsignedInt(std::size_t &evalRet, ASTContext &ctx) const {
+    return true;
+}
+
+bool Expr::evaluateAsFloating(long double &evalRet, ASTContext &ctx) const {
+    return true;
+}
+
 UnaryExpr::UnaryExpr(const SourceLocation &loc, UnaryOpKind op, Expr *expr)
-    : Expr(loc, QualType()), op(op), operand(expr) {}
+    : VisitableExpr<UnaryExpr>(loc, QualType()), op(op), operand(expr) {}
 
 SizeofExpr::SizeofExpr(const SourceLocation &loc, Expr *expr)
-    : Expr(loc, ArithType::getArithType(ArithType::UNSIGNED_LONG_LONG)) {
+    : VisitableExpr<SizeofExpr>(loc, ArithType::getArithType(ArithType::UNSIGNED_LONG_LONG)) {
     sizeofKind = UNARY_EXPR;
     arg.expr = expr;
 }
 
 SizeofExpr::SizeofExpr(const SourceLocation &loc, QualType type)
-    : Expr(loc, ArithType::getArithType(ArithType::UNSIGNED_LONG_LONG)) {
+    : VisitableExpr<SizeofExpr>(loc, ArithType::getArithType(ArithType::UNSIGNED_LONG_LONG)) {
     sizeofKind = TYPE_NAME;
     arg.type = type;
 }
 
 BinaryExpr::BinaryExpr(const SourceLocation &loc, BinaryOpKind op, Expr *lhs, Expr *rhs)
-    : Expr(loc, QualType()), op(op), lhs(lhs), rhs(rhs) {
+    : VisitableExpr<BinaryExpr>(loc, QualType()), op(op), lhs(lhs), rhs(rhs) {
 }
 
-void BinaryExpr::checkAdditiveOperator() {
-    QualType lqt = lhs->qtype;
-    QualType rqt = rhs->qtype;
+// void BinaryExpr::checkAdditiveOperator() {
+//     QualType lqt = lhs->qtype;
+//     QualType rqt = rhs->qtype;
 
-    // TODO: Value transformations.
-    // Lvalue-to-rvalue conversion.
-    // Array-to-pointer conversion.
-    // Function-to-pointer conversion.
+//     // TODO: Value transformations.
+//     // Lvalue-to-rvalue conversion.
+//     // Array-to-pointer conversion.
+//     // Function-to-pointer conversion.
 
-    ArithType *l = dynamic_cast<ArithType *>(lqt.type);
-    ArithType *r = dynamic_cast<ArithType *>(rqt.type);
+//     ArithType *l = dynamic_cast<ArithType *>(lqt.type);
+//     ArithType *r = dynamic_cast<ArithType *>(rqt.type);
 
-    if (lqt.type->kind == ARITH && rqt.type->kind == ARITH) {
-        ArithType *c = ArithType::usualArithConv(l, r);
-        if (l != c) {
-            ImplicitCastExpr::ImplicitKind castK = ImplicitCastExpr::inferArithCastKind(l, c);
-            lhs = new ImplicitCastExpr(lhs->srcLoc, lhs, QualType(c), castK);
-        }
-        if (r != c) {
-            ImplicitCastExpr::ImplicitKind castK = ImplicitCastExpr::inferArithCastKind(r, c);
-            rhs = new ImplicitCastExpr(rhs->srcLoc, rhs, QualType(c), castK);
-        }
-        qtype.type = c;
-    }
-}
+//     if (lqt.type->kind == ARITH && rqt.type->kind == ARITH) {
+//         ArithType *c = ArithType::usualArithConv(l, r);
+//         if (l != c) {
+//             ImplicitCastExpr::ImplicitKind castK = ImplicitCastExpr::inferArithCastKind(l, c);
+//             lhs = new ImplicitCastExpr(lhs->srcLoc, lhs, QualType(c), castK);
+//         }
+//         if (r != c) {
+//             ImplicitCastExpr::ImplicitKind castK = ImplicitCastExpr::inferArithCastKind(r, c);
+//             rhs = new ImplicitCastExpr(rhs->srcLoc, rhs, QualType(c), castK);
+//         }
+//         qtype.type = c;
+//     }
+// }
 
 TernaryExpr::TernaryExpr(const SourceLocation &loc, Expr *condExpr, Expr *trueExpr, Expr *falseExpr)
-    : Expr(loc, QualType()), condExpr(condExpr), trueExpr(trueExpr), falseExpr(falseExpr) {}
+    : VisitableExpr<TernaryExpr>(loc, QualType()), condExpr(condExpr), trueExpr(trueExpr), falseExpr(falseExpr) {}
 
-IntegerConstant::IntegerConstant(const SourceLocation &loc, const QualType &qt, unsigned long long val)
-    : Expr(loc, qt), value(val) {}
+IntegerConstant::IntegerConstant(const SourceLocation &loc, const QualType &qt, unsigned long long ullVal)
+    : VisitableExpr<IntegerConstant>(loc, qt), ullValue(ullVal) {}
+
+IntegerConstant::IntegerConstant(const SourceLocation &loc, const QualType &qt, signed long long sllVal)
+    : VisitableExpr<IntegerConstant>(loc, qt), sllValue(sllVal) {}
 
 FloatingConstant::FloatingConstant(const SourceLocation &loc, const QualType &qt, long double val)
-    : Expr(loc, qt), value(val) {}
+    : VisitableExpr<FloatingConstant>(loc, qt), value(val) {}
 
 CharacterConstant::CharacterConstant(const SourceLocation &loc, const QualType &qt, unsigned val)
-    : Expr(loc, qt), value(val) {}
+    : VisitableExpr<CharacterConstant>(loc, qt), value(val) {}
 
 StringLiteral::StringLiteral(const SourceLocation &loc, const QualType &qt, const std::string &str)
-    : Expr(loc, qt), value(str) {}
+    : VisitableExpr<StringLiteral>(loc, qt), content(str) {}
 
 ImplicitCastExpr::ImplicitCastExpr(const SourceLocation &loc, Expr *from, const QualType &to, ImplicitKind cKind)
-    : Expr(loc, to), fromExpr(from), castKind(cKind) {}
+    : VisitableExpr<ImplicitCastExpr>(loc, to), fromExpr(from), castKind(cKind) {}
 
-ImplicitCastExpr::ImplicitKind ImplicitCastExpr::inferArithCastKind(ArithType *from, ArithType *to) {
-    if (from->isInteger() && to->isInteger()) {
-        return ImplicitCastExpr::INTEGRAL_CAST;
-    } else if (from->isFloating() && to->isFloating()) {
-        return ImplicitCastExpr::FLOATING_CAST;
-    } else {
-        return ImplicitCastExpr::INTEGRAL_TO_FLOATING;
-    }
-}
+// ImplicitCastExpr::ImplicitKind ImplicitCastExpr::inferArithCastKind(ArithType *from, ArithType *to) {
+//     if (from->isInteger() && to->isInteger()) {
+//         return ImplicitCastExpr::INTEGRAL_CAST;
+//     } else if (from->isFloating() && to->isFloating()) {
+//         return ImplicitCastExpr::FLOATING_CAST;
+//     } else {
+//         return ImplicitCastExpr::INTEGRAL_TO_FLOATING;
+//     }
+// }
 
-FieldDecl::FieldDecl(const SourceLocation &loc, QualType qt, const std::string &name, Expr *bitWidth, unsigned offset)
-    : Decl(loc), type(qt), fieldName(name), bitWidth(bitWidth), offset(offset) {}
+template <typename ResultTy>
+void IntegerExprEvaluator<ResultTy>::visit(UnaryExpr *unary) {}
+
+template <typename ResultTy>
+void IntegerExprEvaluator<ResultTy>::visit(SizeofExpr *sizeofExpr) {}
+
+template <typename ResultTy>
+void IntegerExprEvaluator<ResultTy>::visit(BinaryExpr *binary) {}
+
+template <typename ResultTy>
+void IntegerExprEvaluator<ResultTy>::visit(TernaryExpr *ternary) {}
+
+template <typename ResultTy>
+void IntegerExprEvaluator<ResultTy>::visit(IntegerConstant *integer) {}
+
+template <typename ResultTy>
+void IntegerExprEvaluator<ResultTy>::visit(FloatingConstant *floating) {}
+
+template <typename ResultTy>
+void IntegerExprEvaluator<ResultTy>::visit(CharacterConstant *character) {}
+
+template <typename ResultTy>
+void IntegerExprEvaluator<ResultTy>::visit(StringLiteral *string) {}
+
+template <typename ResultTy>
+void IntegerExprEvaluator<ResultTy>::visit(DeclRefExpr *declRef) {}
+
+template <typename ResultTy>
+void IntegerExprEvaluator<ResultTy>::visit(CallExpr *call) {}
+
+template <typename ResultTy>
+void IntegerExprEvaluator<ResultTy>::visit(MemberExpr *member) {}
+
+template <typename ResultTy>
+void IntegerExprEvaluator<ResultTy>::visit(CastExpr *cast) {}
+
+template <typename ResultTy>
+void IntegerExprEvaluator<ResultTy>::visit(ImplicitCastExpr *implicitCast) {}
+
+FieldDecl::FieldDecl(const SourceLocation &loc, QualType qt, const std::string &name, Expr *bitWidth)
+    : VisitableDecl(loc), type(qt), fieldName(name), bitWidth(bitWidth) {}
 
 RecordDecl::RecordDecl(const SourceLocation &loc, bool isStruct, bool isDef, std::string name)
-    : Decl(loc), isDef(isDef), isStruct(isStruct), recordName(name) {}
+    : VisitableDecl(loc), isDef(isDef), isStruct(isStruct), recordName(name) {}
 
 /**
  * AST context
@@ -92,6 +142,7 @@ bool ASTContext::isPromotableIntegerType(QualType t) {
         switch (bt->getArithKind()) {
         case ArithType::BOOL:
         case ArithType::CHAR_S:
+        case ArithType::CHAR_U:
         case ArithType::SIGNED_CHAR:
         case ArithType::UNSIGNED_CHAR:
         case ArithType::SHORT:
@@ -114,7 +165,12 @@ bool ASTContext::isPromotableIntegerType(QualType t) {
 }
 
 QualType ASTContext::isPromotableBitField(Expr *e) {
-    // FieldDecl *field=
+    // FieldDecl *field =
+
+    // std::size_t bitWidth =
+    std::size_t intSize = intTy->getTypeSize();
+
+    return QualType();
 }
 
 void ASTContext::initVoidType(QualType &r) {
@@ -157,9 +213,9 @@ void ASTContext::initBuiltinTypes() {
 /**
  * AST dumper
  */
-void ASTDumper::visitUnaryExpr(UnaryExpr *unary) {
+void ASTDumper::visit(UnaryExpr *unary) {
     out << "UnaryExpr <" << srcLocToPos(unary->srcLoc) << "> ";
-    switch (unary->op) {
+    switch (unary->getOp()) {
     case PREINC:
         out << "prefix '++'\n";
         break;
@@ -193,10 +249,10 @@ void ASTDumper::visitUnaryExpr(UnaryExpr *unary) {
     default:
         break;
     }
-    dumpLastChild(unary->operand);
+    dumpLastChild(unary->getOperand());
 }
 
-void ASTDumper::visitSizeofExpr(SizeofExpr *sizeofExpr) {
+void ASTDumper::visit(SizeofExpr *sizeofExpr) {
     auto reprPair = sizeofExpr->getQualType().repr();
     out << "SizeofExpr <" << srcLocToPos(sizeofExpr->srcLoc) << "> '";
     out << reprPair.first << reprPair.second << "' sizeof ";
@@ -209,7 +265,7 @@ void ASTDumper::visitSizeofExpr(SizeofExpr *sizeofExpr) {
     }
 }
 
-void ASTDumper::visitBinaryExpr(BinaryExpr *binary) {
+void ASTDumper::visit(BinaryExpr *binary) {
     auto reprPair = binary->getQualType().repr();
     out << "BinaryExpr <" << srcLocToPos(binary->srcLoc) << "> '";
     out << reprPair.first << reprPair.second << "' ";
@@ -281,45 +337,54 @@ void ASTDumper::visitBinaryExpr(BinaryExpr *binary) {
     dumpLastChild(binary->rhs);
 }
 
-void ASTDumper::visitTernaryExpr(TernaryExpr *ternary) {
+void ASTDumper::visit(TernaryExpr *ternary) {
     out << "TernaryExpr <" << srcLocToPos(ternary->srcLoc) << ">\n";
     dumpChild(ternary->condExpr);
     dumpChild(ternary->trueExpr);
     dumpLastChild(ternary->falseExpr);
 }
 
-void ASTDumper::visitIntegerConstant(IntegerConstant *integer) {
+void ASTDumper::visit(IntegerConstant *integer) {
     auto reprPair = integer->getQualType().repr();
     out << "IntegerConstant <" << srcLocToPos(integer->srcLoc) << "> '";
-    out << reprPair.first << reprPair.second << "' " << integer->value << '\n';
+    out << reprPair.first << reprPair.second << "' ";
+    if (integer->getQualType()->isSignedIntegerType())
+        out << integer->getSignedvalue() << '\n';
+    else
+        out << integer->getUnsignedValue() << '\n';
 }
 
-void ASTDumper::visitFloatingConstant(FloatingConstant *floating) {
+void ASTDumper::visit(FloatingConstant *floating) {
     auto reprPair = floating->getQualType().repr();
     out << "FloatingConstant <" << srcLocToPos(floating->srcLoc) << "> '";
     out << reprPair.first << reprPair.second << "' " << floating->value << '\n';
 }
 
-void ASTDumper::visitCharacterConstant(CharacterConstant *character) {
+void ASTDumper::visit(CharacterConstant *character) {
     auto reprPair = character->getQualType().repr();
     out << "CharacterConstant <" << srcLocToPos(character->srcLoc) << "> '";
     out << reprPair.first << reprPair.second << "' " << character->value << '\n';
 }
 
-void ASTDumper::visitStringLiteral(StringLiteral *string) {
+void ASTDumper::visit(StringLiteral *string) {
     auto reprPair = string->getQualType().repr();
     out << "StringLiteral <" << srcLocToPos(string->srcLoc) << "> '";
-    out << reprPair.first << reprPair.second << "' \"" << string->value << "\"\n";
+    out << reprPair.first << reprPair.second << "' \"" << string->content << "\"\n";
 }
 
-void ASTDumper::visitDeclRefExpr(DeclRefExpr *declRef) {
-}
+void ASTDumper::visit(DeclRefExpr *declRef) {}
 
-void ASTDumper::visitImplicitCastExpr(ImplicitCastExpr *implicitCast) {
+void ASTDumper::visit(CallExpr *call) {}
+
+void ASTDumper::visit(MemberExpr *member) {}
+
+void ASTDumper::visit(CastExpr *cast) {}
+
+void ASTDumper::visit(ImplicitCastExpr *implicitCast) {
     auto reprPair = implicitCast->getQualType().repr();
     out << "ImplicitCastExpr <" << srcLocToPos(implicitCast->srcLoc) << "> '";
     out << reprPair.first << reprPair.second << "' ";
-    switch (implicitCast->castKind) {
+    switch (implicitCast->getCastKind()) {
     case ImplicitCastExpr::INTEGRAL_CAST:
         out << "<IntegralCast>\n";
         break;
@@ -339,44 +404,53 @@ void ASTDumper::visitImplicitCastExpr(ImplicitCastExpr *implicitCast) {
         out << "<FunctionToPointerDecay>\n";
         break;
     }
-    dumpLastChild(implicitCast->fromExpr);
+    dumpLastChild(implicitCast->getFromExpr());
 }
 
-void ASTDumper::visitVarDecl(VarDecl *varDecl) {
-}
+void ASTDumper::visit(EmptyDecl *emptyDecl) {}
 
-void ASTDumper::visitFieldDecl(FieldDecl *fieldDecl) {
-    auto reprPair = fieldDecl->type.repr();
+void ASTDumper::visit(FunctionDecl *functionDecl) {}
+
+void ASTDumper::visit(VarDecl *varDecl) {}
+
+void ASTDumper::visit(EnumDecl *enumDecl) {}
+
+void ASTDumper::visit(TypedefDecl *typedefDecl) {}
+
+void ASTDumper::visit(FieldDecl *fieldDecl) {
+    auto reprPair = fieldDecl->getType().repr();
     out << "FieldDecl <" << srcLocToPos(fieldDecl->srcLoc) << "> ";
     out << fieldDecl->fieldName << " '";
     out << reprPair.first << reprPair.second << "' \n";
 }
 
-void ASTDumper::visitRecordDecl(RecordDecl *recordDecl) {
+void ASTDumper::visit(RecordDecl *recordDecl) {
     out << "RecordDecl <" << srcLocToPos(recordDecl->srcLoc) << "> ";
     out << "struct " << recordDecl->recordName;
     if (recordDecl->isDef)
         out << " definition\n";
     else
         out << '\n';
-    for (size_t i = 0, e = recordDecl->fields.size(); i < e - 1; ++i) {
+    for (std::size_t i = 0, e = recordDecl->fields.size(); i < e - 1; ++i) {
         dumpChild(recordDecl->fields[i]);
     }
     dumpLastChild(recordDecl->fields.back());
 }
 
-void ASTDumper::visitBreakStmt(BreakStmt *breakStmt) {
+void ASTDumper::visit(BreakStmt *breakStmt) {
     out << "BreakStmt <" << srcLocToPos(breakStmt->srcLoc) << ">\n";
 }
 
-void ASTDumper::dumpChild(Node *node) {
+template <typename ASTNode>
+void ASTDumper::dumpChild(ASTNode *node) {
     out << prefix << "|--";
     prefix.append("|  ");
     node->accept(this);
     prefix.erase(prefix.size() - 3);
 }
 
-void ASTDumper::dumpLastChild(Node *node) {
+template <typename ASTNode>
+void ASTDumper::dumpLastChild(ASTNode *node) {
     out << prefix << "`--";
     prefix.append("   ");
     node->accept(this);
