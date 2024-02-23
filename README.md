@@ -9,27 +9,7 @@ C language compiler
 
 ## Notice
 
-+ Nested struct definitions like:
-    ```C
-    struct foo {
-        int id;
-        struct bar {
-            float val;
-        } internal;
-    };
-    ```
-    is not supported yet. The C code above should be written as:
-    ```C
-    struct bar {
-        float val;
-    };
-    
-    struct foo {
-        int id;
-        struct bar internal;
-    };
-    ```
-    to pass compilation and get a correct result.
++ It strictly follows the ISO C99 standard, like clang with "-pedantic".
 
 ## Reference
 

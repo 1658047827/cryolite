@@ -8,13 +8,20 @@ bool Type::isArithmeticType() const {
 }
 
 bool Type::isSignedIntegerType() {
-    if (kind != TypeKind::ARITH && kind != TypeKind::ENUM)
-        return false;
     if (const auto *bt = dynamic_cast<ArithType *>(this))
         return bt->getArithKind() >= ArithType::CHAR_S &&
                bt->getArithKind() <= ArithType::LONG_LONG;
+    // Underlying type of enum is int in implementation.
     if (const auto *et = dynamic_cast<EnumType *>(this))
-        return et->getDecl()->getIntegerType()->isSignedIntegerType();
+        return true;
+    return false;
+}
+
+bool Type::isUnsignedIntegerType() {
+    if (const auto *bt = dynamic_cast<ArithType *>(this))
+        return bt->getArithKind() >= ArithType::BOOL &&
+               bt->getArithKind() <= ArithType::UNSIGNED_LONG_LONG;
+    // Underlying type of enum is int in implementation.
     return false;
 }
 
@@ -50,6 +57,8 @@ ArithType *ArithType::getArithType(ArithKind kind) {
     default:
         assert(0 && "Unknown arith type");
     }
+    // unreachable
+    return nullptr;
 }
 
 std::pair<std::string, std::string> ArithType::repr() {
@@ -68,7 +77,8 @@ std::pair<std::string, std::string> ArithType::repr() {
 
 int ArithType::convRank() {
     switch (arithKind) {
-    // TODO: Support bool.
+    case BOOL:
+        return 1;
     case CHAR_S:
     case CHAR_U:
     case SIGNED_CHAR:

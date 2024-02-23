@@ -35,6 +35,7 @@ public:
 
     bool isArithmeticType() const;
     bool isSignedIntegerType();
+    bool isUnsignedIntegerType();
 
     template <typename T>
     const T *getAs() {
@@ -230,6 +231,10 @@ private:
     RecordDecl *decl;
 };
 
+/**
+ * EnumType - Enumeration type.
+ * The underlying integer type is int by default.
+ */ 
 class EnumType : public Type {
 public:
     EnumDecl *getDecl() const { return decl; }
