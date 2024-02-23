@@ -30,7 +30,7 @@ BinaryExpr::BinaryExpr(const SourceLocation &loc, BinaryOpKind op, Expr *lhs, Ex
 
 std::string_view BinaryExpr::getOpStr(BinaryOpKind opK) {
     switch (opK) {
-#define BINARY(NAME, REPE) \
+#define BINARY(NAME, REPR) \
     case NAME:             \
         return REPR;
 #include "operatorKind.def"
@@ -95,6 +95,9 @@ ImplicitCastExpr::ImplicitCastExpr(const SourceLocation &loc, Expr *from, const 
 //     }
 // }
 
+ParenExpr::ParenExpr(const SourceLocation &loc, Expr *subExpr)
+    : VisitableExpr<ParenExpr>(loc, QualType()), subExpr(subExpr) {}
+
 template <typename ResultTy>
 void IntegerExprEvaluator<ResultTy>::visit(UnaryExpr *unary) {}
 
@@ -121,6 +124,9 @@ void IntegerExprEvaluator<ResultTy>::visit(StringLiteral *string) {}
 
 template <typename ResultTy>
 void IntegerExprEvaluator<ResultTy>::visit(DeclRefExpr *declRef) {}
+
+template <typename ResultTy>
+void IntegerExprEvaluator<ResultTy>::visit(ParenExpr *paren) {}
 
 template <typename ResultTy>
 void IntegerExprEvaluator<ResultTy>::visit(CallExpr *call) {}
@@ -383,6 +389,8 @@ void ASTDumper::visit(StringLiteral *string) {
 }
 
 void ASTDumper::visit(DeclRefExpr *declRef) {}
+
+void ASTDumper::visit(ParenExpr *paren) {}
 
 void ASTDumper::visit(CallExpr *call) {}
 

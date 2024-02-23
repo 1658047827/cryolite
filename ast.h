@@ -106,6 +106,9 @@ class BinaryExpr : public VisitableExpr<BinaryExpr> {
 public:
     BinaryExpr(const SourceLocation &loc, BinaryOpKind op, Expr *lhs, Expr *rhs);
 
+    bool isAdditiveOp() const { return isAdditiveOp(op); }
+    static bool isAdditiveOp(BinaryOpKind opK) { return opK == ADD || opK == SUB; }
+
     bool isComparisonOp() const { return isComparisonOp(op); }
     static bool isComparisonOp(BinaryOpKind opK) { return opK >= LESS && opK <= NEQ; }
 
@@ -179,6 +182,14 @@ public:
     // Decl *decl;
 };
 
+class ParenExpr : public VisitableExpr<ParenExpr> {
+public:
+    ParenExpr(const SourceLocation &loc, Expr *subExpr);
+
+private:
+    Expr *subExpr;
+};
+
 class CallExpr : public VisitableExpr<CallExpr> {
 };
 
@@ -216,19 +227,8 @@ class IntegerExprEvaluator : public ExprVisitor {
 public:
     IntegerExprEvaluator(const ResultTy &res) : result(res) {}
 
-    void visit(UnaryExpr *unary);
-    void visit(SizeofExpr *sizeofExpr);
-    void visit(BinaryExpr *binary);
-    void visit(TernaryExpr *ternary);
-    void visit(IntegerConstant *integer);
-    void visit(FloatingConstant *floating);
-    void visit(CharacterConstant *character);
-    void visit(StringLiteral *string);
-    void visit(DeclRefExpr *declRef);
-    void visit(CallExpr *call);
-    void visit(MemberExpr *member);
-    void visit(CastExpr *cast);
-    void visit(ImplicitCastExpr *implicitCast);
+#define EXPR(CLASS) void visit(CLASS *e);
+#include "exprNode.def"
 
 private:
     ResultTy &result;
