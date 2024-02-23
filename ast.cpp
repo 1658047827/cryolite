@@ -153,7 +153,16 @@ ASTContext::ASTContext() {
     initBuiltinTypes();
 }
 
-bool ASTContext::isPromotableIntegerType(QualType t) {
+QualType ASTContext::getPromotedIntegerType(QualType promotable) const {
+    if (promotable->isSignedIntegerType())
+        return intTy;
+    std::size_t promotableSize = promotable->getTypeSize();
+    std::size_t intTypeSize = intTy->getTypeSize();
+    assert(promotable->isUnsignedIntegerType() && promotableSize <= intTypeSize);
+    return (promotableSize != intTypeSize) ? intTy : unsignedIntTy;
+}
+
+bool ASTContext::isPromotableIntegerType(QualType t) const {
     if (const ArithType *bt = t->getAs<ArithType>()) {
         switch (bt->getArithKind()) {
         case ArithType::BOOL:
@@ -168,15 +177,8 @@ bool ASTContext::isPromotableIntegerType(QualType t) {
             return false;
         }
     }
-
-    // Enumerated types are promotable to their compatible integer types
-    // (C99 6.3.1.1) a.k.a. its underlying type.
-    if (const EnumType *et = t->getAs<EnumType>()) {
-        if (et->getDecl()->getPromotionType().isNull())
-            return false;
-        return true;
-    }
-
+    // In this compiler, enum's underlying type is int.
+    // So enum is not promotable.
     return false;
 }
 

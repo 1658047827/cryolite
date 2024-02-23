@@ -272,19 +272,21 @@ public:
     std::string name;
 };
 
+/**
+ * EnumDecl - Enumeration type declaration.
+ * Since this compiler follows ISO C99 strictly,
+ * forward reference to enum type is forbidden.
+ */
 class EnumDecl : public VisitableDecl<EnumDecl> {
 public:
     EnumDecl(const SourceLocation &loc) : VisitableDecl(loc) {}
 
     QualType getIntegerType() const { return integerType; }
-    QualType getPromotionType() const { return promotionType; }
 
 private:
-    // integerType - The underlying integer type.
+    // integerType - The underlying integer type which defaults to int.
+    // ISO C99 does not allow declaration with a fixed underlying type.
     QualType integerType;
-
-    // promotionType - The integer type that this enum should promote to.
-    QualType promotionType;
 };
 
 class TypedefDecl : public VisitableDecl<TypedefDecl> {
@@ -406,7 +408,9 @@ public:
 
     ASTContext();
 
-    bool isPromotableIntegerType(QualType t);
+    // [C99 6.3.1.1p2]
+    QualType getPromotedIntegerType(QualType promotable) const;
+    bool isPromotableIntegerType(QualType t) const;
     QualType isPromotableBitField(Expr *e);
 
 private:
