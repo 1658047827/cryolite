@@ -3,28 +3,6 @@
 #include <algorithm>
 #include <cassert>
 
-bool Type::isArithmeticType() const {
-    return kind == TypeKind::ARITH;
-}
-
-bool Type::isSignedIntegerType() {
-    if (const auto *bt = dynamic_cast<ArithType *>(this))
-        return bt->getArithKind() >= ArithType::CHAR_S &&
-               bt->getArithKind() <= ArithType::LONG_LONG;
-    // Underlying type of enum is int in implementation.
-    if (const auto *et = dynamic_cast<EnumType *>(this))
-        return true;
-    return false;
-}
-
-bool Type::isUnsignedIntegerType() {
-    if (const auto *bt = dynamic_cast<ArithType *>(this))
-        return bt->getArithKind() >= ArithType::BOOL &&
-               bt->getArithKind() <= ArithType::UNSIGNED_LONG_LONG;
-    // Underlying type of enum is int in implementation.
-    return false;
-}
-
 std::pair<std::string, std::string> QualType::repr() {
     // TODO: A proper way to print qualifiers.
     // std::string s = isConstQualified() ? "const " : "";
@@ -105,6 +83,17 @@ int ArithType::convRank() {
     default:
         assert(0);
     }
+    return 0;
+}
+
+bool ArithType::isSignedIntegerType() const {
+    return arithKind >= ArithType::CHAR_S &&
+           arithKind <= ArithType::LONG_LONG;
+}
+
+bool ArithType::isUnsignedIntegerType() const {
+    return arithKind >= ArithType::BOOL &&
+           arithKind <= ArithType::UNSIGNED_LONG_LONG;
 }
 
 // ArithType *ArithType::integerPromote(ArithType *t) {

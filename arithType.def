@@ -2,6 +2,7 @@
 #define ARITH(T, SIZE, REPR)
 #endif
 
+// Unsigned types
 ARITH(BOOL, 1, "bool")
 ARITH(CHAR_U, 1, "char") // For char which is unsigned.
 ARITH(UNSIGNED_CHAR, 1, "unsigned char")
@@ -10,6 +11,7 @@ ARITH(UNSIGNED_INT, 4, "unsigned int")
 ARITH(UNSIGNED_LONG, 8, "unsigned long")
 ARITH(UNSIGNED_LONG_LONG, 8, "unsigned long long")
 
+// Signed types
 ARITH(CHAR_S, 1, "char") // For char which is signed.
 ARITH(SIGNED_CHAR, 1, "signed char")
 ARITH(SHORT, 2, "short")
@@ -17,6 +19,7 @@ ARITH(INT, 4, "int")
 ARITH(LONG, 8, "long")
 ARITH(LONG_LONG, 8, "long long")
 
+// Floating point types
 ARITH(FLOAT, 4, "float")
 ARITH(DOUBLE, 8, "double")
 ARITH(LONG_DOUBLE, 8, "long double")

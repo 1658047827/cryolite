@@ -16,7 +16,8 @@ enum TypeKind {
     ARRAY,
     FUNCTION,
     RECORD,
-    ENUM
+    ENUM,
+    TYPEDEF
 };
 
 class Type {
@@ -33,9 +34,7 @@ public:
     virtual std::pair<std::string, std::string> repr() = 0;
     virtual std::size_t getTypeSize() = 0;
 
-    bool isArithmeticType() const;
-    bool isSignedIntegerType();
-    bool isUnsignedIntegerType();
+    TypeKind getKind() const { return kind; }
 
     template <typename T>
     const T *getAs() {
@@ -47,6 +46,11 @@ public:
         // TODO: Ref Clang Type.h
         return nullptr;
     }
+
+    virtual bool isVoidType() const { return false; }
+    virtual bool isArithmeticType() const { return false; }
+    virtual bool isSignedIntegerType() const { return false; }
+    virtual bool isUnsignedIntegerType() const { return false; }
 
     TypeKind kind;
     // complete - A type is considered incomplete if its size or structure is unknown at a particular point in time.
@@ -72,6 +76,7 @@ public:
     QualType(Type *type, unsigned char quals = 0) : type(type), quals(quals) {}
 
     Type *getTypePtr() const { return type; }
+    QualType getUnqualifiedType() const { return QualType(type); }
 
     Type &operator*() const { return *type; }
     Type *operator->() const { return type; }
@@ -91,9 +96,8 @@ public:
         return (quals != other.quals) || (type != other.type);
     }
 
-    Type *type;
-
 private:
+    Type *type;
     unsigned char quals;
 };
 
@@ -106,6 +110,8 @@ public:
     static VoidType *getVoidType();
     std::pair<std::string, std::string> repr() { return std::make_pair("void", ""); }
     std::size_t getTypeSize() { return 1ULL; }
+
+    bool isVoidType() const { return true; }
 
 private:
     // void is incomplete.
@@ -149,6 +155,10 @@ public:
     // static ArithType *usualArithConv(ArithType *l, ArithType *r);
 
     ArithKind getArithKind() const { return arithKind; }
+
+    bool isArithmeticType() const { return true; }
+    bool isSignedIntegerType() const;
+    bool isUnsignedIntegerType() const;
 
 private:
     ArithKind arithKind;
@@ -234,13 +244,25 @@ private:
 /**
  * EnumType - Enumeration type.
  * The underlying integer type is int by default.
- */ 
+ */
 class EnumType : public Type {
 public:
     EnumDecl *getDecl() const { return decl; }
 
+    bool isArithmeticType() const { return true; }
+    // Underlying type of enum is int in implementation.
+    bool isSignedIntegerType() const { return true; }
+
 private:
     EnumDecl *decl;
+};
+
+class TypedefType : public Type {
+public:
+    TypedefDecl *getDecl() const { return decl; }
+
+private:
+    TypedefDecl *decl;
 };
 
 #endif
