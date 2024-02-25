@@ -7,23 +7,56 @@ void Semantic::actOnPopScope(SourceLocation loc, Scope *s) {
     assert((s->getFlags() & Scope::DECL_SCOPE) && "Scope shouldn't contain decls");
 }
 
-void Semantic::defaultFunctionArrayConversion(Expr *&expr) {
+Expr *Semantic::implicitCastExprToType(Expr *expr, QualType ty, CastKind cKind) {
+    QualType exprTy = expr->getQualType();
+    if (exprTy == ty)
+        return expr;
+    return new ImplicitCastExpr(expr, ty, cKind);
 }
 
-Expr *Semantic::usualUnaryConversions(Expr *&expr) {
-    QualType ty = expr->getQualType();
-    assert(!ty.isNull() && "missing type in usual unary conversions");
+Expr *Semantic::lvalueConversion(Expr *expr) {
+    // TODO: Finish it.
+    return expr;
+}
 
-    // [C99 6.3.1.1p2] Integer promotion.
+Expr *Semantic::functionArrayConversion(Expr *expr) {
+}
+
+Expr *Semantic::integerPromotions(Expr *expr) {
+    QualType pTy = context.isPromotableBitField(expr);
+    if (!pTy.isNull()) {
+        expr = implicitCastExprToType(expr, pTy, CastKind::INTEGRAL_CAST);
+        return expr;
+    }
+    QualType ty = expr->getQualType();
+    if (context.isPromotableIntegerType(ty)) {
+        QualType pt = context.getPromotedIntegerType(ty);
+        expr = implicitCastExprToType(expr, pt, CastKind::INTEGRAL_CAST);
+        return expr;
+    }
 }
 
 // usualArithmeticConversions - [C99 6.3.1.8]
-QualType Semantic::usualArithmeticConversions(Expr *lhs, Expr *rhs) {
-    usualUnaryConversions(lhs);
-    usualUnaryConversions(rhs);
+QualType Semantic::usualArithmeticConversions(Expr *&lhs, Expr *&rhs) {
+    // For conversion purposes, we ignore any qualifiers.
+    QualType lhsTy = lhs->getQualType().getUnqualifiedType();
+    QualType rhsTy = rhs->getQualType().getUnqualifiedType();
+    assert(lhsTy->isArithmeticType() && rhsTy->isArithmeticType());
+
+    if(lhsTy->isFloatingType() || rhsTy->isFloatingType())
+        handleFloatingConversions(lhs, rhs, lhsTy, rhsTy);
 }
 
-Expr *Semantic::actOnBinaryOp(Scope *s, SourceLocation loc, BinaryOpKind op, Expr *lhs, Expr *rhs) {
+QualType Semantic::handleFloatingConversions(Expr *&lhs, Expr *&rhs, QualType lhsTy, QualType rhsTy) {
+    bool lhsFloating = lhsTy->isFloatingType();
+    bool rhsFloating = rhsTy->isFloatingType();
+
+    if(lhsFloating && rhsFloating) {
+        
+    }
+}
+
+Expr *Semantic::actOnBinaryOp(Scope *s, SourceLocation opLoc, BinaryOpKind op, Expr *lhs, Expr *rhs) {
     assert(lhs && "missing left expression");
     assert(rhs && "missing right expression");
 
@@ -31,20 +64,19 @@ Expr *Semantic::actOnBinaryOp(Scope *s, SourceLocation loc, BinaryOpKind op, Exp
     //     0x1 & 0x4 == 0
     //     1 << 2 + 4
     if (BinaryExpr::isBitwiseOp(op))
-        diagnoseBitwisePrecedence(op, loc, lhs, rhs);
+        diagnoseBitwisePrecedence(op, opLoc, lhs, rhs);
     if (op == SHL || op == SHR)
-        diagnoseAdditiveInShift(op, loc, lhs, rhs);
+        diagnoseAdditiveInShift(op, opLoc, lhs, rhs);
 
-    return buildBinaryExpr(s, loc, op, lhs, rhs);
+    return createBuiltinBinaryExpr(s, opLoc, op, lhs, rhs);
 }
 
-Expr *Semantic::buildBinaryExpr(Scope *s, SourceLocation loc, BinaryOpKind op, Expr *lhs, Expr *rhs) {
-    return new BinaryExpr(loc, op, lhs, rhs);
-
+Expr *Semantic::createBuiltinBinaryExpr(Scope *s, SourceLocation opLoc, BinaryOpKind op, Expr *lhs, Expr *rhs) {
     QualType resultTy;
 
     switch (op) {
     case BinaryOpKind::ADD:
+        resultTy = checkAdditionOperands(lhs, rhs, opLoc);
         break;
     case BinaryOpKind::SUB:
         break;
@@ -53,11 +85,27 @@ Expr *Semantic::buildBinaryExpr(Scope *s, SourceLocation loc, BinaryOpKind op, E
     case BinaryOpKind::MOD:
         break;
     default:
-        assert(0);
+        // assert(0);
+        break;
     }
+    return new BinaryExpr(opLoc, op, lhs, rhs);
 }
 
-QualType Semantic::checkAdditionOperands(Expr *lhs, Expr *rhs, SourceLocation loc) {
+QualType Semantic::checkAdditionOperands(Expr *&lhs, Expr *&rhs, SourceLocation loc) {
+    QualType lhsTy = lhs->getQualType();
+    QualType rhsTy = rhs->getQualType();
+
+    if (lhsTy->isArithmeticType() && rhsTy->isArithmeticType()) {
+        QualType type = usualArithmeticConversions(lhs, rhs);
+        if (!type.isNull() && type->isArithmeticType())
+            return type;
+        // TODO: else?
+    }
+
+    // Diagnose string literal + int and string + char literal.
+
+    // TODO: Other situations.
+    return QualType();
 }
 
 static void diagnoseBitwisePrecedence(BinaryOpKind opK, SourceLocation opLoc, Expr *lhs, Expr *rhs) {

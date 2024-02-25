@@ -13,14 +13,24 @@ public:
 
     void actOnPopScope(SourceLocation loc, Scope *s);
 
-    void defaultFunctionArrayConversion(Expr *&expr);
-    Expr *usualUnaryConversions(Expr *&expr);
-    QualType usualArithmeticConversions(Expr *lhs, Expr *rhs);
+    Expr *implicitCastExprToType(Expr *expr, QualType ty, CastKind cKind);
 
-    Expr *actOnBinaryOp(Scope *s, SourceLocation loc, BinaryOpKind op, Expr *lhs, Expr *rhs);
-    Expr *buildBinaryExpr(Scope *s, SourceLocation loc, BinaryOpKind op, Expr *lhs, Expr *rhs);
+    // Value transformations
+    // lvalueConversion - The type remains the same, but loses const/volatile/restrict-qualifiers.
+    Expr *lvalueConversion(Expr *expr);
+    Expr *functionArrayConversion(Expr *expr);
 
-    QualType checkAdditionOperands(Expr *lhs, Expr *rhs, SourceLocation loc);
+    // [C99 6.3.1.1p2] Integer promotions.
+    Expr *integerPromotions(Expr *expr);
+
+    // [C99 6.3.1.8] Usual arithmetic conversions.
+    QualType usualArithmeticConversions(Expr *&lhs, Expr *&rhs);
+    QualType handleFloatingConversions(Expr *&lhs, Expr *&rhs, QualType lhsTy, QualType rhsTy);
+
+    Expr *actOnBinaryOp(Scope *s, SourceLocation opLoc, BinaryOpKind op, Expr *lhs, Expr *rhs);
+    Expr *createBuiltinBinaryExpr(Scope *s, SourceLocation opLoc, BinaryOpKind op, Expr *lhs, Expr *rhs);
+
+    QualType checkAdditionOperands(Expr *&lhs, Expr *&rhs, SourceLocation loc);
 
 private:
     ASTContext &context;

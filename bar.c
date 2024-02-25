@@ -1,7 +1,21 @@
+// clang -Xclang -ast-dump -fsyntax-only -std=c99 -pedantic bar.c
+// clang -Xclang -ast-dump -fsyntax-only -std=c99 -pedantic-errors bar.c
+// gcc -std=c99 -pedantic bar.c
+// gcc -std=c99 -pedantic-errors bar.c
+
 // #include <stdio.h>
 
 typedef unsigned long long ull;
-;
+typedef const ull cull;
+typedef cull f0(int);
+typedef f0 *f1(float);
+typedef f0 *(*f2)(f1 *, ull);
+typedef cull (*(*crazy)(cull (*(*)(float))(int), ull))(int);
+// std::is_same<f2, crazy>::value == true
+
+typedef int Foo;
+typedef Foo *Bar;
+typedef const Bar xyz;
 
 const int w = 10;
 
@@ -12,13 +26,15 @@ struct Node {
         int length;
         int width;
     } internal;
+    // enum Qualifier qual;
     float;
 };
 
 enum Qualifier {
     CONST,
     RESTRICT,
-    VOLATILE
+    VOLATILE,
+    WTF = CONST // ???
 };
 
 typedef float (*F)(long **);
@@ -89,7 +105,8 @@ int main() {
     (*nodePtr).id;
     // func(0, 0);
     helper(0, 0);
-    function(10);
+    // function(10);
     (3.14L + 114.514F) - (sizeof(44L) - 'a');
+    unsigned kkk = (unsigned)(0x12 & 1 == 2);
     return 0;
 }

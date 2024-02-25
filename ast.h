@@ -15,7 +15,9 @@ class ASTContext;
 class Node {
 public:
     Node(const SourceLocation &loc) : srcLoc(loc) {}
+    SourceLocation getSrcLoc() const { return srcLoc; }
 
+private:
     SourceLocation srcLoc;
 };
 
@@ -196,30 +198,30 @@ class CallExpr : public VisitableExpr<CallExpr> {
 class MemberExpr : public VisitableExpr<MemberExpr> {
 };
 
+enum CastKind {
+    INTEGRAL_CAST,
+    FLOATING_CAST,
+    INTEGRAL_TO_FLOATING,
+    LVALUE_TO_RVALUE,
+    ARRAY_TO_POINTER_DECAY,
+    FUNCTION_TO_POINTER_DECAY,
+};
+
 class CastExpr : public VisitableExpr<CastExpr> {
 };
 
 class ImplicitCastExpr : public VisitableExpr<ImplicitCastExpr> {
 public:
-    enum ImplicitKind {
-        INTEGRAL_CAST,
-        FLOATING_CAST,
-        INTEGRAL_TO_FLOATING,
-        LVALUE_TO_RVALUE,
-        ARRAY_DECAY,    // Array to pointer decay.
-        FUNCTION_DECAY, // Function to pointer decay.
-    };
-
-    ImplicitCastExpr(const SourceLocation &loc, Expr *from, const QualType &to, ImplicitKind cKind);
+    ImplicitCastExpr(Expr *from, const QualType &to, CastKind cKind);
 
     Expr *getFromExpr() const { return fromExpr; }
-    ImplicitKind getCastKind() const { return castKind; }
+    CastKind getCastKind() const { return castKind; }
 
     // static ImplicitKind inferArithCastKind(ArithType *from, ArithType *to);
 
 private:
     Expr *fromExpr;
-    ImplicitKind castKind;
+    CastKind castKind;
 };
 
 template <typename ResultTy = unsigned long long>
@@ -290,6 +292,8 @@ private:
 };
 
 class TypedefDecl : public VisitableDecl<TypedefDecl> {
+public:
+private:
 };
 
 class FieldDecl : public VisitableDecl<FieldDecl> {
@@ -408,6 +412,10 @@ public:
 
     ASTContext();
 
+    // getIntegerRank - [C99 6.3.1.1p1] Integer conversion rank.
+    unsigned getIntegerRank(Type *t) const;
+    unsigned getFloatingRank(Type *t) const;
+
     // [C99 6.3.1.1p2]
     QualType getPromotedIntegerType(QualType promotable) const;
     bool isPromotableIntegerType(QualType t) const;
@@ -439,6 +447,7 @@ public:
     // Helper functions.
     template <typename ASTNode>
     void dumpChild(ASTNode *node);
+
     template <typename ASTNode>
     void dumpLastChild(ASTNode *node);
 

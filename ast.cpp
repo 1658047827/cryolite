@@ -82,8 +82,8 @@ CharacterConstant::CharacterConstant(const SourceLocation &loc, const QualType &
 StringLiteral::StringLiteral(const SourceLocation &loc, const QualType &qt, const std::string &str)
     : VisitableExpr<StringLiteral>(loc, qt), content(str) {}
 
-ImplicitCastExpr::ImplicitCastExpr(const SourceLocation &loc, Expr *from, const QualType &to, ImplicitKind cKind)
-    : VisitableExpr<ImplicitCastExpr>(loc, to), fromExpr(from), castKind(cKind) {}
+ImplicitCastExpr::ImplicitCastExpr(Expr *from, const QualType &to, CastKind cKind)
+    : VisitableExpr<ImplicitCastExpr>(from->getSrcLoc(), to), fromExpr(from), castKind(cKind) {}
 
 // ImplicitCastExpr::ImplicitKind ImplicitCastExpr::inferArithCastKind(ArithType *from, ArithType *to) {
 //     if (from->isInteger() && to->isInteger()) {
@@ -183,12 +183,59 @@ bool ASTContext::isPromotableIntegerType(QualType t) const {
 }
 
 QualType ASTContext::isPromotableBitField(Expr *e) {
+    // TODO: Finish it.
+
     // FieldDecl *field =
 
     // std::size_t bitWidth =
     std::size_t intSize = intTy->getTypeSize();
 
     return QualType();
+}
+
+unsigned ASTContext::getIntegerRank(Type *t) const {
+    assert(t->isCanonicalUnqualified() && "t should be canonicalized");
+    if (const auto *et = dynamic_cast<EnumType *>(t))
+        t = et->getDecl()->getIntegerType().getTypePtr();
+    assert(t->isArithmeticType());
+    switch (t->getAs<ArithType>()->getArithKind()) {
+    case ArithType::BOOL:
+        return 1;
+    case ArithType::CHAR_S:
+    case ArithType::CHAR_U:
+    case ArithType::SIGNED_CHAR:
+    case ArithType::UNSIGNED_CHAR:
+        return 2;
+    case ArithType::SHORT:
+    case ArithType::UNSIGNED_SHORT:
+        return 3;
+    case ArithType::INT:
+    case ArithType::UNSIGNED_INT:
+        return 4;
+    case ArithType::LONG:
+    case ArithType::UNSIGNED_LONG:
+        return 5;
+    case ArithType::LONG_LONG:
+    case ArithType::UNSIGNED_LONG_LONG:
+        return 6;
+    default:
+        assert(0 && "not an integer type");
+    }
+    return 0;
+}
+
+unsigned ASTContext::getFloatingRank(Type *t) const {
+    assert(t->isArithmeticType());
+    switch (t->getAs<ArithType>()->getArithKind()) {
+    case ArithType::FLOAT:
+        return 7;
+    case ArithType::DOUBLE:
+        return 8;
+    case ArithType::LONG_DOUBLE:
+        return 9;
+    default:
+        assert(0 && "not a floating type");
+    }
 }
 
 void ASTContext::initVoidType(QualType &r) {
@@ -232,7 +279,7 @@ void ASTContext::initBuiltinTypes() {
  * AST dumper
  */
 void ASTDumper::visit(UnaryExpr *unary) {
-    out << "UnaryExpr <" << srcLocToPos(unary->srcLoc) << "> ";
+    out << "UnaryExpr <" << srcLocToPos(unary->getSrcLoc()) << "> ";
     switch (unary->getOp()) {
     case PREINC:
         out << "prefix '++'\n";
@@ -272,7 +319,7 @@ void ASTDumper::visit(UnaryExpr *unary) {
 
 void ASTDumper::visit(SizeofExpr *sizeofExpr) {
     auto reprPair = sizeofExpr->getQualType().repr();
-    out << "SizeofExpr <" << srcLocToPos(sizeofExpr->srcLoc) << "> '";
+    out << "SizeofExpr <" << srcLocToPos(sizeofExpr->getSrcLoc()) << "> '";
     out << reprPair.first << reprPair.second << "' sizeof ";
     if (sizeofExpr->sizeofKind == SizeofExpr::UNARY_EXPR) {
         out << '\n';
@@ -285,7 +332,7 @@ void ASTDumper::visit(SizeofExpr *sizeofExpr) {
 
 void ASTDumper::visit(BinaryExpr *binary) {
     auto reprPair = binary->getQualType().repr();
-    out << "BinaryExpr <" << srcLocToPos(binary->srcLoc) << "> '";
+    out << "BinaryExpr <" << srcLocToPos(binary->getSrcLoc()) << "> '";
     out << reprPair.first << reprPair.second << "' ";
     switch (binary->op) {
     case ADD:
@@ -356,7 +403,7 @@ void ASTDumper::visit(BinaryExpr *binary) {
 }
 
 void ASTDumper::visit(TernaryExpr *ternary) {
-    out << "TernaryExpr <" << srcLocToPos(ternary->srcLoc) << ">\n";
+    out << "TernaryExpr <" << srcLocToPos(ternary->getSrcLoc()) << ">\n";
     dumpChild(ternary->condExpr);
     dumpChild(ternary->trueExpr);
     dumpLastChild(ternary->falseExpr);
@@ -364,7 +411,7 @@ void ASTDumper::visit(TernaryExpr *ternary) {
 
 void ASTDumper::visit(IntegerConstant *integer) {
     auto reprPair = integer->getQualType().repr();
-    out << "IntegerConstant <" << srcLocToPos(integer->srcLoc) << "> '";
+    out << "IntegerConstant <" << srcLocToPos(integer->getSrcLoc()) << "> '";
     out << reprPair.first << reprPair.second << "' ";
     if (integer->getQualType()->isSignedIntegerType())
         out << integer->getSignedvalue() << '\n';
@@ -374,19 +421,19 @@ void ASTDumper::visit(IntegerConstant *integer) {
 
 void ASTDumper::visit(FloatingConstant *floating) {
     auto reprPair = floating->getQualType().repr();
-    out << "FloatingConstant <" << srcLocToPos(floating->srcLoc) << "> '";
+    out << "FloatingConstant <" << srcLocToPos(floating->getSrcLoc()) << "> '";
     out << reprPair.first << reprPair.second << "' " << floating->value << '\n';
 }
 
 void ASTDumper::visit(CharacterConstant *character) {
     auto reprPair = character->getQualType().repr();
-    out << "CharacterConstant <" << srcLocToPos(character->srcLoc) << "> '";
+    out << "CharacterConstant <" << srcLocToPos(character->getSrcLoc()) << "> '";
     out << reprPair.first << reprPair.second << "' " << character->value << '\n';
 }
 
 void ASTDumper::visit(StringLiteral *string) {
     auto reprPair = string->getQualType().repr();
-    out << "StringLiteral <" << srcLocToPos(string->srcLoc) << "> '";
+    out << "StringLiteral <" << srcLocToPos(string->getSrcLoc()) << "> '";
     out << reprPair.first << reprPair.second << "' \"" << string->content << "\"\n";
 }
 
@@ -402,25 +449,25 @@ void ASTDumper::visit(CastExpr *cast) {}
 
 void ASTDumper::visit(ImplicitCastExpr *implicitCast) {
     auto reprPair = implicitCast->getQualType().repr();
-    out << "ImplicitCastExpr <" << srcLocToPos(implicitCast->srcLoc) << "> '";
+    out << "ImplicitCastExpr <" << srcLocToPos(implicitCast->getSrcLoc()) << "> '";
     out << reprPair.first << reprPair.second << "' ";
     switch (implicitCast->getCastKind()) {
-    case ImplicitCastExpr::INTEGRAL_CAST:
+    case CastKind::INTEGRAL_CAST:
         out << "<IntegralCast>\n";
         break;
-    case ImplicitCastExpr::FLOATING_CAST:
+    case CastKind::FLOATING_CAST:
         out << "<FloatingCast>\n";
         break;
-    case ImplicitCastExpr::INTEGRAL_TO_FLOATING:
+    case CastKind::INTEGRAL_TO_FLOATING:
         out << "<IntegralToFloating>\n";
         break;
-    case ImplicitCastExpr::LVALUE_TO_RVALUE:
+    case CastKind::LVALUE_TO_RVALUE:
         out << "<LValueToRValue>\n";
         break;
-    case ImplicitCastExpr::ARRAY_DECAY:
+    case CastKind::ARRAY_TO_POINTER_DECAY:
         out << "<ArrayToPointerDecay>\n";
         break;
-    case ImplicitCastExpr::FUNCTION_DECAY:
+    case CastKind::FUNCTION_TO_POINTER_DECAY:
         out << "<FunctionToPointerDecay>\n";
         break;
     }
@@ -439,13 +486,13 @@ void ASTDumper::visit(TypedefDecl *typedefDecl) {}
 
 void ASTDumper::visit(FieldDecl *fieldDecl) {
     auto reprPair = fieldDecl->getType().repr();
-    out << "FieldDecl <" << srcLocToPos(fieldDecl->srcLoc) << "> ";
+    out << "FieldDecl <" << srcLocToPos(fieldDecl->getSrcLoc()) << "> ";
     out << fieldDecl->fieldName << " '";
     out << reprPair.first << reprPair.second << "' \n";
 }
 
 void ASTDumper::visit(RecordDecl *recordDecl) {
-    out << "RecordDecl <" << srcLocToPos(recordDecl->srcLoc) << "> ";
+    out << "RecordDecl <" << srcLocToPos(recordDecl->getSrcLoc()) << "> ";
     out << "struct " << recordDecl->recordName;
     if (recordDecl->isDef)
         out << " definition\n";
@@ -458,7 +505,7 @@ void ASTDumper::visit(RecordDecl *recordDecl) {
 }
 
 void ASTDumper::visit(BreakStmt *breakStmt) {
-    out << "BreakStmt <" << srcLocToPos(breakStmt->srcLoc) << ">\n";
+    out << "BreakStmt <" << srcLocToPos(breakStmt->getSrcLoc()) << ">\n";
 }
 
 template <typename ASTNode>
