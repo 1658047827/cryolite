@@ -15,20 +15,23 @@ std::pair<std::string, std::string> QualType::repr() {
     return reprPair;
 }
 
+bool Type::isCanonicalUnqualified() const {
+    return canonicalType.getTypePtr() == this &&
+           !canonicalType.hasQualifiers();
+    // return canonicalType == QualType(this, 0);
+}
+
 VoidType *VoidType::getVoidType() {
     static VoidType *voidType = new VoidType();
     return voidType;
 }
 
-ArithType::ArithType(ArithKind kind, std::size_t size)
-    : Type(TypeKind::ARITH, true, size), arithKind(kind) {}
-
 ArithType *ArithType::getArithType(ArithKind kind) {
-#define ARITH(T, SIZE, REPR) static ArithType *T##_TYPE = new ArithType(T, SIZE);
+#define ARITH(T, BITSIZE, REPR) static ArithType *T##_TYPE = new ArithType(T);
 #include "arithType.def"
 
     switch (kind) {
-#define ARITH(T, SIZE, REPR) \
+#define ARITH(T, BITSIZE, REPR) \
     case T:                  \
         return T##_TYPE;
 #include "arithType.def"
@@ -42,7 +45,7 @@ ArithType *ArithType::getArithType(ArithKind kind) {
 std::pair<std::string, std::string> ArithType::repr() {
     std::string s;
     switch (arithKind) {
-#define ARITH(T, SIZE, REPR) \
+#define ARITH(T, BITSIZE, REPR) \
     case T:                  \
         s = REPR;            \
         break;
@@ -87,13 +90,18 @@ int ArithType::convRank() {
 }
 
 bool ArithType::isSignedIntegerType() const {
-    return arithKind >= ArithType::CHAR_S &&
-           arithKind <= ArithType::LONG_LONG;
+    return arithKind >= ArithKind::CHAR_S &&
+           arithKind <= ArithKind::LONG_LONG;
 }
 
 bool ArithType::isUnsignedIntegerType() const {
-    return arithKind >= ArithType::BOOL &&
-           arithKind <= ArithType::UNSIGNED_LONG_LONG;
+    return arithKind >= ArithKind::BOOL &&
+           arithKind <= ArithKind::UNSIGNED_LONG_LONG;
+}
+
+bool ArithType::isFloatingType() const {
+    return arithKind >= ArithKind::FLOAT &&
+           arithKind <= ArithKind::LONG_DOUBLE;
 }
 
 // ArithType *ArithType::integerPromote(ArithType *t) {
@@ -154,9 +162,8 @@ bool ArithType::isUnsignedIntegerType() const {
 // }
 
 // The completeness of a pointer is independent of the definition status of the data type it points to.
-// TODO: The size of pointer.
-PointerType::PointerType(const QualType &p)
-    : Type(TypeKind::POINTER, true, 8), pointee(p) {}
+// TODO: canonicalType.
+PointerType::PointerType(const QualType &p) : Type(TypeKind::POINTER, QualType()), pointee(p) {}
 
 std::pair<std::string, std::string> PointerType::repr() {
     auto reprPair = pointee.repr();
@@ -169,8 +176,9 @@ std::pair<std::string, std::string> PointerType::repr() {
     return reprPair;
 }
 
+// TODO: canonicalType
 ArrayType::ArrayType(const QualType &type, ArrayKind kind, Expr *expr)
-    : Type(TypeKind::ARRAY), elemType(type), arrKind(kind), sizeExpr(expr) {}
+    : Type(TypeKind::ARRAY, QualType()), elemType(type), arrKind(kind), sizeExpr(expr) {}
 
 ConstantArrayType::ConstantArrayType(const QualType &type, std::size_t size, Expr *expr)
     : ArrayType(type, CONSTANT, expr), size(size) {}
@@ -187,16 +195,9 @@ std::pair<std::string, std::string> ConstantArrayType::repr() {
     return reprPair;
 }
 
-std::size_t ConstantArrayType::getTypeSize() {
-    if (typeSize != 0) {
-        return typeSize;
-    } else {
-        return typeSize = elemType->getTypeSize() * size;
-    }
-}
-
+// TODO: canonicalType.
 FunctionType::FunctionType(const QualType &type, bool variadic)
-    : Type(TypeKind::FUNCTION, true, 1), retType(type), isVariadic(variadic) {}
+    : Type(TypeKind::FUNCTION, QualType()), retType(type), isVariadic(variadic) {}
 
 std::pair<std::string, std::string> RecordType::repr() {
     std::string rcd = decl->isStruct ? "struct " : "union ";

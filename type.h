@@ -4,62 +4,12 @@
 #include <string>
 #include <vector>
 
+class Type;
 class Expr;
+class TypedefDecl;
 class RecordDecl;
 class EnumDecl;
 class ArrayType;
-
-enum TypeKind {
-    VOID,
-    ARITH,
-    POINTER,
-    ARRAY,
-    FUNCTION,
-    RECORD,
-    ENUM,
-    TYPEDEF
-};
-
-class Type {
-public:
-    Type(TypeKind kind, bool complete = true, std::size_t typeSize = 0ULL)
-        : kind(kind), complete(complete), typeSize(typeSize) {}
-
-    // repr - Return two string, "left-string + IDENTIFIER + right-string"
-    // constitutes the type declaration for this IDENTIFIER. e.g.
-    // char ( * IDENTIFIER )
-    // int * IDENTIFIER ( )
-    // double ( * IDENTIFIER ) ( float )
-    // int IDENTIFIER [ 10 ]
-    virtual std::pair<std::string, std::string> repr() = 0;
-    virtual std::size_t getTypeSize() = 0;
-
-    TypeKind getKind() const { return kind; }
-
-    template <typename T>
-    const T *getAs() {
-        static_assert(!std::integral_constant < bool, std::is_same<T, ArrayType>::value || std::is_base_of<ArrayType, T>::value > ::value,
-                      "ArrayType cannot be used with getAs");
-        // If this is directly a T type, return it.
-        if (const auto *ty = dynamic_cast<T *>(this))
-            return ty;
-        // TODO: Ref Clang Type.h
-        return nullptr;
-    }
-
-    virtual bool isVoidType() const { return false; }
-    virtual bool isArithmeticType() const { return false; }
-    virtual bool isSignedIntegerType() const { return false; }
-    virtual bool isUnsignedIntegerType() const { return false; }
-
-    TypeKind kind;
-    // complete - A type is considered incomplete if its size or structure is unknown at a particular point in time.
-    bool complete;
-    // typeSize - To get the size of a specific type, we should call getTypeSize().
-    // getTypeSize() will calculate the size and save the result in typeSize.
-    // If typeSize!=0, getTypeSize() will return typeSize directly.
-    std::size_t typeSize;
-};
 
 /**
  * QualType - A (possibly-)qualified type, which is a simple wrapper class.
@@ -86,6 +36,7 @@ public:
     bool isVolatileQualified() const { return quals & VOLATILE; }
 
     bool isNull() const { return type == nullptr; }
+    bool hasQualifiers() const { return quals != 0; }
 
     std::pair<std::string, std::string> repr();
 
@@ -96,9 +47,73 @@ public:
         return (quals != other.quals) || (type != other.type);
     }
 
-private:
     Type *type;
+
+private:
     unsigned char quals;
+};
+
+enum TypeKind {
+    VOID,
+    ARITH,
+    POINTER,
+    ARRAY,
+    FUNCTION,
+    RECORD,
+    ENUM,
+    TYPEDEF
+};
+
+class Type {
+public:
+    Type(TypeKind kind, QualType canonical)
+        : kind(kind), canonicalType(canonical) {}
+
+    // repr - Return two string, "left-string + IDENTIFIER + right-string"
+    // constitutes the type declaration for this IDENTIFIER. e.g.
+    //     char ( * IDENTIFIER )
+    //     int * IDENTIFIER ( )
+    //     double ( * IDENTIFIER ) ( float )
+    //     int IDENTIFIER [ 10 ]
+    virtual std::pair<std::string, std::string> repr() = 0;
+
+    TypeKind getKind() const { return kind; }
+
+    template <typename T>
+    const T *getAs() {
+        static_assert(!std::integral_constant < bool, std::is_same<T, ArrayType>::value || std::is_base_of<ArrayType, T>::value > ::value,
+                      "ArrayType cannot be used with getAs");
+        // If this is directly a T type, return it.
+        if (const auto *ty = dynamic_cast<T *>(this))
+            return ty;
+        // TODO: Ref Clang Type.h
+        return nullptr;
+    }
+
+    // isCanonicalUnqualified - Determines if this type would be canonical
+    // if it had no further qualification.
+    bool isCanonicalUnqualified() const;
+
+    virtual bool isVoidType() const { return false; }
+    virtual bool isArithmeticType() const { return false; }
+    virtual bool isSignedIntegerType() const { return false; }
+    virtual bool isUnsignedIntegerType() const { return false; }
+    virtual bool isFloatingType() const { return false; }
+    virtual bool isFunctionType() const { return false; }
+    virtual bool isArrayType() const { return false; }
+
+    // canonicalType - A canonical type is the type with any typedef names
+    // stripped out of it or the types it references.
+    // A central concept with types is that each type always has a canonical type.
+    QualType canonicalType;
+
+    TypeKind kind;
+    // complete - A type is considered incomplete if its size or structure is unknown at a particular point in time.
+    bool complete;
+    // typeSize - To get the size of a specific type, we should call getTypeSize().
+    // getTypeSize() will calculate the size and save the result in typeSize.
+    // If typeSize!=0, getTypeSize() will return typeSize directly.
+    std::size_t typeSize;
 };
 
 /**
@@ -109,13 +124,11 @@ class VoidType : public Type {
 public:
     static VoidType *getVoidType();
     std::pair<std::string, std::string> repr() { return std::make_pair("void", ""); }
-    std::size_t getTypeSize() { return 1ULL; }
 
     bool isVoidType() const { return true; }
 
 private:
-    // void is incomplete.
-    VoidType() : Type(TypeKind::VOID, false, 1ULL) {}
+    VoidType() : Type(TypeKind::VOID, QualType(this)) {}
 };
 
 /**
@@ -132,14 +145,13 @@ private:
 class ArithType : public Type {
 public:
     enum ArithKind {
-#define ARITH(T, SIZE, REPR) T,
+#define ARITH(T, BITSIZE, REPR) T,
 #include "arithType.def"
     };
 
     static ArithType *getArithType(ArithKind kind);
 
     std::pair<std::string, std::string> repr();
-    std::size_t getTypeSize() { return typeSize; }
 
     // convRank - [C99 6.3.1.1p1]
     int convRank();
@@ -159,11 +171,12 @@ public:
     bool isArithmeticType() const { return true; }
     bool isSignedIntegerType() const;
     bool isUnsignedIntegerType() const;
+    bool isFloatingType() const;
 
 private:
     ArithKind arithKind;
 
-    ArithType(ArithKind kind, std::size_t size);
+    ArithType(ArithKind kind) : Type(TypeKind::ARITH, QualType(this)), arithKind(kind) {}
 };
 
 class PointerType : public Type {
@@ -171,7 +184,6 @@ public:
     PointerType(const QualType &p);
 
     std::pair<std::string, std::string> repr();
-    std::size_t getTypeSize() { return typeSize; }
 
     QualType pointee;
 };
@@ -184,6 +196,8 @@ public:
     };
 
     ArrayType(const QualType &type, ArrayKind kind = CONSTANT, Expr *expr = nullptr);
+
+    bool isArrayType() const { return true; }
 
     ArrayKind arrKind;
     QualType elemType;
@@ -198,7 +212,6 @@ public:
     ConstantArrayType(const QualType &type, std::size_t size, Expr *expr = nullptr);
 
     std::pair<std::string, std::string> repr();
-    std::size_t getTypeSize();
 
     // size - The length of the array, the quantity of elements.
     std::size_t size;
@@ -219,7 +232,7 @@ class FunctionType : public Type {
 public:
     FunctionType(const QualType &type, bool variadic = false);
 
-    std::size_t getTypeSize() { return 1ULL; }
+    bool isFunctionType() const { return true; }
 
     QualType retType;
     std::vector<QualType> params;
@@ -229,8 +242,8 @@ public:
 // Struct or union
 class RecordType : public Type {
 public:
-    // TODO: Completeness, typeSize.
-    RecordType(RecordDecl *d) : Type(TypeKind::RECORD), decl(d) {}
+    // TODO: Completeness, typeSize, canonicalType.
+    RecordType(RecordDecl *d) : Type(TypeKind::RECORD, QualType()), decl(d) {}
 
     RecordDecl *getDecl() const { return decl; }
 
