@@ -1,9 +1,7 @@
 #ifndef _CRYOLITE_PARSER_H_
 #define _CRYOLITE_PARSER_H_
 
-#include "ast.h"
-#include "scope.h"
-#include "token.h"
+#include "semantic.h"
 #include <bitset>
 #include <variant>
 
@@ -328,10 +326,12 @@ public:
 
 class Parser {
 public:
-    Parser(TokenSequence &ts)
-        : tksq(ts) {
+    Parser(TokenSequence &ts, Semantic &sema)
+        : tksq(ts), sema(sema) {
         cursor = ts.cBegin();
         tok = **cursor;
+        numCachedScopes = 0;
+        curScope = nullptr;
         initBitSet();
     }
 
@@ -442,12 +442,23 @@ private:
     }
     bool skipUntil(const TokenKind *toks, unsigned numToks, bool stopAtSemi = true, bool dontConsume = false);
 
+    void enterScope(unsigned char scopeFlags);
+    void exitScope();
+
     // tok - The current token we are peeking ahead.
     // All parsing methods assume that this is valid.
     Token tok;
 
     // prevTokenLoc - The location of the token we previously consumed.
     SourceLocation prevTokenLoc;
+
+    Semantic &sema;
+
+    Scope *curScope;
+    // scopeCache - Cache scopes to reduce malloc traffic.
+    static const unsigned scopeCacheSize = 16;
+    Scope *scopeCache[scopeCacheSize];
+    unsigned numCachedScopes;
 
     TokenSequence &tksq;
     TokenSeqConstIter cursor;

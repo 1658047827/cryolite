@@ -186,12 +186,12 @@ QualType convertDeclSpecToType(const DeclSpec &ds, SourceLocation loc, bool &isI
         break;
     case DeclSpec::TST_CHAR:
         if (ds.typeSpecSign == DeclSpec::TSS_UNSPECIFIED)
-            result.type = BuiltinType::getBuiltinType(BuiltinType::CHAR);
+            result.type = ArithType::getArithType(ArithType::CHAR_S);
         else if (ds.typeSpecSign == DeclSpec::TSS_SIGNED)
-            result.type = BuiltinType::getBuiltinType(BuiltinType::SIGNED | BuiltinType::CHAR);
+            result.type = ArithType::getArithType(ArithType::SIGNED_CHAR);
         else {
             assert(ds.typeSpecSign == DeclSpec::TSS_UNSIGNED && "Unknown TSS value");
-            result.type = BuiltinType::getBuiltinType(BuiltinType::UNSIGNED | BuiltinType::CHAR);
+            result.type = ArithType::getArithType(ArithType::UNSIGNED_CHAR);
         }
         break;
     case DeclSpec::TST_UNSPECIFIED:
@@ -203,44 +203,44 @@ QualType convertDeclSpecToType(const DeclSpec &ds, SourceLocation loc, bool &isI
         if (ds.typeSpecSign != DeclSpec::TSS_UNSIGNED) {
             switch (ds.typeSpecWidth) {
             case DeclSpec::TSW_UNSPECIFIED:
-                result.type = BuiltinType::getBuiltinType(BuiltinType::INT);
+                result.type = ArithType::getArithType(ArithType::INT);
                 break;
             case DeclSpec::TSW_SHORT:
-                result.type = BuiltinType::getBuiltinType(BuiltinType::SHORT);
+                result.type = ArithType::getArithType(ArithType::SHORT);
                 break;
             case DeclSpec::TSW_LONG:
-                result.type = BuiltinType::getBuiltinType(BuiltinType::LONG);
+                result.type = ArithType::getArithType(ArithType::LONG);
                 break;
             case DeclSpec::TSW_LONGLONG:
-                result.type = BuiltinType::getBuiltinType(BuiltinType::LONGLONG);
+                result.type = ArithType::getArithType(ArithType::LONG_LONG);
                 break;
             }
         } else {
             switch (ds.typeSpecWidth) {
             case DeclSpec::TSW_UNSPECIFIED:
-                result.type = BuiltinType::getBuiltinType(BuiltinType::UNSIGNED | BuiltinType::INT);
+                result.type = ArithType::getArithType(ArithType::UNSIGNED_INT);
                 break;
             case DeclSpec::TSW_SHORT:
-                result.type = BuiltinType::getBuiltinType(BuiltinType::UNSIGNED | BuiltinType::SHORT);
+                result.type = ArithType::getArithType(ArithType::UNSIGNED_SHORT);
                 break;
             case DeclSpec::TSW_LONG:
-                result.type = BuiltinType::getBuiltinType(BuiltinType::UNSIGNED | BuiltinType::LONG);
+                result.type = ArithType::getArithType(ArithType::UNSIGNED_LONG);
                 break;
             case DeclSpec::TSW_LONGLONG:
-                result.type = BuiltinType::getBuiltinType(BuiltinType::UNSIGNED | BuiltinType::LONGLONG);
+                result.type = ArithType::getArithType(ArithType::UNSIGNED_LONG_LONG);
                 break;
             }
         }
         break;
     }
     case DeclSpec::TST_FLOAT:
-        result.type = BuiltinType::getBuiltinType(BuiltinType::FLOAT);
+        result.type = ArithType::getArithType(ArithType::FLOAT);
         break;
     case DeclSpec::TST_DOUBLE:
         if (ds.typeSpecWidth == DeclSpec::TSW_LONG)
-            result.type = BuiltinType::getBuiltinType(BuiltinType::LONG | BuiltinType::DOUBLE);
+            result.type = ArithType::getArithType(ArithType::LONG_DOUBLE);
         else
-            result.type = BuiltinType::getBuiltinType(BuiltinType::DOUBLE);
+            result.type = ArithType::getArithType(ArithType::DOUBLE);
         break;
     case DeclSpec::TST_BOOL:
         // TODO: Support bool.
@@ -299,28 +299,34 @@ QualType getTypeForDeclarator(Declarator &d) {
     return t;
 }
 
-unsigned int parseIntegerSuffix(NumericLiteralParser &parser) {
+ArithType::ArithKind parseIntegerSuffix(NumericLiteralParser &parser) {
     // Integer constants are implicitly of type int by default.
-    unsigned int ret = BuiltinType::INT;
+    ArithType::ArithKind ret = ArithType::INT;
     if (parser.isLong) {
-        ret |= BuiltinType::LONG;
+        ret = ArithType::LONG;
     } else if (parser.isLongLong) {
-        ret |= BuiltinType::LONGLONG;
+        ret = ArithType::LONG_LONG;
     }
     if (parser.isUnsigned) {
-        ret |= BuiltinType::UNSIGNED;
+        switch (ret) {
+        case ArithType::INT:
+            return ArithType::UNSIGNED_INT;
+        case ArithType::LONG:
+            return ArithType::UNSIGNED_LONG;
+        case ArithType::LONG_LONG:
+            return ArithType::UNSIGNED_LONG_LONG;
+        }
     }
     return ret;
 }
 
-unsigned int parseFloatingSuffix(NumericLiteralParser &parser) {
+ArithType::ArithKind parseFloatingSuffix(NumericLiteralParser &parser) {
     // Floating constants are implicitly of type double by default.
-    unsigned int ret = BuiltinType::DOUBLE;
+    ArithType::ArithKind ret = ArithType::DOUBLE;
     if (parser.isFloat) {
-        ret |= BuiltinType::FLOAT;
-        ret &= ~BuiltinType::DOUBLE;
+        ret = ArithType::FLOAT;
     } else if (parser.isLong) {
-        ret |= BuiltinType::LONG;
+        ret = ArithType::LONG_DOUBLE;
     }
     return ret;
 }
@@ -390,6 +396,29 @@ bool Parser::skipUntil(const TokenKind *toks, unsigned numToks, bool stopAtSemi,
             break;
         }
     }
+}
+
+void Parser::enterScope(unsigned char scopeFlags) {
+    if (numCachedScopes) {
+        Scope *n = scopeCache[--numCachedScopes];
+        n->init(curScope, scopeFlags);
+        curScope = n;
+    } else {
+        curScope = new Scope(curScope, scopeFlags);
+    }
+}
+
+void Parser::exitScope() {
+    if (!curScope->declEmpty())
+        ;
+
+    Scope *old = curScope;
+    curScope = old->getParent();
+
+    if (numCachedScopes == scopeCacheSize)
+        delete old;
+    else
+        scopeCache[numCachedScopes++] = old;
 }
 
 TransUnit *Parser::parseTranslationUnit() {
@@ -470,7 +499,7 @@ Expr *Parser::parseAssignmentExpression() {
     SourceLocation loc = consumeToken();
     Expr *rhs = parseAssignmentExpression();
     // Break compound assignment into two BinaryExprs.
-    // e.g.: a += b => a = a + b
+    // e.g. a += b => a = a + b
     if (op != BinaryOpKind::ASSIGN) {
         rhs = new BinaryExpr(loc, op, lhs, rhs);
     }
@@ -495,7 +524,7 @@ Expr *Parser::parseSimpleBinaryExpression(Expr *(Parser::*parseTerm)(), TokenKin
     while (tok.is(kind)) {
         SourceLocation loc = consumeToken();
         Expr *rhs = (this->*parseTerm)();
-        lhs = new BinaryExpr(loc, op, lhs, rhs);
+        lhs = sema.actOnBinaryOp(curScope, loc, op, lhs, rhs);
     }
     return lhs;
 }
@@ -582,7 +611,7 @@ Expr *Parser::parseShiftExpression() {
         }
         SourceLocation loc = consumeToken();
         Expr *rhs = parseAdditiveExpression();
-        lhs = new BinaryExpr(loc, op, lhs, rhs);
+        lhs = sema.actOnBinaryOp(curScope, loc, op, lhs, rhs);
     }
 }
 
@@ -602,7 +631,7 @@ Expr *Parser::parseAdditiveExpression() {
         }
         SourceLocation loc = consumeToken();
         Expr *rhs = parseMultiplicativeExpression();
-        lhs = new BinaryExpr(loc, op, lhs, rhs);
+        lhs = sema.actOnBinaryOp(curScope, loc, op, lhs, rhs);
     }
 }
 
@@ -741,14 +770,14 @@ Expr *Parser::parsePrimaryExpression() {
         return parseIdentifier();
     case TK_NUMERIC_CONSTANT: {
         std::string s = tok.getStr();
-        NumericLiteralParser parser(s.data(), s.data() + s.size(), loc);
-        if (parser.hadError) {
+        NumericLiteralParser numeric(s.data(), s.data() + s.size(), loc);
+        if (numeric.hadError) {
             // TODO: A better way?
             return nullptr;
-        } else if (parser.isIntegerLiteral()) {
-            return parseIntegerConstant(parser);
-        } else if (parser.isFloatingLiteral()) {
-            return parseFloatingConstant(parser);
+        } else if (numeric.isIntegerLiteral()) {
+            return parseIntegerConstant(numeric);
+        } else if (numeric.isFloatingLiteral()) {
+            return parseFloatingConstant(numeric);
         }
     }
     case TK_CHAR_CONSTANT:
@@ -781,7 +810,7 @@ IntegerConstant *Parser::parseIntegerConstant(NumericLiteralParser &parser) {
     SourceLocation loc = tok.getLoc();
     std::string s = tok.getStr();
     unsigned long long val = 0;
-    size_t idx = 0;
+    std::size_t idx = 0;
     try {
         val = std::stoull(s, &idx, parser.getRadix());
     } catch (const std::out_of_range &e) {
@@ -790,16 +819,16 @@ IntegerConstant *Parser::parseIntegerConstant(NumericLiteralParser &parser) {
     }
     consumeToken(); // Maintain consistency.
     // TODO: Automatically determine the type based on the size of the integer constant.
-    unsigned int builtinTypeFlags = parseIntegerSuffix(parser);
-    BuiltinType *builtinType = BuiltinType::getBuiltinType(builtinTypeFlags);
-    return new IntegerConstant(loc, QualType(builtinType), val);
+    ArithType::ArithKind kind = parseIntegerSuffix(parser);
+    ArithType *arithType = ArithType::getArithType(kind);
+    return new IntegerConstant(loc, QualType(arithType), val);
 }
 
 FloatingConstant *Parser::parseFloatingConstant(NumericLiteralParser &parser) {
     SourceLocation loc = tok.getLoc();
     std::string s = tok.getStr();
     long double val;
-    size_t idx = 0;
+    std::size_t idx = 0;
     try {
         val = std::stold(s, &idx);
     } catch (const std::out_of_range &e) {
@@ -808,9 +837,9 @@ FloatingConstant *Parser::parseFloatingConstant(NumericLiteralParser &parser) {
     }
     consumeToken(); // Maintain consistency.
     // TODO: Automatically determine the type based on the size of the floating constant.
-    unsigned int builtinTypeFlags = parseFloatingSuffix(parser);
-    BuiltinType *builtinType = BuiltinType::getBuiltinType(builtinTypeFlags);
-    return new FloatingConstant(loc, QualType(builtinType), val);
+    ArithType::ArithKind kind = parseFloatingSuffix(parser);
+    ArithType *arithType = ArithType::getArithType(kind);
+    return new FloatingConstant(loc, QualType(arithType), val);
 }
 
 CharacterConstant *Parser::parseCharacterConstant() {
@@ -820,8 +849,8 @@ CharacterConstant *Parser::parseCharacterConstant() {
     // TODO: Support more kinds of character constants.
     val = s[1];
     consumeToken(); // Maintain consistency.
-    BuiltinType *builtinType = BuiltinType::getBuiltinType(BuiltinType::INT);
-    return new CharacterConstant(loc, QualType(builtinType), val);
+    ArithType *arithType = ArithType::getArithType(ArithType::INT);
+    return new CharacterConstant(loc, QualType(arithType), val);
 }
 
 StringLiteral *Parser::parseStringLiterals() {
@@ -838,8 +867,8 @@ StringLiteral *Parser::parseStringLiterals() {
         val.append(tmp);
         consumeToken();
     }
-    size_t sz = val.size() + 1; // '\0'
-    BuiltinType *charT = BuiltinType::getBuiltinType(BuiltinType::CHAR);
+    std::size_t sz = val.size() + 1; // '\0'
+    ArithType *charT = ArithType::getArithType(ArithType::CHAR_S);
     ConstantArrayType *constArrT = new ConstantArrayType(charT, sz);
     return new StringLiteral(loc, QualType(constArrT), val);
 }
@@ -1039,11 +1068,10 @@ void Parser::parseRecordSpecifier(SourceLocation loc, DeclSpec &ds) {
     else
         tagUseKind = REFERENCE;
 
-    if (name.empty() && tagUseKind != DEFINITION) {
-        error(loc, "illegal anonymous record");
+    if (name.empty() && tagUseKind != TagUseKind::DEFINITION) {
+        error(loc, "declaration of anonymous record must be a definition");
         // Skip the rest of this declarator, up until the comma or semicolon.
-        while (tok.isNot(TK_COMMA) && tok.isNot(TK_SEMI))
-            consumeToken();
+        skipUntil(TK_COMMA, true);
         return;
     }
 
@@ -1093,7 +1121,7 @@ void Parser::parseDirectDeclarator(Declarator &d) {
         d.setIdentifier(tok.getStr(), tok.getLoc());
         consumeToken();
     } else if (tok.is(TK_LPAR)) {
-        // e.g.: "char (*x)" or "int (*y)(float)"
+        // e.g. "char (*x)" or "int (*y)(float)"
         parseParenDeclarator(d);
     } else if (d.mayOmitIdentifier()) {
         d.setIdentifier("", tok.getLoc());
