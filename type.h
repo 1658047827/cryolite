@@ -110,10 +110,6 @@ public:
     TypeKind kind;
     // complete - A type is considered incomplete if its size or structure is unknown at a particular point in time.
     bool complete;
-    // typeSize - To get the size of a specific type, we should call getTypeSize().
-    // getTypeSize() will calculate the size and save the result in typeSize.
-    // If typeSize!=0, getTypeSize() will return typeSize directly.
-    std::size_t typeSize;
 };
 
 /**
@@ -248,7 +244,6 @@ public:
     RecordDecl *getDecl() const { return decl; }
 
     std::pair<std::string, std::string> repr();
-    std::size_t getTypeSize() { return 0ULL; }
 
 private:
     RecordDecl *decl;

@@ -188,7 +188,7 @@ QualType ASTContext::isPromotableBitField(Expr *e) {
     // FieldDecl *field =
 
     // std::size_t bitWidth =
-    std::size_t intSize = intTy->getTypeSize();
+    std::size_t intSize = 0;
 
     return QualType();
 }
@@ -248,6 +248,37 @@ void ASTContext::initArithType(QualType &r, ArithType::ArithKind k) {
     Type *t = ArithType::getArithType(k);
     types.emplace_back(t);
     r = QualType(t);
+}
+
+std::size_t ASTContext::getTypeSize(Type *t) {
+    auto iter = memorizedTypeSize.find(t);
+    if (iter != memorizedTypeSize.end())
+        return iter->second;
+
+    std::size_t width = 0;
+
+    switch (t->getKind()) {
+    case TypeKind::VOID:
+        width = 0;
+        break;
+    case TypeKind::ARITH: {
+        switch (t->getAs<ArithType>()->getArithKind()) {
+#define ARITH(T, BITSIZE, REPR) \
+    case T:                     \
+        width = BITSIZE;        \
+        break;
+#include "arithType.def"
+        default:
+            // unreachable
+            assert(0 && "unknown arithmetic type");
+        }
+    }
+    default:
+        break;
+    }
+
+    memorizedTypeSize[t] = width;
+    return width;
 }
 
 void ASTContext::initBuiltinTypes() {

@@ -421,10 +421,16 @@ public:
     bool isPromotableIntegerType(QualType t) const;
     QualType isPromotableBitField(Expr *e);
 
+    // getTypeSize - Return the size of the specified type, in bits.
+    // This method does not work on incomplete types.
+    std::size_t getTypeSize(Type *t);
+
 private:
     void initBuiltinTypes();
     void initVoidType(QualType &r);
     void initArithType(QualType &r, ArithType::ArithKind k);
+
+    std::unordered_map<Type *, std::size_t> memorizedTypeSize;
 };
 
 /**
