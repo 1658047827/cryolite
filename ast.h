@@ -417,12 +417,13 @@ public:
     unsigned getFloatingRank(Type *t) const;
 
     // [C99 6.3.1.1p2]
-    QualType getPromotedIntegerType(QualType promotable) const;
+    QualType getPromotedIntegerType(QualType promotable);
     bool isPromotableIntegerType(QualType t) const;
     QualType isPromotableBitField(Expr *e);
 
     // getTypeSize - Return the size of the specified type, in bits.
     // This method does not work on incomplete types.
+    std::size_t getTypeSize(QualType t) { return getTypeSize(t.getTypePtr()); }
     std::size_t getTypeSize(Type *t);
 
 private:

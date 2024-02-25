@@ -153,11 +153,11 @@ ASTContext::ASTContext() {
     initBuiltinTypes();
 }
 
-QualType ASTContext::getPromotedIntegerType(QualType promotable) const {
+QualType ASTContext::getPromotedIntegerType(QualType promotable) {
     if (promotable->isSignedIntegerType())
         return intTy;
-    std::size_t promotableSize = promotable->getTypeSize();
-    std::size_t intTypeSize = intTy->getTypeSize();
+    std::size_t promotableSize = getTypeSize(promotable);
+    std::size_t intTypeSize = getTypeSize(intTy);
     assert(promotable->isUnsignedIntegerType() && promotableSize <= intTypeSize);
     return (promotableSize != intTypeSize) ? intTy : unsignedIntTy;
 }
