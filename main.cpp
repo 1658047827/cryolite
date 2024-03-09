@@ -18,6 +18,7 @@ int main(int argc, char *argv[]) {
     ASTContext context;
     Semantic sema(context);
     Parser parser(ts, sema);
+    
     Expr *expr = parser.parseExpression();
     ASTDumper *astDumper = new ASTDumper(std::cout);
     expr->accept(astDumper);

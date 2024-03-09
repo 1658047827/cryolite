@@ -47,10 +47,9 @@ public:
         return (quals != other.quals) || (type != other.type);
     }
 
-    Type *type;
-
 private:
     unsigned char quals;
+    Type *type;
 };
 
 enum TypeKind {
@@ -66,15 +65,11 @@ enum TypeKind {
 
 class Type {
 public:
-    Type(TypeKind kind, QualType canonical)
-        : kind(kind), canonicalType(canonical) {}
+    Type(TypeKind kind, QualType canonical) : kind(kind) {
+        canonicalType = canonical.isNull() ? QualType(this) : canonical;
+    }
 
-    // repr - Return two string, "left-string + IDENTIFIER + right-string"
-    // constitutes the type declaration for this IDENTIFIER. e.g.
-    //     char ( * IDENTIFIER )
-    //     int * IDENTIFIER ( )
-    //     double ( * IDENTIFIER ) ( float )
-    //     int IDENTIFIER [ 10 ]
+    // repr - Return two string which constitutes the type declaration for an IDENTIFIER.
     virtual std::pair<std::string, std::string> repr() = 0;
 
     TypeKind getKind() const { return kind; }
@@ -102,42 +97,28 @@ public:
     virtual bool isFunctionType() const { return false; }
     virtual bool isArrayType() const { return false; }
 
+private:
     // canonicalType - A canonical type is the type with any typedef names
     // stripped out of it or the types it references.
     // A central concept with types is that each type always has a canonical type.
     QualType canonicalType;
 
     TypeKind kind;
-    // complete - A type is considered incomplete if its size or structure is unknown at a particular point in time.
-    bool complete;
 };
 
 /**
- * VoidType - [C99 6.2.5p19] The void type comprises an empty set of values;
- * it is an incomplete object type that cannot be completed.
+ * VoidType - [C99 6.2.5p19] The void type comprises an empty set of values.
+ * It is an incomplete object type that cannot be completed.
  */
 class VoidType : public Type {
 public:
-    static VoidType *getVoidType();
+    VoidType() : Type(TypeKind::VOID, QualType()) {}
+
     std::pair<std::string, std::string> repr() { return std::make_pair("void", ""); }
 
     bool isVoidType() const { return true; }
-
-private:
-    VoidType() : Type(TypeKind::VOID, QualType(this)) {}
 };
 
-/**
- * ArithType - Arithmetic type.
- *
- * 1. Temporarily, we specify 'char' as 8 bits, 'short' as 16 bits, 'int' as 32 bits,
- * 'long' as 64 bits, 'long long' as 64 bits, 'float' as 32 bits, 'double' as 64 bits
- * and 'long double' as 64 bits. Compiler typically provides options to allow users
- * to control the width of integer types, which may be implemented in the future.
- *
- * 2. Temporarily, char is considered as signed char. Compile option to control this
- * will be implemented in the future.
- */
 class ArithType : public Type {
 public:
     enum ArithKind {
@@ -145,22 +126,9 @@ public:
 #include "arithType.def"
     };
 
-    static ArithType *getArithType(ArithKind kind);
+    ArithType(ArithKind kind) : Type(TypeKind::ARITH, QualType()), arithKind(kind) {}
 
     std::pair<std::string, std::string> repr();
-
-    // convRank - [C99 6.3.1.1p1]
-    int convRank();
-
-    // integerPromote - [C99 6.3.1.1p2]
-    // Make sure that t is an integer type.
-    // static ArithType *integerPromote(ArithType *t);
-
-    // usualArithConv - [C99 6.3.1.8] Usual arithmetic conversions.
-    // All kinds of builtin arithmetic type is gotten by getArithType.
-    // Pointers of same builtin type point to the same static object.
-    // So we can use raw pointer casually.
-    // static ArithType *usualArithConv(ArithType *l, ArithType *r);
 
     ArithKind getArithKind() const { return arithKind; }
 
@@ -171,13 +139,12 @@ public:
 
 private:
     ArithKind arithKind;
-
-    ArithType(ArithKind kind) : Type(TypeKind::ARITH, QualType(this)), arithKind(kind) {}
 };
 
 class PointerType : public Type {
 public:
-    PointerType(const QualType &p);
+    // The completeness of a pointer is independent of the definition status of the data type it points to.
+    PointerType(QualType p, QualType canonicalPtr) : Type(TypeKind::POINTER, canonicalPtr), pointee(p) {}
 
     std::pair<std::string, std::string> repr();
 
@@ -191,7 +158,8 @@ public:
         VARIABLE,
     };
 
-    ArrayType(const QualType &type, ArrayKind kind = CONSTANT, Expr *expr = nullptr);
+    ArrayType(QualType type, QualType canonicalTy, Expr *expr = nullptr, ArrayKind kind = CONSTANT)
+        : Type(TypeKind::ARRAY, canonicalTy), elemType(type), arrKind(kind), sizeExpr(expr) {}
 
     bool isArrayType() const { return true; }
 
@@ -205,10 +173,12 @@ public:
 
 class ConstantArrayType : public ArrayType {
 public:
-    ConstantArrayType(const QualType &type, std::size_t size, Expr *expr = nullptr);
+    ConstantArrayType(QualType type, QualType canonicalTy, std::size_t size, Expr *expr = nullptr)
+        : ArrayType(type, canonicalTy, expr), size(size) {}
 
     std::pair<std::string, std::string> repr();
 
+private:
     // size - The length of the array, the quantity of elements.
     std::size_t size;
 };
@@ -219,17 +189,17 @@ public:
 
 /**
  * FunctionType - Represents a function prototype with parameter type info.
- * e.g.
- * "int foo(int)", "float bar()" or "long func(char *, int)"
  * Old-style function, which has no information available about its arguments,
- * is totally not supported. So all prototypes are complete.
+ * is totally not supported.
  */
 class FunctionType : public Type {
 public:
-    FunctionType(const QualType &type, bool variadic = false);
+    FunctionType(QualType type, QualType canonicalTy, bool variadic = false)
+        : Type(TypeKind::FUNCTION, canonicalTy), retType(type), isVariadic(variadic) {}
 
     bool isFunctionType() const { return true; }
 
+private:
     QualType retType;
     std::vector<QualType> params;
     bool isVariadic;
@@ -238,7 +208,7 @@ public:
 // Struct or union
 class RecordType : public Type {
 public:
-    // TODO: Completeness, typeSize, canonicalType.
+    // TODO: Completeness, typeSize.
     RecordType(RecordDecl *d) : Type(TypeKind::RECORD, QualType()), decl(d) {}
 
     RecordDecl *getDecl() const { return decl; }
@@ -255,6 +225,8 @@ private:
  */
 class EnumType : public Type {
 public:
+    EnumType(EnumDecl *d) : Type(TypeKind::ENUM, QualType()), decl(d) {}
+
     EnumDecl *getDecl() const { return decl; }
 
     bool isArithmeticType() const { return true; }

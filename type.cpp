@@ -5,88 +5,28 @@
 
 std::pair<std::string, std::string> QualType::repr() {
     // TODO: A proper way to print qualifiers.
-    // std::string s = isConstQualified() ? "const " : "";
-    // if (isVolatileQualified())
-    //     s += "volatile ";
-    // if (isRestrictQualified())
-    //     s += "restrict ";
     auto reprPair = type->repr();
-    // reprPair.first = s + reprPair.first;
     return reprPair;
 }
 
 bool Type::isCanonicalUnqualified() const {
+    // return canonicalType == QualType(this, 0);
     return canonicalType.getTypePtr() == this &&
            !canonicalType.hasQualifiers();
-    // return canonicalType == QualType(this, 0);
-}
-
-VoidType *VoidType::getVoidType() {
-    static VoidType *voidType = new VoidType();
-    return voidType;
-}
-
-ArithType *ArithType::getArithType(ArithKind kind) {
-#define ARITH(T, BITSIZE, REPR) static ArithType *T##_TYPE = new ArithType(T);
-#include "arithType.def"
-
-    switch (kind) {
-#define ARITH(T, BITSIZE, REPR) \
-    case T:                  \
-        return T##_TYPE;
-#include "arithType.def"
-    default:
-        assert(0 && "Unknown arith type");
-    }
-    // unreachable
-    return nullptr;
 }
 
 std::pair<std::string, std::string> ArithType::repr() {
     std::string s;
     switch (arithKind) {
 #define ARITH(T, BITSIZE, REPR) \
-    case T:                  \
-        s = REPR;            \
+    case T:                     \
+        s = REPR;               \
         break;
 #include "arithType.def"
     default:
         assert(0 && "Unknown builtin type");
     }
     return std::make_pair(s, "");
-}
-
-int ArithType::convRank() {
-    switch (arithKind) {
-    case BOOL:
-        return 1;
-    case CHAR_S:
-    case CHAR_U:
-    case SIGNED_CHAR:
-    case UNSIGNED_CHAR:
-        return 2;
-    case SHORT:
-    case UNSIGNED_SHORT:
-        return 3;
-    case INT:
-    case UNSIGNED_INT:
-        return 4;
-    case LONG:
-    case UNSIGNED_LONG:
-        return 5;
-    case LONG_LONG:
-    case UNSIGNED_LONG_LONG:
-        return 6;
-    case FLOAT:
-        return 7;
-    case DOUBLE:
-        return 8;
-    case LONG_DOUBLE:
-        return 9;
-    default:
-        assert(0);
-    }
-    return 0;
 }
 
 bool ArithType::isSignedIntegerType() const {
@@ -103,15 +43,6 @@ bool ArithType::isFloatingType() const {
     return arithKind >= ArithKind::FLOAT &&
            arithKind <= ArithKind::LONG_DOUBLE;
 }
-
-// ArithType *ArithType::integerPromote(ArithType *t) {
-//     if (t->convRank() < getArithType(INT)->convRank()) {
-//         return getArithType(INT);
-//     } else {
-//         return t;
-//     }
-//     // TODO: What if the width of 'int' is the same as that of 'short'?
-// }
 
 // ArithType *ArithType::usualArithConv(ArithType *l, ArithType *r) {
 //     assert(l->kind == TypeKind::ARITH && r->kind == TypeKind::ARITH);
@@ -161,27 +92,16 @@ bool ArithType::isFloatingType() const {
 //     }
 // }
 
-// The completeness of a pointer is independent of the definition status of the data type it points to.
-// TODO: canonicalType.
-PointerType::PointerType(const QualType &p) : Type(TypeKind::POINTER, QualType()), pointee(p) {}
-
 std::pair<std::string, std::string> PointerType::repr() {
     auto reprPair = pointee.repr();
     // Handle things like 'int (*A)[4];' correctly.
-    if (pointee->kind == TypeKind::ARRAY) {
+    if (pointee->getKind() == TypeKind::ARRAY) {
         reprPair.first.push_back('(');
         reprPair.second.insert(0, ")");
     }
     reprPair.first.push_back('*');
     return reprPair;
 }
-
-// TODO: canonicalType
-ArrayType::ArrayType(const QualType &type, ArrayKind kind, Expr *expr)
-    : Type(TypeKind::ARRAY, QualType()), elemType(type), arrKind(kind), sizeExpr(expr) {}
-
-ConstantArrayType::ConstantArrayType(const QualType &type, std::size_t size, Expr *expr)
-    : ArrayType(type, CONSTANT, expr), size(size) {}
 
 std::pair<std::string, std::string> ConstantArrayType::repr() {
     auto reprPair = elemType.repr();
@@ -195,12 +115,6 @@ std::pair<std::string, std::string> ConstantArrayType::repr() {
     return reprPair;
 }
 
-// TODO: canonicalType.
-FunctionType::FunctionType(const QualType &type, bool variadic)
-    : Type(TypeKind::FUNCTION, QualType()), retType(type), isVariadic(variadic) {}
-
 std::pair<std::string, std::string> RecordType::repr() {
-    std::string rcd = decl->isStruct ? "struct " : "union ";
-    rcd += decl->recordName;
-    return make_pair(rcd, "");
+    assert(0 && "Not implemented yet");
 }
