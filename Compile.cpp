@@ -1,6 +1,6 @@
-#include "diagnostic.h"
-#include "lexer.h"
-#include "parser.h"
+#include "Diagnostic.h"
+#include "Lexer.h"
+#include "Parser.h"
 #include <iostream>
 
 int main(int argc, char *argv[]) {

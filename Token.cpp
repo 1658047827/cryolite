@@ -1,5 +1,5 @@
-#include "token.h"
-#include "diagnostic.h"
+#include "Token.h"
+#include "Diagnostic.h"
 #include <algorithm>
 #include <iostream>
 

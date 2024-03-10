@@ -1,7 +1,7 @@
 #ifndef _CRYOLITE_LEXER_H_
 #define _CRYOLITE_LEXER_H_
 
-#include "token.h"
+#include "Token.h"
 #include <vector>
 
 class Lexer {

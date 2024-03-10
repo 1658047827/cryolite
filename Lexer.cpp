@@ -1,5 +1,5 @@
-#include "lexer.h"
-#include "diagnostic.h"
+#include "Lexer.h"
+#include "Diagnostic.h"
 #include <fstream>
 #include <iostream>
 #include <unordered_map>
@@ -7,7 +7,7 @@
 
 static const std::unordered_map<std::string, TokenKind> keyword2TokenKind{
 #define KEYWORD(X, Y) {Y, TK_##X},
-#include "tokenKind.def"
+#include "TokenKind.def"
 };
 
 static inline bool isNumberBody(char c) {

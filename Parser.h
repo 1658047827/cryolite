@@ -1,7 +1,7 @@
 #ifndef _CRYOLITE_PARSER_H_
 #define _CRYOLITE_PARSER_H_
 
-#include "semantic.h"
+#include "Semantic.h"
 #include <bitset>
 #include <variant>
 

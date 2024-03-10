@@ -1,5 +1,5 @@
-#include "parser.h"
-#include "diagnostic.h"
+#include "Parser.h"
+#include "Diagnostic.h"
 #include <cassert>
 
 unsigned DeclSpec::getParsedSpecifiers() {

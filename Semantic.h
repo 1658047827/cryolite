@@ -1,9 +1,9 @@
 #ifndef _CRYOLITE_SEMANTIC_H_
 #define _CRYOLITE_SEMANTIC_H_
 
-#include "ast.h"
-#include "scope.h"
-#include "token.h"
+#include "AST.h"
+#include "Scope.h"
+#include "Token.h"
 
 class Expr;
 

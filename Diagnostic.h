@@ -1,7 +1,7 @@
 #ifndef _CRYOLITE_DIAGNOSTIC_H_
 #define _CRYOLITE_DIAGNOSTIC_H_
 
-#include "token.h"
+#include "Token.h"
 
 #define ANSI_COLOR_RED "\x1b[31m"
 #define ANSI_COLOR_MAGENTA "\x1b[95m"

@@ -123,7 +123,7 @@ class ArithType : public Type {
 public:
     enum ArithKind {
 #define ARITH(T, BITSIZE, REPR) T,
-#include "arithType.def"
+#include "ArithType.def"
     };
 
     ArithType(ArithKind kind) : Type(TypeKind::ARITH, QualType()), arithKind(kind) {}

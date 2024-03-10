@@ -2,13 +2,13 @@
 #define _CRYOLITE_VISITOR_H_
 
 #define EXPR(CLASS) class CLASS;
-#include "exprNode.def"
+#include "ExprNode.def"
 
 #define DECL(CLASS) class CLASS;
-#include "declNode.def"
+#include "DeclNode.def"
 
 #define STMT(CLASS) class CLASS;
-#include "stmtNode.def"
+#include "StmtNode.def"
 
 class Visitor {
 public:
@@ -34,13 +34,13 @@ public:
 class ExprVisitor {
 public:
 #define EXPR(CLASS) virtual void visit(CLASS *e) = 0;
-#include "exprNode.def"
+#include "ExprNode.def"
 };
 
 class DeclVisitor {
 public:
 #define DECL(CLASS) virtual void visit(CLASS *d) = 0;
-#include "declNode.def"
+#include "DeclNode.def"
 };
 
 class StmtVisitor {

@@ -1,9 +1,9 @@
 #ifndef _CRYOLITE_AST_H_
 #define _CRYOLITE_AST_H_
 
-#include "token.h"
-#include "type.h"
-#include "visitor.h"
+#include "Token.h"
+#include "Type.h"
+#include "Visitor.h"
 #include <ostream>
 #include <vector>
 
@@ -102,7 +102,7 @@ private:
 
 enum BinaryOpKind {
 #define BINARY(NAME, REPR) NAME,
-#include "operatorKind.def"
+#include "OperatorKind.def"
 };
 
 class BinaryExpr : public VisitableExpr<BinaryExpr> {
@@ -231,7 +231,7 @@ public:
     IntegerExprEvaluator(const ResultTy &res) : result(res) {}
 
 #define EXPR(CLASS) void visit(CLASS *e);
-#include "exprNode.def"
+#include "ExprNode.def"
 
 private:
     ResultTy &result;
@@ -453,10 +453,10 @@ public:
     ASTDumper(std::ostream &os) : out(os) {}
 
 #define EXPR(CLASS) void visit(CLASS *e);
-#include "exprNode.def"
+#include "ExprNode.def"
 
 #define DECL(CLASS) void visit(CLASS *d);
-#include "declNode.def"
+#include "DeclNode.def"
 
     void visit(BreakStmt *breakStmt);
 

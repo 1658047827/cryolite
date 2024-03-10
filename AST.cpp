@@ -1,4 +1,4 @@
-#include "ast.h"
+#include "AST.h"
 #include <cassert>
 
 bool Expr::evaluateAsUnsignedInt(std::size_t &evalRet, ASTContext &ctx) const {
@@ -33,7 +33,7 @@ std::string_view BinaryExpr::getOpStr(BinaryOpKind opK) {
 #define BINARY(NAME, REPR) \
     case NAME:             \
         return REPR;
-#include "operatorKind.def"
+#include "OperatorKind.def"
     }
     assert(0 && "invalid binary operator");
 }
@@ -267,7 +267,7 @@ std::size_t ASTContext::getTypeSize(Type *t) {
     case ArithType::T:          \
         width = BITSIZE;        \
         break;
-#include "arithType.def"
+#include "ArithType.def"
         default:
             // unreachable
             assert(0 && "unknown arithmetic type");

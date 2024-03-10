@@ -1,5 +1,5 @@
-#include "semantic.h"
-#include "diagnostic.h"
+#include "Semantic.h"
+#include "Diagnostic.h"
 #include <sstream>
 
 void Semantic::actOnPopScope(SourceLocation loc, Scope *s) {

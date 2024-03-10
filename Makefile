@@ -11,28 +11,28 @@ endif
 $(TARGET): diagnostic.o token.o lexer.o type.o ast.o semantic.o parser.o main.o
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $^
 
-diagnostic.o: diagnostic.cpp diagnostic.h
+diagnostic.o: diagnostic.cpp Diagnostic.h
 	$(CXX) $(CXXFLAGS) -c $<
 
-token.o: token.cpp token.h tokenKind.def
+token.o: token.cpp Token.h TokenKind.def
 	$(CXX) $(CXXFLAGS) -c $<
 
-lexer.o: lexer.cpp lexer.h token.h diagnostic.h tokenKind.def
+lexer.o: lexer.cpp Lexer.h Token.h Diagnostic.h TokenKind.def
 	$(CXX) $(CXXFLAGS) -c $<
 
-parser.o: parser.cpp parser.h token.h ast.h
+parser.o: parser.cpp Parser.h Token.h AST.h
 	$(CXX) $(CXXFLAGS) -c $<
 
-type.o: type.cpp type.h arithType.def
+type.o: type.cpp Type.h ArithType.def
 	$(CXX) $(CXXFLAGS) -c $<
 
-ast.o: ast.cpp ast.h token.h type.h visitor.h exprNode.def
+ast.o: ast.cpp AST.h Token.h Type.h Visitor.h ExprNode.def
 	$(CXX) $(CXXFLAGS) -c $<
 
-semantic.o: semantic.cpp semantic.h
+semantic.o: semantic.cpp Semantic.h
 	$(CXX) $(CXXFLAGS) -c $<
 
-main.o: main.cpp lexer.h parser.h diagnostic.h
+main.o: Compile.cpp Lexer.h Parser.h Diagnostic.h
 	$(CXX) $(CXXFLAGS) -c $<
 
 clean:

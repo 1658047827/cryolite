@@ -19,14 +19,14 @@ std::string srcLocToPos(const SourceLocation &loc);
 
 enum TokenKind {
 #define TOK(X) TK_##X,
-#include "tokenKind.def"
+#include "TokenKind.def"
     NUM_TOKENS
 };
 
 static const std::unordered_map<TokenKind, std::string> tokenKind2Str{
 #define PUNCTUATOR(X, Y) {TK_##X, Y},
 #define KEYWORD(X, Y) {TK_##X, Y},
-#include "tokenKind.def"
+#include "TokenKind.def"
 };
 
 class Token {

@@ -1,5 +1,5 @@
-#include "type.h"
-#include "ast.h"
+#include "Type.h"
+#include "AST.h"
 #include <algorithm>
 #include <cassert>
 
@@ -22,7 +22,7 @@ std::pair<std::string, std::string> ArithType::repr() {
     case T:                     \
         s = REPR;               \
         break;
-#include "arithType.def"
+#include "ArithType.def"
     default:
         assert(0 && "Unknown builtin type");
     }

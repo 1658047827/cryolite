@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "diagnostic.h"
+#include "Diagnostic.h"
 
 unsigned diagErrorCount = 0;
 unsigned diagWarningCount = 0;
