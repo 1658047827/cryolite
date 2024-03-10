@@ -2,12 +2,9 @@
 #define _CRYOLITE_TOKEN_H_
 
 #include <list>
-#include <memory>
 #include <set>
 #include <string>
 #include <unordered_map>
-
-using HideSet = std::set<std::string>;
 
 struct SourceLocation {
     const std::string *filename;
@@ -41,26 +38,21 @@ public:
 
     ~Token() = default;
 
-    TokenKind getKind();
-    SourceLocation getLoc();
-    std::string getStr();
-    std::string toString();
+    TokenKind getKind() const;
+    SourceLocation getLoc() const;
+    std::string getStr() const;
+    std::string toString() const;
 
     bool is(TokenKind k) const { return kind == k; }
     bool isNot(TokenKind k) const { return kind != k; }
 
-    void hideSetAdd(std::string &tokenStr);
-    bool hideSetHas(std::string &tokenStr);
-
 private:
     TokenKind kind;
     SourceLocation loc;
-    std::string str;
-    HideSet hideSet;
-};
 
-HideSet hideSetIntersection(HideSet &lhs, HideSet &rhs);
-HideSet hideSetUnion(HideSet &lhs, HideSet &rhs);
+    
+    void *ptr;
+};
 
 using TokenSeqIter = std::list<std::unique_ptr<Token>>::iterator;
 using TokenSeqConstIter = std::list<std::unique_ptr<Token>>::const_iterator;
@@ -83,7 +75,7 @@ public:
     TokenSeqConstIter cEnd();
 
 private:
-    std::list<std::unique_ptr<Token>> tokenList;
+    std::list<Token*> tokenList;
 };
 
 // NumericLiteralParser - Analysis and classify a string as either integer, floating, or erroneous.

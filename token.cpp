@@ -21,19 +21,19 @@ std::string srcLocToPos(const SourceLocation &loc) {
     return s;
 }
 
-TokenKind Token::getKind() {
+TokenKind Token::getKind() const {
     return kind;
 }
 
-SourceLocation Token::getLoc() {
+SourceLocation Token::getLoc() const {
     return loc;
 }
 
-std::string Token::getStr() {
+std::string Token::getStr() const {
     return str;
 }
 
-std::string Token::toString() {
+std::string Token::toString() const {
     if (str.empty()) {
         auto iter = tokenKind2Str.find(kind);
         if (iter != tokenKind2Str.cend())
@@ -42,26 +42,6 @@ std::string Token::toString() {
     } else {
         return str;
     }
-}
-
-void Token::hideSetAdd(std::string &tokenStr) {
-    hideSet.insert(tokenStr);
-}
-
-bool Token::hideSetHas(std::string &tokenStr) {
-    return hideSet.count(tokenStr) == 1;
-}
-
-HideSet hideSetIntersection(HideSet &lhs, HideSet &rhs) {
-    HideSet hs;
-    std::set_intersection(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend(), std::inserter(hs, hs.begin()));
-    return hs;
-}
-
-HideSet hideSetUnion(HideSet &lhs, HideSet &rhs) {
-    HideSet hs;
-    std::set_union(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend(), std::inserter(hs, hs.begin()));
-    return hs;
 }
 
 void TokenSequence::pushBack(Token &token) {

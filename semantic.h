@@ -32,6 +32,8 @@ public:
 
     QualType checkAdditionOperands(Expr *&lhs, Expr *&rhs, SourceLocation loc);
 
+    Expr *actOnNumericConstant(const Token &tok);
+
 private:
     ASTContext &context;
 };

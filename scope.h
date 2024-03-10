@@ -8,7 +8,15 @@
 
 class IdentifierInfo {
 public:
+    std::string getName() const { return name; }
+
+    template <typename T>
+    T *getInfo() const { return static_cast<T *>(info); }
+    void setInfo(void *T) { info = T; }
+
+private:
     std::string name;
+    void *info; // Managed by the frontend.
 };
 
 class IdentifierTable {

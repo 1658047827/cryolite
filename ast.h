@@ -14,7 +14,7 @@ class ASTContext;
 
 class Node {
 public:
-    Node(const SourceLocation &loc) : srcLoc(loc) {}
+    Node(SourceLocation loc) : srcLoc(loc) {}
     SourceLocation getSrcLoc() const { return srcLoc; }
 
 private:
@@ -26,7 +26,7 @@ private:
  */
 class Expr : public Node {
 public:
-    Expr(const SourceLocation &loc, const QualType &qt) : Node(loc), qtype(qt) {}
+    Expr(SourceLocation loc, QualType qt) : Node(loc), qtype(qt) {}
 
     QualType getQualType() const { return qtype; }
 
@@ -43,7 +43,8 @@ private:
 template <typename Derived>
 class VisitableExpr : public Expr {
 public:
-    VisitableExpr(const SourceLocation &loc, const QualType &qt) : Expr(loc, qt) {}
+    template <typename... Args>
+    VisitableExpr(Args &&...args) : Expr(std::forward<Args>(args)...) {}
 
     void accept(ExprVisitor *v) { v->visit(static_cast<Derived *>(this)); }
 };
@@ -64,7 +65,7 @@ enum UnaryOpKind {
 
 class UnaryExpr : public VisitableExpr<UnaryExpr> {
 public:
-    UnaryExpr(const SourceLocation &loc, UnaryOpKind op, Expr *expr);
+    UnaryExpr(SourceLocation loc, UnaryOpKind op, Expr *expr);
 
     UnaryOpKind getOp() const { return op; }
     Expr *getOperand() const { return operand; }
@@ -84,9 +85,9 @@ public:
     };
 
     // for "sizeof unary-expression"
-    SizeofExpr(const SourceLocation &loc, Expr *expr);
+    SizeofExpr(SourceLocation loc, QualType resultTy, Expr *expr);
     // for "sizeof ( type-name )"
-    SizeofExpr(const SourceLocation &loc, QualType type);
+    SizeofExpr(SourceLocation loc, QualType resultTy, QualType type);
 
     union SizeofArg {
         Expr *expr;
@@ -106,7 +107,7 @@ enum BinaryOpKind {
 
 class BinaryExpr : public VisitableExpr<BinaryExpr> {
 public:
-    BinaryExpr(const SourceLocation &loc, BinaryOpKind op, Expr *lhs, Expr *rhs);
+    BinaryExpr(SourceLocation loc, BinaryOpKind op, Expr *lhs, Expr *rhs);
 
     bool isAdditiveOp() const { return isAdditiveOp(op); }
     static bool isAdditiveOp(BinaryOpKind opK) { return opK == ADD || opK == SUB; }
@@ -128,7 +129,7 @@ public:
 // Currently, only the conditional expression is ternary.
 class TernaryExpr : public VisitableExpr<TernaryExpr> {
 public:
-    TernaryExpr(const SourceLocation &loc, Expr *condExpr, Expr *trueExpr, Expr *falseExpr);
+    TernaryExpr(SourceLocation loc, Expr *condExpr, Expr *trueExpr, Expr *falseExpr);
 
     Expr *condExpr;
     Expr *trueExpr;
@@ -137,8 +138,8 @@ public:
 
 class IntegerConstant : public VisitableExpr<IntegerConstant> {
 public:
-    IntegerConstant(const SourceLocation &loc, const QualType &qt, unsigned long long ullVal);
-    IntegerConstant(const SourceLocation &loc, const QualType &qt, signed long long sllVal);
+    IntegerConstant(SourceLocation loc, QualType qt, unsigned long long ullVal);
+    IntegerConstant(SourceLocation loc, QualType qt, signed long long sllVal);
 
     unsigned long long getUnsignedValue() const { return ullValue; }
     signed long long getSignedvalue() const { return sllValue; }
@@ -153,21 +154,21 @@ private:
 
 class FloatingConstant : public VisitableExpr<FloatingConstant> {
 public:
-    FloatingConstant(const SourceLocation &loc, const QualType &qt, long double val);
+    FloatingConstant(SourceLocation loc, QualType qt, long double val);
 
     long double value;
 };
 
 class CharacterConstant : public VisitableExpr<CharacterConstant> {
 public:
-    CharacterConstant(const SourceLocation &loc, const QualType &qt, unsigned val);
+    CharacterConstant(SourceLocation loc, QualType qt, int val);
 
-    unsigned value;
+    int value;
 };
 
 class StringLiteral : public VisitableExpr<StringLiteral> {
 public:
-    StringLiteral(const SourceLocation &loc, const QualType &qt, const std::string &str);
+    StringLiteral(SourceLocation loc, QualType qt, const std::string &str);
 
     std::string content;
 };
@@ -186,7 +187,7 @@ public:
 
 class ParenExpr : public VisitableExpr<ParenExpr> {
 public:
-    ParenExpr(const SourceLocation &loc, Expr *subExpr);
+    ParenExpr(SourceLocation loc, Expr *subExpr);
 
 private:
     Expr *subExpr;
@@ -212,7 +213,7 @@ class CastExpr : public VisitableExpr<CastExpr> {
 
 class ImplicitCastExpr : public VisitableExpr<ImplicitCastExpr> {
 public:
-    ImplicitCastExpr(Expr *from, const QualType &to, CastKind cKind);
+    ImplicitCastExpr(Expr *from, QualType to, CastKind cKind);
 
     Expr *getFromExpr() const { return fromExpr; }
     CastKind getCastKind() const { return castKind; }
@@ -241,7 +242,7 @@ private:
  */
 class Decl : public Node {
 public:
-    Decl(const SourceLocation &loc) : Node(loc) {}
+    Decl(SourceLocation loc) : Node(loc) {}
 
     virtual void accept(DeclVisitor *v) = 0;
 };
@@ -249,7 +250,8 @@ public:
 template <typename Derived>
 class VisitableDecl : public Decl {
 public:
-    VisitableDecl(const SourceLocation &loc) : Decl(loc) {}
+    template <typename... Args>
+    VisitableDecl(Args &&...args) : Decl(std::forward<Args>(args)...) {}
 
     void accept(DeclVisitor *v) { v->visit(static_cast<Derived *>(this)); }
 };
@@ -281,7 +283,7 @@ public:
  */
 class EnumDecl : public VisitableDecl<EnumDecl> {
 public:
-    EnumDecl(const SourceLocation &loc) : VisitableDecl(loc) {}
+    EnumDecl(SourceLocation loc) : VisitableDecl<EnumDecl>(loc) {}
 
     QualType getIntegerType() const { return integerType; }
 
@@ -298,7 +300,7 @@ private:
 
 class FieldDecl : public VisitableDecl<FieldDecl> {
 public:
-    FieldDecl(const SourceLocation &loc, QualType qt, const std::string &name = "", Expr *bitWidth = nullptr);
+    FieldDecl(SourceLocation loc, QualType qt, const std::string &name = "", Expr *bitWidth = nullptr);
 
     void accept(Visitor *v) { v->visitFieldDecl(this); }
 
@@ -315,6 +317,7 @@ public:
 
 private:
     QualType type;
+
     // bitWidth - Bit-field declaration, declares a member with explicit width, in bits.
     // Adjacent bit-field members may be packed to share and straddle the individual bytes.
     // If struct member is declared normally, bitWidth will be set to nullptr.
@@ -323,12 +326,17 @@ private:
 
 class RecordDecl : public VisitableDecl<RecordDecl> {
 public:
-    RecordDecl(const SourceLocation &loc, bool isStruct = true, bool isDef = true, std::string name = "");
+    enum RecordKind {
+        RK_STRUCT,
+        RK_UNION,
+    };
+
+    RecordDecl(SourceLocation loc, RecordKind k, bool isDef = true, std::string name = "");
 
     void accept(Visitor *v) { v->visitRecordDecl(this); }
 
-    // isStruct - True if this record is a struct, false if this record is an union.
-    bool isStruct;
+private:
+    RecordKind recordDeclKind;
     // isDef - Whether this declaration is a definition.
     bool isDef;
     std::string recordName;
@@ -349,7 +357,8 @@ public:
 template <typename Derived>
 class VisitableStmt : public Stmt {
 public:
-    VisitableStmt(const SourceLocation &loc) : Stmt(loc) {}
+    template <typename... Args>
+    VisitableStmt(Args &&...args) : Stmt(std::forward<Args>(args)...) {}
 
     void accept(StmtVisitor *v) { v->visit(static_cast<Derived *>(this)); }
 };
@@ -361,7 +370,7 @@ public:
 
 class BreakStmt : public VisitableStmt<BreakStmt> {
 public:
-    BreakStmt(const SourceLocation &loc) : VisitableStmt(loc) {}
+    BreakStmt(const SourceLocation &loc) : VisitableStmt<BreakStmt>(loc) {}
 };
 
 class ContinueStmt : public Stmt {

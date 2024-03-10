@@ -178,127 +178,6 @@ DeclaratorChunk DeclaratorChunk::getFunction(unsigned char typeQuals,
     return dc;
 }
 
-QualType convertDeclSpecToType(const DeclSpec &ds, SourceLocation loc, bool &isInvalid) {
-    QualType result;
-    switch (ds.typeSpecType) {
-    case DeclSpec::TST_VOID:
-        result.type = VoidType::getVoidType();
-        break;
-    case DeclSpec::TST_CHAR:
-        if (ds.typeSpecSign == DeclSpec::TSS_UNSPECIFIED)
-            result.type = ArithType::getArithType(ArithType::CHAR_S);
-        else if (ds.typeSpecSign == DeclSpec::TSS_SIGNED)
-            result.type = ArithType::getArithType(ArithType::SIGNED_CHAR);
-        else {
-            assert(ds.typeSpecSign == DeclSpec::TSS_UNSIGNED && "Unknown TSS value");
-            result.type = ArithType::getArithType(ArithType::UNSIGNED_CHAR);
-        }
-        break;
-    case DeclSpec::TST_UNSPECIFIED:
-        if (!ds.hasTypeSpecifier()) {
-            error(loc, "missing type specifier");
-        }
-    // Fall through
-    case DeclSpec::TST_INT: {
-        if (ds.typeSpecSign != DeclSpec::TSS_UNSIGNED) {
-            switch (ds.typeSpecWidth) {
-            case DeclSpec::TSW_UNSPECIFIED:
-                result.type = ArithType::getArithType(ArithType::INT);
-                break;
-            case DeclSpec::TSW_SHORT:
-                result.type = ArithType::getArithType(ArithType::SHORT);
-                break;
-            case DeclSpec::TSW_LONG:
-                result.type = ArithType::getArithType(ArithType::LONG);
-                break;
-            case DeclSpec::TSW_LONGLONG:
-                result.type = ArithType::getArithType(ArithType::LONG_LONG);
-                break;
-            }
-        } else {
-            switch (ds.typeSpecWidth) {
-            case DeclSpec::TSW_UNSPECIFIED:
-                result.type = ArithType::getArithType(ArithType::UNSIGNED_INT);
-                break;
-            case DeclSpec::TSW_SHORT:
-                result.type = ArithType::getArithType(ArithType::UNSIGNED_SHORT);
-                break;
-            case DeclSpec::TSW_LONG:
-                result.type = ArithType::getArithType(ArithType::UNSIGNED_LONG);
-                break;
-            case DeclSpec::TSW_LONGLONG:
-                result.type = ArithType::getArithType(ArithType::UNSIGNED_LONG_LONG);
-                break;
-            }
-        }
-        break;
-    }
-    case DeclSpec::TST_FLOAT:
-        result.type = ArithType::getArithType(ArithType::FLOAT);
-        break;
-    case DeclSpec::TST_DOUBLE:
-        if (ds.typeSpecWidth == DeclSpec::TSW_LONG)
-            result.type = ArithType::getArithType(ArithType::LONG_DOUBLE);
-        else
-            result.type = ArithType::getArithType(ArithType::DOUBLE);
-        break;
-    case DeclSpec::TST_BOOL:
-        // TODO: Support bool.
-        break;
-    case DeclSpec::TST_ENUM:
-        // TODO
-        break;
-    case DeclSpec::TST_UNION:
-    case DeclSpec::TST_STRUCT: {
-        Decl *d = static_cast<Decl *>(ds.typeRep);
-        RecordDecl *rd = dynamic_cast<RecordDecl *>(d);
-        result.type = new RecordType(rd);
-        break;
-    }
-    case DeclSpec::TST_TYPENAME: {
-        // TODO
-    }
-    }
-
-    // Apply const/volatile/restrict qualifiers to T.
-    if (unsigned typeQuals = ds.typeQualifiers) {
-    }
-
-    return result;
-}
-
-QualType getTypeForDeclarator(Declarator &d) {
-    QualType t;
-    switch (d.kind) {
-    case Declarator::DK_ABSTRACT:
-    case Declarator::DK_NORMAL: {
-        const DeclSpec &ds = d.ds;
-        bool isInvalid = false;
-        t = convertDeclSpecToType(ds, d.identifierLoc, isInvalid);
-        if (isInvalid)
-            d.invalidType = true;
-        break;
-    }
-    }
-
-    // TODO
-    for (unsigned i = 0, e = d.declTypeInfo.size(); i != e; ++i) {
-        DeclaratorChunk &declType = d.declTypeInfo[e - i - 1];
-        switch (declType.chunkKind) {
-        case DeclaratorChunk::POINTER:
-            break;
-        case DeclaratorChunk::ARRAY:
-            break;
-        case DeclaratorChunk::FUNCTION:
-            break;
-        default:
-            break;
-        }
-    }
-
-    return t;
-}
-
 ArithType::ArithKind parseIntegerSuffix(NumericLiteralParser &parser) {
     // Integer constants are implicitly of type int by default.
     ArithType::ArithKind ret = ArithType::INT;
@@ -706,18 +585,19 @@ UnaryExpr *Parser::parseUnaryOperatorExpression(UnaryOpKind op) {
 }
 
 SizeofExpr *Parser::parseSizeof() {
-    SourceLocation loc = consumeToken(); // Consume the SIZEOF.
-    TokenSeqConstIter nxt = std::next(cursor, 1);
-    if (tok.is(TK_LPAR) && isFirstOfTypeName(nxt)) {
-        consumeToken(); // Consume the '('.
-        QualType qt = parseTypeName();
-        expect(cursor, TK_RPAR);
-        consumeToken(); // Consume the ')'.
-        return new SizeofExpr(loc, qt);
-    } else {
-        Expr *expr = parseUnaryExpression();
-        return new SizeofExpr(loc, expr);
-    }
+    // SourceLocation loc = consumeToken(); // Consume the SIZEOF.
+    // TokenSeqConstIter nxt = std::next(cursor, 1);
+    // if (tok.is(TK_LPAR) && isFirstOfTypeName(nxt)) {
+    //     consumeToken(); // Consume the '('.
+    //     QualType qt = parseTypeName();
+    //     expect(cursor, TK_RPAR);
+    //     consumeToken(); // Consume the ')'.
+    //     return new SizeofExpr(loc, qt);
+    // } else {
+    //     Expr *expr = parseUnaryExpression();
+    //     return new SizeofExpr(loc, expr);
+    // }
+    return nullptr;
 }
 
 Expr *Parser::parsePostfixExpression() {

@@ -316,9 +316,6 @@ struct FieldDeclarator {
         : d(ds, Declarator::MEMBER_CONTEXT), bitFieldWidth(nullptr) {}
 };
 
-QualType convertDeclSpecToType(const DeclSpec &ds, SourceLocation loc, bool &isInvalid);
-QualType getTypeForDeclarator(Declarator &d);
-
 struct DeclGroup {
 public:
     std::vector<Decl *> decls;

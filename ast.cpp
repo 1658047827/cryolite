@@ -9,22 +9,22 @@ bool Expr::evaluateAsFloating(long double &evalRet, ASTContext &ctx) const {
     return true;
 }
 
-UnaryExpr::UnaryExpr(const SourceLocation &loc, UnaryOpKind op, Expr *expr)
+UnaryExpr::UnaryExpr(SourceLocation loc, UnaryOpKind op, Expr *expr)
     : VisitableExpr<UnaryExpr>(loc, QualType()), op(op), operand(expr) {}
 
-SizeofExpr::SizeofExpr(const SourceLocation &loc, Expr *expr)
-    : VisitableExpr<SizeofExpr>(loc, ArithType::getArithType(ArithType::UNSIGNED_LONG_LONG)) {
+SizeofExpr::SizeofExpr(SourceLocation loc, QualType resultTy, Expr *expr)
+    : VisitableExpr<SizeofExpr>(loc, resultTy) {
     sizeofKind = UNARY_EXPR;
     arg.expr = expr;
 }
 
-SizeofExpr::SizeofExpr(const SourceLocation &loc, QualType type)
-    : VisitableExpr<SizeofExpr>(loc, ArithType::getArithType(ArithType::UNSIGNED_LONG_LONG)) {
+SizeofExpr::SizeofExpr(SourceLocation loc, QualType resultTy, QualType type)
+    : VisitableExpr<SizeofExpr>(loc, resultTy) {
     sizeofKind = TYPE_NAME;
     arg.type = type;
 }
 
-BinaryExpr::BinaryExpr(const SourceLocation &loc, BinaryOpKind op, Expr *lhs, Expr *rhs)
+BinaryExpr::BinaryExpr(SourceLocation loc, BinaryOpKind op, Expr *lhs, Expr *rhs)
     : VisitableExpr<BinaryExpr>(loc, QualType()), op(op), lhs(lhs), rhs(rhs) {
 }
 
@@ -64,25 +64,25 @@ std::string_view BinaryExpr::getOpStr(BinaryOpKind opK) {
 //     }
 // }
 
-TernaryExpr::TernaryExpr(const SourceLocation &loc, Expr *condExpr, Expr *trueExpr, Expr *falseExpr)
+TernaryExpr::TernaryExpr(SourceLocation loc, Expr *condExpr, Expr *trueExpr, Expr *falseExpr)
     : VisitableExpr<TernaryExpr>(loc, QualType()), condExpr(condExpr), trueExpr(trueExpr), falseExpr(falseExpr) {}
 
-IntegerConstant::IntegerConstant(const SourceLocation &loc, const QualType &qt, unsigned long long ullVal)
+IntegerConstant::IntegerConstant(SourceLocation loc, QualType qt, unsigned long long ullVal)
     : VisitableExpr<IntegerConstant>(loc, qt), ullValue(ullVal) {}
 
-IntegerConstant::IntegerConstant(const SourceLocation &loc, const QualType &qt, signed long long sllVal)
+IntegerConstant::IntegerConstant(SourceLocation loc, QualType qt, signed long long sllVal)
     : VisitableExpr<IntegerConstant>(loc, qt), sllValue(sllVal) {}
 
-FloatingConstant::FloatingConstant(const SourceLocation &loc, const QualType &qt, long double val)
+FloatingConstant::FloatingConstant(SourceLocation loc, QualType qt, long double val)
     : VisitableExpr<FloatingConstant>(loc, qt), value(val) {}
 
-CharacterConstant::CharacterConstant(const SourceLocation &loc, const QualType &qt, unsigned val)
+CharacterConstant::CharacterConstant(SourceLocation loc, QualType qt, int val)
     : VisitableExpr<CharacterConstant>(loc, qt), value(val) {}
 
-StringLiteral::StringLiteral(const SourceLocation &loc, const QualType &qt, const std::string &str)
+StringLiteral::StringLiteral(SourceLocation loc, QualType qt, const std::string &str)
     : VisitableExpr<StringLiteral>(loc, qt), content(str) {}
 
-ImplicitCastExpr::ImplicitCastExpr(Expr *from, const QualType &to, CastKind cKind)
+ImplicitCastExpr::ImplicitCastExpr(Expr *from, QualType to, CastKind cKind)
     : VisitableExpr<ImplicitCastExpr>(from->getSrcLoc(), to), fromExpr(from), castKind(cKind) {}
 
 // ImplicitCastExpr::ImplicitKind ImplicitCastExpr::inferArithCastKind(ArithType *from, ArithType *to) {
@@ -95,7 +95,7 @@ ImplicitCastExpr::ImplicitCastExpr(Expr *from, const QualType &to, CastKind cKin
 //     }
 // }
 
-ParenExpr::ParenExpr(const SourceLocation &loc, Expr *subExpr)
+ParenExpr::ParenExpr(SourceLocation loc, Expr *subExpr)
     : VisitableExpr<ParenExpr>(loc, QualType()), subExpr(subExpr) {}
 
 template <typename ResultTy>
@@ -140,11 +140,11 @@ void IntegerExprEvaluator<ResultTy>::visit(CastExpr *cast) {}
 template <typename ResultTy>
 void IntegerExprEvaluator<ResultTy>::visit(ImplicitCastExpr *implicitCast) {}
 
-FieldDecl::FieldDecl(const SourceLocation &loc, QualType qt, const std::string &name, Expr *bitWidth)
-    : VisitableDecl(loc), type(qt), fieldName(name), bitWidth(bitWidth) {}
+FieldDecl::FieldDecl(SourceLocation loc, QualType qt, const std::string &name, Expr *bitWidth)
+    : VisitableDecl<FieldDecl>(loc), type(qt), fieldName(name), bitWidth(bitWidth) {}
 
-RecordDecl::RecordDecl(const SourceLocation &loc, bool isStruct, bool isDef, std::string name)
-    : VisitableDecl(loc), isDef(isDef), isStruct(isStruct), recordName(name) {}
+RecordDecl::RecordDecl(SourceLocation loc, RecordKind k, bool isDef, std::string name)
+    : VisitableDecl<RecordDecl>(loc), isDef(isDef), recordDeclKind(k), recordName(name) {}
 
 /**
  * AST context
@@ -239,13 +239,13 @@ unsigned ASTContext::getFloatingRank(Type *t) const {
 }
 
 void ASTContext::initVoidType(QualType &r) {
-    Type *t = VoidType::getVoidType();
+    Type *t = new VoidType();
     types.emplace_back(t);
     r = QualType(t);
 }
 
 void ASTContext::initArithType(QualType &r, ArithType::ArithKind k) {
-    Type *t = ArithType::getArithType(k);
+    Type *t = new ArithType(k);
     types.emplace_back(t);
     r = QualType(t);
 }
@@ -264,7 +264,7 @@ std::size_t ASTContext::getTypeSize(Type *t) {
     case TypeKind::ARITH: {
         switch (t->getAs<ArithType>()->getArithKind()) {
 #define ARITH(T, BITSIZE, REPR) \
-    case T:                     \
+    case ArithType::T:          \
         width = BITSIZE;        \
         break;
 #include "arithType.def"
@@ -515,29 +515,11 @@ void ASTDumper::visit(EnumDecl *enumDecl) {}
 
 void ASTDumper::visit(TypedefDecl *typedefDecl) {}
 
-void ASTDumper::visit(FieldDecl *fieldDecl) {
-    auto reprPair = fieldDecl->getType().repr();
-    out << "FieldDecl <" << srcLocToPos(fieldDecl->getSrcLoc()) << "> ";
-    out << fieldDecl->fieldName << " '";
-    out << reprPair.first << reprPair.second << "' \n";
-}
+void ASTDumper::visit(FieldDecl *fieldDecl) {}
 
-void ASTDumper::visit(RecordDecl *recordDecl) {
-    out << "RecordDecl <" << srcLocToPos(recordDecl->getSrcLoc()) << "> ";
-    out << "struct " << recordDecl->recordName;
-    if (recordDecl->isDef)
-        out << " definition\n";
-    else
-        out << '\n';
-    for (std::size_t i = 0, e = recordDecl->fields.size(); i < e - 1; ++i) {
-        dumpChild(recordDecl->fields[i]);
-    }
-    dumpLastChild(recordDecl->fields.back());
-}
+void ASTDumper::visit(RecordDecl *recordDecl) {}
 
-void ASTDumper::visit(BreakStmt *breakStmt) {
-    out << "BreakStmt <" << srcLocToPos(breakStmt->getSrcLoc()) << ">\n";
-}
+void ASTDumper::visit(BreakStmt *breakStmt) {}
 
 template <typename ASTNode>
 void ASTDumper::dumpChild(ASTNode *node) {

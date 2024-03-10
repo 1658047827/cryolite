@@ -43,7 +43,7 @@ QualType Semantic::usualArithmeticConversions(Expr *&lhs, Expr *&rhs) {
     QualType rhsTy = rhs->getQualType().getUnqualifiedType();
     assert(lhsTy->isArithmeticType() && rhsTy->isArithmeticType());
 
-    if(lhsTy->isFloatingType() || rhsTy->isFloatingType())
+    if (lhsTy->isFloatingType() || rhsTy->isFloatingType())
         handleFloatingConversions(lhs, rhs, lhsTy, rhsTy);
 }
 
@@ -51,8 +51,7 @@ QualType Semantic::handleFloatingConversions(Expr *&lhs, Expr *&rhs, QualType lh
     bool lhsFloating = lhsTy->isFloatingType();
     bool rhsFloating = rhsTy->isFloatingType();
 
-    if(lhsFloating && rhsFloating) {
-        
+    if (lhsFloating && rhsFloating) {
     }
 }
 
@@ -106,6 +105,12 @@ QualType Semantic::checkAdditionOperands(Expr *&lhs, Expr *&rhs, SourceLocation 
 
     // TODO: Other situations.
     return QualType();
+}
+
+Expr *Semantic::actOnNumericConstant(const Token &tok) {
+    std::string s = tok.getStr();
+    NumericLiteralParser numeric(s.data(), s.data() + s.size(), tok.getLoc());
+
 }
 
 static void diagnoseBitwisePrecedence(BinaryOpKind opK, SourceLocation opLoc, Expr *lhs, Expr *rhs) {
