@@ -50,7 +50,6 @@ private:
     TokenKind kind;
     SourceLocation loc;
 
-    
     void *ptr;
 };
 
@@ -75,7 +74,7 @@ public:
     TokenSeqConstIter cEnd();
 
 private:
-    std::list<Token*> tokenList;
+    std::list<Token *> tokenList;
 };
 
 // NumericLiteralParser - Analysis and classify a string as either integer, floating, or erroneous.
@@ -84,10 +83,10 @@ public:
     NumericLiteralParser(const char *begin, const char *end, const SourceLocation &loc);
 
     bool hadError;
-    bool isUnsigned;
-    bool isLong; // This is *not* set for long long.
-    bool isLongLong;
-    bool isFloat;
+    bool isUnsigned; // Set for u suffix.
+    bool isLong;     // Set for l suffix. This is *not* set for long long.
+    bool isLongLong; // Set for ll suffix.
+    bool isFloat;    // Set for f suffix.
 
     bool isIntegerLiteral() const {
         return !sawPeriod && !sawExponent;

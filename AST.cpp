@@ -67,11 +67,8 @@ std::string_view BinaryExpr::getOpStr(BinaryOpKind opK) {
 TernaryExpr::TernaryExpr(SourceLocation loc, Expr *condExpr, Expr *trueExpr, Expr *falseExpr)
     : VisitableExpr<TernaryExpr>(loc, QualType()), condExpr(condExpr), trueExpr(trueExpr), falseExpr(falseExpr) {}
 
-IntegerConstant::IntegerConstant(SourceLocation loc, QualType qt, unsigned long long ullVal)
-    : VisitableExpr<IntegerConstant>(loc, qt), ullValue(ullVal) {}
-
-IntegerConstant::IntegerConstant(SourceLocation loc, QualType qt, signed long long sllVal)
-    : VisitableExpr<IntegerConstant>(loc, qt), sllValue(sllVal) {}
+IntegerConstant::IntegerConstant(SourceLocation loc, QualType qt, unsigned long long val)
+    : VisitableExpr<IntegerConstant>(loc, qt), value(val) {}
 
 FloatingConstant::FloatingConstant(SourceLocation loc, QualType qt, long double val)
     : VisitableExpr<FloatingConstant>(loc, qt), value(val) {}
@@ -443,17 +440,13 @@ void ASTDumper::visit(TernaryExpr *ternary) {
 void ASTDumper::visit(IntegerConstant *integer) {
     auto reprPair = integer->getQualType().repr();
     out << "IntegerConstant <" << srcLocToPos(integer->getSrcLoc()) << "> '";
-    out << reprPair.first << reprPair.second << "' ";
-    if (integer->getQualType()->isSignedIntegerType())
-        out << integer->getSignedvalue() << '\n';
-    else
-        out << integer->getUnsignedValue() << '\n';
+    out << reprPair.first << reprPair.second << "' " << integer->getValue() << '\n';
 }
 
 void ASTDumper::visit(FloatingConstant *floating) {
     auto reprPair = floating->getQualType().repr();
     out << "FloatingConstant <" << srcLocToPos(floating->getSrcLoc()) << "> '";
-    out << reprPair.first << reprPair.second << "' " << floating->value << '\n';
+    out << reprPair.first << reprPair.second << "' " << floating->getValue() << '\n';
 }
 
 void ASTDumper::visit(CharacterConstant *character) {

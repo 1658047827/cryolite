@@ -178,38 +178,6 @@ DeclaratorChunk DeclaratorChunk::getFunction(unsigned char typeQuals,
     return dc;
 }
 
-ArithType::ArithKind parseIntegerSuffix(NumericLiteralParser &parser) {
-    // Integer constants are implicitly of type int by default.
-    ArithType::ArithKind ret = ArithType::INT;
-    if (parser.isLong) {
-        ret = ArithType::LONG;
-    } else if (parser.isLongLong) {
-        ret = ArithType::LONG_LONG;
-    }
-    if (parser.isUnsigned) {
-        switch (ret) {
-        case ArithType::INT:
-            return ArithType::UNSIGNED_INT;
-        case ArithType::LONG:
-            return ArithType::UNSIGNED_LONG;
-        case ArithType::LONG_LONG:
-            return ArithType::UNSIGNED_LONG_LONG;
-        }
-    }
-    return ret;
-}
-
-ArithType::ArithKind parseFloatingSuffix(NumericLiteralParser &parser) {
-    // Floating constants are implicitly of type double by default.
-    ArithType::ArithKind ret = ArithType::DOUBLE;
-    if (parser.isFloat) {
-        ret = ArithType::FLOAT;
-    } else if (parser.isLong) {
-        ret = ArithType::LONG_DOUBLE;
-    }
-    return ret;
-}
-
 void Parser::expect(TokenSeqConstIter &iter, TokenKind kind) {
     if ((*iter)->getKind() != kind) {
         error((*iter)->getLoc(), "expected '" + tokenKind2Str.at(kind) + "'");
@@ -684,42 +652,6 @@ Expr *Parser::parseParenthesesExpression() {
     // Maintain consistency: after parseXXX, cursor always points to next token.
     consumeToken();
     return expr;
-}
-
-IntegerConstant *Parser::parseIntegerConstant(NumericLiteralParser &parser) {
-    SourceLocation loc = tok.getLoc();
-    std::string s = tok.getStr();
-    unsigned long long val = 0;
-    std::size_t idx = 0;
-    try {
-        val = std::stoull(s, &idx, parser.getRadix());
-    } catch (const std::out_of_range &e) {
-        error(loc, "integer constant too large");
-        val = 0;
-    }
-    consumeToken(); // Maintain consistency.
-    // TODO: Automatically determine the type based on the size of the integer constant.
-    ArithType::ArithKind kind = parseIntegerSuffix(parser);
-    ArithType *arithType = ArithType::getArithType(kind);
-    return new IntegerConstant(loc, QualType(arithType), val);
-}
-
-FloatingConstant *Parser::parseFloatingConstant(NumericLiteralParser &parser) {
-    SourceLocation loc = tok.getLoc();
-    std::string s = tok.getStr();
-    long double val;
-    std::size_t idx = 0;
-    try {
-        val = std::stold(s, &idx);
-    } catch (const std::out_of_range &e) {
-        error(loc, "floating constant too large");
-        val = 0.0;
-    }
-    consumeToken(); // Maintain consistency.
-    // TODO: Automatically determine the type based on the size of the floating constant.
-    ArithType::ArithKind kind = parseFloatingSuffix(parser);
-    ArithType *arithType = ArithType::getArithType(kind);
-    return new FloatingConstant(loc, QualType(arithType), val);
 }
 
 CharacterConstant *Parser::parseCharacterConstant() {

@@ -138,24 +138,21 @@ public:
 
 class IntegerConstant : public VisitableExpr<IntegerConstant> {
 public:
-    IntegerConstant(SourceLocation loc, QualType qt, unsigned long long ullVal);
-    IntegerConstant(SourceLocation loc, QualType qt, signed long long sllVal);
+    IntegerConstant(SourceLocation loc, QualType qt, unsigned long long val);
 
-    unsigned long long getUnsignedValue() const { return ullValue; }
-    signed long long getSignedvalue() const { return sllValue; }
+    unsigned long long getValue() const { return value; }
 
 private:
-    union {
-        unsigned long long ullValue;
-        signed long long sllValue;
-    };
-    // Its sign can be read from qtype.
+    unsigned long long value;
 };
 
 class FloatingConstant : public VisitableExpr<FloatingConstant> {
 public:
     FloatingConstant(SourceLocation loc, QualType qt, long double val);
 
+    long double getValue() const { return value; }
+
+private:
     long double value;
 };
 

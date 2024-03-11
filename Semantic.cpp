@@ -110,7 +110,77 @@ QualType Semantic::checkAdditionOperands(Expr *&lhs, Expr *&rhs, SourceLocation 
 Expr *Semantic::actOnNumericConstant(const Token &tok) {
     std::string s = tok.getStr();
     NumericLiteralParser numeric(s.data(), s.data() + s.size(), tok.getLoc());
+    if (numeric.hadError) {
+        error(tok.getLoc(), "invalid numeric constant");
+        return nullptr;
+    }
+    if (numeric.isFloatingLiteral()) {
+        QualType ty;
+        if (numeric.isFloat)
+            ty = context.floatTy;
+        else if (!numeric.isLong)
+            ty = context.doubleTy;
+        else
+            ty = context.longDoubleTy;
 
+        // TODO: It may lose precision or be out of range.
+        long double val = std::stold(s);
+
+        return new FloatingConstant(tok.getLoc(), ty, val);
+
+    } else if (numeric.isIntegerLiteral()) {
+        QualType ty;
+
+        // TODO: It may be out of range.
+        unsigned long long val = std::stoull(s, nullptr, numeric.getRadix());
+
+        // Octal, Hexadecimal, and integers with a U suffix are allowed to be an unsigned int.
+        bool allowUnsigned = numeric.isUnsigned || numeric.getRadix() != 10;
+
+        // TODO: Get specified bitwidth from target info to decide whether val can fit in.
+        // Reference Clang SemaExpr.cpp.
+
+        // Check from smallest to largest, picking the smallest type we can.
+        if (!numeric.isLong && !numeric.isLongLong) {
+            // Does it fit in an unsigned int?
+            if (val <= UINT32_MAX) {
+                // Does it fit in a signed int?
+                if (!numeric.isUnsigned && val <= INT32_MAX)
+                    ty = context.intTy;
+                else if (allowUnsigned)
+                    ty = context.unsignedIntTy;
+            }
+        }
+
+        if (ty.isNull() && !numeric.isLongLong) {
+            // Does it fit in an unsigned long?
+            if (val <= UINT64_MAX) {
+                // Does it fit in a signed long?
+                if (!numeric.isUnsigned && val <= INT64_MAX)
+                    ty = context.longTy;
+                else if (allowUnsigned)
+                    ty = context.unsignedLongTy;
+            }
+        }
+
+        if (ty.isNull()) {
+            // Does it fit in an unsigned long long?
+            if (val <= UINT64_MAX) {
+                // Does it fit in a signed long long?
+                if (!numeric.isUnsigned && val <= INT64_MAX)
+                    ty = context.longLongTy;
+                else if (allowUnsigned)
+                    ty = context.unsignedLongLongTy;
+            }
+        }
+
+        // TODO: If we still couldn't decide a type?
+
+        return new IntegerConstant(tok.getLoc(), ty, val);
+
+    } else {
+        return nullptr;
+    }
 }
 
 static void diagnoseBitwisePrecedence(BinaryOpKind opK, SourceLocation opLoc, Expr *lhs, Expr *rhs) {
