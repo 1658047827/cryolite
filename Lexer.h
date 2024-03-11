@@ -4,34 +4,83 @@
 #include "Token.h"
 #include <vector>
 
+class Cursor {
+public:
+    Cursor(std::string *filename, std::vector<char> &buf)
+        : loc{filename, 1, 1}, iter(buf.cbegin()) {}
+
+    SourceLocation getLoc() const { return loc; }
+
+    Cursor &operator++() {
+        if (*iter == '\n') {
+            loc.line += 1;
+            loc.column = 1;
+        } else {
+            loc.column += 1;
+        }
+        ++iter;
+        return *this;
+    }
+
+    Cursor operator++(int) {
+        Cursor tmp = *this;
+        ++(*this);
+        return tmp;
+    }
+
+    const char &operator*() {
+        return *iter;
+    }
+
+    unsigned operator-(const Cursor &other) const {
+        return iter - other.iter;
+    }
+
+    const char *base() const {
+        return iter.base();
+    }
+
+private:
+    SourceLocation loc;
+    std::vector<char>::const_iterator iter;
+};
+
 class Lexer {
 public:
-    Lexer(std::string *filename, std::vector<char> &buffer)
-        : curLoc{filename, 1, 1}, buffer(buffer), p(0) {}
+    Lexer(std::string *filename, std::vector<char> &buf)
+        : buffer(buf), bufferCursor(filename, buf) {}
 
     ~Lexer() = default;
 
-    void lex(TokenSequence &ts);
+    void lex(Token &tok);
 
 private:
-    char curChar();
-    char next();
+    inline char getAndAdvance(Cursor &cursor) { return *cursor++; }
+
+    void formTokenWithChars(Token &tok, Cursor tokEnd, TokenKind kind) {
+        unsigned tokLen = tokEnd - bufferCursor;
+        tok.setLength(tokLen);
+        tok.setLoc(bufferCursor.getLoc());
+        tok.setKind(kind);
+        bufferCursor = tokEnd;
+    }
+
     char lookAhead(std::size_t n = 1);
     bool nextIs(char c);
     bool tryNext(char c);
 
     void skipComment();
-    Token lexNumericConstant();
-    Token lexCharConstant();
-    Token lexStringLiteral();
+    void lexNumericConstant(Token &tok, Cursor curCursor);
+    void lexCharConstant(Token &tok);
+    void lexStringLiteral(Token &tok);
     // lexIdentifier - Lex identifier and C keyword.
-    Token lexIdentifier();
+    void lexIdentifier(Token &tok);
 
-    SourceLocation curLoc;
     std::vector<char> &buffer;
-    std::size_t p;
+    Cursor bufferCursor;
 };
 
-int readFile(std::string &filename, std::vector<char> &buffer);
+// readFile - Read file content into buffer.
+std::vector<char> readFile(std::string &filename);
 
 #endif

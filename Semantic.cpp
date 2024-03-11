@@ -5,6 +5,10 @@
 void Semantic::actOnPopScope(SourceLocation loc, Scope *s) {
     if (s->declEmpty()) return;
     assert((s->getFlags() & Scope::DECL_SCOPE) && "Scope shouldn't contain decls");
+
+    for (auto &decl : s->getDeclsInScope()) {
+        // TODO: Remove decl name from our lexical scope.
+    }
 }
 
 Expr *Semantic::implicitCastExprToType(Expr *expr, QualType ty, CastKind cKind) {

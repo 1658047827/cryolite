@@ -1,6 +1,7 @@
 #ifndef _CRYOLITE_PARSER_H_
 #define _CRYOLITE_PARSER_H_
 
+#include "Lexer.h"
 #include "Semantic.h"
 #include <bitset>
 #include <variant>
@@ -323,13 +324,10 @@ public:
 
 class Parser {
 public:
-    Parser(TokenSequence &ts, Semantic &sema)
-        : tksq(ts), sema(sema) {
-        cursor = ts.cBegin();
-        tok = **cursor;
+    Parser(Lexer &lexer, Semantic &sema)
+        : lexer(lexer), sema(sema) {
         numCachedScopes = 0;
         curScope = nullptr;
-        initBitSet();
     }
 
     /**
@@ -410,20 +408,14 @@ public:
     TransUnit *parseTranslationUnit();
 
 private:
-    void expect(TokenSeqConstIter &iter, TokenKind kind);
-    void initBitSet();
-    template <typename... Args>
-    void setBitSet(TokenBitSet &bitset, Args... values) {
-        (bitset.set(values), ...);
-    }
-    bool isInBitSet(TokenBitSet &bitset, TokenSeqConstIter &iter);
-    bool isFirstOfTypeName(TokenSeqConstIter &iter);
+    // initialize - Initialize the parser.
+    void initialize();
 
-    // consumeToken - Move cursor to the next one and return the location of the consumed token.
+    // consumeToken - Consume the current 'peek token' and lex the next one.
+    // This returns the location of the consumed token.
     SourceLocation consumeToken() {
         prevTokenLoc = tok.getLoc();
-        ++cursor;
-        tok = **cursor;
+        lexer.lex(tok);
         return prevTokenLoc;
     }
 
@@ -442,6 +434,8 @@ private:
     void enterScope(unsigned char scopeFlags);
     void exitScope();
 
+    Lexer &lexer;
+
     // tok - The current token we are peeking ahead.
     // All parsing methods assume that this is valid.
     Token tok;
@@ -456,9 +450,6 @@ private:
     static const unsigned scopeCacheSize = 16;
     Scope *scopeCache[scopeCacheSize];
     unsigned numCachedScopes;
-
-    TokenSequence &tksq;
-    TokenSeqConstIter cursor;
 
     TokenBitSet firstOfSpecifierQualifier;
     TokenBitSet firstOfDeclarator;

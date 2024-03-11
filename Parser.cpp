@@ -178,47 +178,11 @@ DeclaratorChunk DeclaratorChunk::getFunction(unsigned char typeQuals,
     return dc;
 }
 
-void Parser::expect(TokenSeqConstIter &iter, TokenKind kind) {
-    if ((*iter)->getKind() != kind) {
-        error((*iter)->getLoc(), "expected '" + tokenKind2Str.at(kind) + "'");
-    }
-}
-
-void Parser::initBitSet() {
-    setBitSet(firstOfSpecifierQualifier,
-              // TypeQualifier
-              TK_CONST,
-              TK_RESTRICT,
-              TK_VOLATILE,
-              // TypeSpecifier
-              TK_VOID,
-              TK_CHAR,
-              TK_SHORT,
-              TK_INT,
-              TK_LONG,
-              TK_FLOAT,
-              TK_DOUBLE,
-              TK_SIGNED,
-              TK_UNSIGNED,
-              TK_STRUCT,
-              TK_UNION,
-              TK_ENUM,
-              TK_IDENTIFIER);
-
-    setBitSet(firstOfDeclarator,
-              // Pointer
-              TK_STAR,
-              // DirectDeclarator
-              TK_IDENTIFIER,
-              TK_LPAR);
-}
-
-bool Parser::isInBitSet(TokenBitSet &bitset, TokenSeqConstIter &iter) {
-    return bitset[(*iter)->getKind()];
-}
-
-bool Parser::isFirstOfTypeName(TokenSeqConstIter &iter) {
-    return isInBitSet(firstOfSpecifierQualifier, iter);
+void Parser::initialize() {
+    // Create the translation unit scope.  Install it as the current scope.
+    assert(curScope == nullptr);
+    enterScope(Scope::DECL_SCOPE);
+    
 }
 
 bool Parser::skipUntil(const TokenKind *toks, unsigned numToks, bool stopAtSemi, bool dontConsume) {
@@ -257,7 +221,7 @@ void Parser::enterScope(unsigned char scopeFlags) {
 
 void Parser::exitScope() {
     if (!curScope->declEmpty())
-        ;
+        sema.actOnPopScope(tok.getLoc(), curScope);
 
     Scope *old = curScope;
     curScope = old->getParent();

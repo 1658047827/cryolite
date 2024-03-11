@@ -270,7 +270,7 @@ public:
 class VarDecl : public VisitableDecl<VarDecl> {
 public:
     QualType type;
-    std::string name;
+    IdentifierInfo* name;
 };
 
 /**

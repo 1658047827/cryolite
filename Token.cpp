@@ -21,54 +21,10 @@ std::string srcLocToPos(const SourceLocation &loc) {
     return s;
 }
 
-TokenKind Token::getKind() const {
-    return kind;
-}
-
-SourceLocation Token::getLoc() const {
-    return loc;
-}
-
-std::string Token::getStr() const {
-    return str;
-}
-
-std::string Token::toString() const {
-    if (str.empty()) {
-        auto iter = tokenKind2Str.find(kind);
-        if (iter != tokenKind2Str.cend())
-            return iter->second;
-        return "";
-    } else {
-        return str;
-    }
-}
-
-void TokenSequence::pushBack(Token &token) {
-    tokenList.push_back(std::make_unique<Token>(token));
-}
-
-void TokenSequence::print(std::ostream &out) {
-    for (auto &tkp : tokenList) {
-        out << tkp->toString() << ' ';
-    }
-    out << std::endl;
-}
-
-TokenSeqIter TokenSequence::begin() {
-    return tokenList.begin();
-}
-
-TokenSeqIter TokenSequence::end() {
-    return tokenList.end();
-}
-
-TokenSeqConstIter TokenSequence::cBegin() {
-    return tokenList.cbegin();
-}
-
-TokenSeqConstIter TokenSequence::cEnd() {
-    return tokenList.cend();
+void Token::clear() {
+    kind = TokenKind::TK_UNKNOWN;
+    ptr = nullptr;
+    loc = SourceLocation();
 }
 
 /**

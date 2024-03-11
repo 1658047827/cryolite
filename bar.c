@@ -104,7 +104,7 @@ int main() {
     nodePtr->id;
     (*nodePtr).id;
     // func(0, 0);
-    helper(0, 0);
+    helper(0, '\0');
     // function(10);
     (3.14L + 114.514F) - (sizeof(44L) - 'a');
     unsigned kkk = (unsigned)(0x12 & 1 == 2);
