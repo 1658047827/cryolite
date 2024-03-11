@@ -616,18 +616,10 @@ Expr *Parser::parsePrimaryExpression() {
     switch (tok.getKind()) {
     case TK_IDENTIFIER:
         return parseIdentifier();
-    case TK_NUMERIC_CONSTANT: {
-        std::string s = tok.getStr();
-        NumericLiteralParser numeric(s.data(), s.data() + s.size(), loc);
-        if (numeric.hadError) {
-            // TODO: A better way?
-            return nullptr;
-        } else if (numeric.isIntegerLiteral()) {
-            return parseIntegerConstant(numeric);
-        } else if (numeric.isFloatingLiteral()) {
-            return parseFloatingConstant(numeric);
-        }
-    }
+    case TK_NUMERIC_CONSTANT:
+        ret = sema.actOnNumericConstant(tok);
+        consumeToken();
+        return ret;
     case TK_CHAR_CONSTANT:
         return parseCharacterConstant();
     case TK_STRING_LITERAL:

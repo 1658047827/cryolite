@@ -228,7 +228,7 @@ public:
     IntegerExprEvaluator(const ResultTy &res) : result(res) {}
 
 #define EXPR(CLASS) void visit(CLASS *e);
-#include "ExprNode.def"
+#include "ASTNode.def"
 
 private:
     ResultTy &result;
@@ -450,10 +450,10 @@ public:
     ASTDumper(std::ostream &os) : out(os) {}
 
 #define EXPR(CLASS) void visit(CLASS *e);
-#include "ExprNode.def"
+#include "ASTNode.def"
 
 #define DECL(CLASS) void visit(CLASS *d);
-#include "DeclNode.def"
+#include "ASTNode.def"
 
     void visit(BreakStmt *breakStmt);
 

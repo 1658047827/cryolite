@@ -1,0 +1,46 @@
+#ifndef EXPR
+#define EXPR(CLASS)
+#endif
+
+#ifndef STMT
+#define STMT(CLASS)
+#endif
+
+#ifndef DECL
+#define DECL(CLASS)
+#endif
+
+EXPR(UnaryExpr)
+EXPR(SizeofExpr)
+EXPR(BinaryExpr)
+EXPR(TernaryExpr)
+EXPR(IntegerConstant)
+EXPR(FloatingConstant)
+EXPR(CharacterConstant)
+EXPR(StringLiteral)
+EXPR(DeclRefExpr)
+EXPR(ParenExpr)
+EXPR(CallExpr)
+EXPR(MemberExpr)
+EXPR(CastExpr)
+EXPR(ImplicitCastExpr)
+
+STMT(DeclStmt)
+STMT(BreakStmt)
+STMT(ContinueStmt)
+STMT(NullStmt)
+STMT(ExprStmt)
+STMT(CompoundStmt)
+STMT(ForStmt)
+
+DECL(EmptyDecl)
+DECL(FunctionDecl)
+DECL(VarDecl)
+DECL(EnumDecl)
+DECL(TypedefDecl)
+DECL(FieldDecl)
+DECL(RecordDecl)
+
+#undef DECL
+#undef STMT
+#undef EXPR
