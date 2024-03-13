@@ -114,24 +114,6 @@ KEYWORD(VOID,     "void")
 KEYWORD(VOLATILE, "volatile")
 KEYWORD(WHILE,    "while")
 
-// For preprocessor
-/*
-IF,
-IFDEF,
-IFNDEF,
-ELIF,
-ELSE,
-ENDIF,
-INCLUDE,
-DEFINE,
-UNDEF,
-LINE,
-ERROR,
-PRAGMA,
-NONE,
-EMPTY,
-*/
-
 #undef PPKEYWORD
 #undef KEYWORD
 #undef PUNCTUATOR

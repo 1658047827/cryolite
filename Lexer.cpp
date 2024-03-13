@@ -28,7 +28,8 @@ lexNextToken:
         bufferCursor = curCursor;
     }
 
-    char c = getAndAdvance(curCursor);
+    // Read a character, advancing over it.
+    char c = *(curCursor++);
     TokenKind kind;
 
     switch (c) {
@@ -63,237 +64,257 @@ lexNextToken:
         kind = TokenKind::TK_COMMA;
         break;
     case ':':
-        c = lookAhead();
-        if (c == '>') {
+        if (*curCursor == '>') {
             kind = TokenKind::TK_RSQB; // ':>' -> ']'
-            next();
+            ++curCursor;
         } else {
             kind = TokenKind::TK_COLON;
         }
         break;
-    case '=': {
-        if (nextIs('=')) {
-            ts.emplaceBack(TK_EQUALEQUAL, curLoc);
-            next(); // Consume the '='.
+    case '=':
+        if (*curCursor == '=') {
+            kind = TokenKind::TK_EQUALEQUAL;
+            ++curCursor;
         } else {
-            ts.emplaceBack(TK_EQUAL, curLoc);
+            kind = TokenKind::TK_EQUAL;
         }
-    } break;
-    case '.': {
-        char peekc = lookAhead();
-        if (std::isdigit(peekc)) {
-            Token tk = lexNumericConstant();
-            ts.pushBack(tk);
-        } else if (peekc == '.' && lookAhead(2) == '.') {
-            ts.emplaceBack(TK_ELLIPSIS, curLoc);
-            next(); // Consume the two dots.
-            next();
+        break;
+    case '.':
+        c = *curCursor;
+        if (std::isdigit(c)) {
+            return lexNumericConstant(tok, ++curCursor);
+        } else if (c == '.' && *(curCursor + 1) == '.') {
+            kind = TokenKind::TK_ELLIPSIS;
+            ++(++curCursor);
         } else {
-            ts.emplaceBack(TK_DOT, curLoc);
+            kind = TokenKind::TK_DOT;
         }
-    } break;
-    case '&': {
-        char peekc = lookAhead();
-        if (peekc == '&') {
-            ts.emplaceBack(TK_AMPAMP, curLoc);
-            next(); // Consume the '&'.
-        } else if (peekc == '=') {
-            ts.emplaceBack(TK_AMPEQUAL, curLoc);
-            next(); // Consume thr '='.
+        break;
+    case '&':
+        c = *curCursor;
+        if (c == '&') {
+            kind = TokenKind::TK_AMPAMP;
+            ++curCursor;
+        } else if (c == '=') {
+            kind = TokenKind::TK_AMPEQUAL;
+            ++curCursor;
         } else {
-            ts.emplaceBack(TK_AMP, curLoc);
+            kind = TokenKind::TK_AMP;
         }
-    } break;
-    case '*': {
-        if (lookAhead() == '=') {
-            ts.emplaceBack(TK_STAREQUAL, curLoc);
-            next(); // Consume the '='.
+        break;
+    case '*':
+        if (*curCursor == '=') {
+            kind = TokenKind::TK_STAREQUAL;
+            ++curCursor;
         } else {
-            ts.emplaceBack(TK_STAR, curLoc);
+            kind = TokenKind::TK_STAR;
         }
-    } break;
-    case '+': {
-        char peekc = lookAhead();
-        if (peekc == '+') {
-            ts.emplaceBack(TK_PLUSPLUS, curLoc);
-            next(); // Consume the '+'.
-        } else if (peekc == '=') {
-            ts.emplaceBack(TK_PLUSEQUAL, curLoc);
-            next(); // Consume the '='.
+        break;
+    case '+':
+        c = *curCursor;
+        if (c == '+') {
+            kind = TokenKind::TK_PLUSPLUS;
+            ++curCursor;
+        } else if (c == '=') {
+            kind = TokenKind::TK_PLUSEQUAL;
+            ++curCursor;
         } else {
-            ts.emplaceBack(TK_PLUS, curLoc);
+            kind = TokenKind::TK_PLUS;
         }
-    } break;
-    case '-': {
-        char peekc = lookAhead();
-        if (peekc == '-') {
-            ts.emplaceBack(TK_MINUSMINUS, curLoc);
-            next(); // Consume the '-'.
-        } else if (peekc == '>') {
-            ts.emplaceBack(TK_ARROW, curLoc);
-            next(); // Consume the '>'.
-        } else if (peekc == '=') {
-            ts.emplaceBack(TK_MINUSEQUAL, curLoc);
-            next(); // Consume the '='.
+        break;
+    case '-':
+        c = *curCursor;
+        if (c == '-') {
+            kind = TokenKind::TK_MINUSMINUS;
+            ++curCursor;
+        } else if (c == '>') {
+            kind = TokenKind::TK_ARROW;
+            ++curCursor;
+        } else if (c == '=') {
+            kind = TokenKind::TK_MINUSEQUAL;
+            ++curCursor;
         } else {
-            ts.emplaceBack(TK_MINUS, curLoc);
+            kind = TokenKind::TK_MINUS;
         }
-    } break;
-    case '!': {
-        if (nextIs('=')) {
-            ts.emplaceBack(TK_EXCLAIMEQUAL, curLoc);
-            next(); // Consume the '='.
+        break;
+    case '!':
+        if (*curCursor == '=') {
+            kind = TokenKind::TK_EXCLAIMEQUAL;
+            ++curCursor;
         } else {
-            ts.emplaceBack(TK_EXCLAIM, curLoc);
+            kind = TokenKind::TK_EXCLAIM;
         }
-    } break;
-    case '/': {
-        if (nextIs('/') || nextIs('*')) {
-            skipComment();
-        } else if (nextIs('=')) {
-            ts.emplaceBack(TK_SLASHEQUAL, curLoc);
-            next(); // Consume the '='.
+        break;
+    case '/':
+        c = *curCursor;
+
+        if (c == '/') {
+            skipBCPLComment(++curCursor);
+            goto lexNextToken;
+        }
+
+        if (c == '*') {
+            skipBlockComment(++curCursor);
+            goto lexNextToken;
+        }
+
+        if (c == '=') {
+            kind = TokenKind::TK_SLASHEQUAL;
+            ++curCursor;
         } else {
-            ts.emplaceBack(TK_SLASH, curLoc);
+            kind = TokenKind::TK_SLASH;
         }
-    } break;
-    case '%': {
-        if (lookAhead() == '=') {
-            ts.emplaceBack(TK_PERCENTEQUAL, curLoc);
-            next(); // Consume the '='.
+        break;
+    case '%':
+        c = *curCursor;
+        if (c == '=') {
+            kind = TokenKind::TK_PERCENTEQUAL;
+            ++curCursor;
+        } else if (c == '>') {
+            kind = TokenKind::TK_RBRACE; // '%>' -> '}'
+            ++curCursor;
+        } else if (c == ':') {
+            ++curCursor;
+            c = *curCursor;
+            if (c == '%' && *(curCursor + 1) == ':') {
+                kind = TokenKind::TK_HASHHASH; // '%:%:' -> '##'
+                ++(++curCursor);
+            } else {
+                kind = TokenKind::TK_HASH; // '%:' -> '#'
+            }
         } else {
-            ts.emplaceBack(TK_PERCENT, curLoc);
+            kind = TokenKind::TK_PERCENT;
         }
-    } break;
-    case '<': {
-        char peekc = lookAhead();
-        if (peekc == '<' && lookAhead(2) == '=') {
-            ts.emplaceBack(TK_LESSLESSEQUAL, curLoc);
-            next(); // Consume the "<=".
-            next();
-        } else if (peekc == '<') {
-            ts.emplaceBack(TK_LESSLESS, curLoc);
-            next(); // Consume the '<'.
-        } else if (peekc == '=') {
-            ts.emplaceBack(TK_LESSEQUAL, curLoc);
-            next(); // Consume the '='.
+        break;
+    case '<':
+        c = *curCursor;
+        if (c == '<' && *(curCursor + 1) == '=') {
+            kind = TokenKind::TK_LESSLESSEQUAL;
+            ++(++curCursor);
+        } else if (c == '<') {
+            kind = TokenKind::TK_LESSLESS;
+            ++curCursor;
+        } else if (c == '=') {
+            kind = TokenKind::TK_LESSEQUAL;
+            ++curCursor;
+        } else if (c == ':') {
+            kind = TokenKind::TK_LSQB; // '<:' -> '['
+            ++curCursor;
+        } else if (c == '%') {
+            kind = TokenKind::TK_LBRACE; // '<%' -> '{'
+            ++curCursor;
         } else {
-            ts.emplaceBack(TK_LESS, curLoc);
+            kind = TokenKind::TK_LESS;
         }
-    } break;
-    case '>': {
-        char peekc = lookAhead();
-        if (peekc == '=') {
-            ts.emplaceBack(TK_GREATEREQUAL, curLoc);
-            next(); // Consume the '='.
-        } else if (peekc == '>' && lookAhead(2) == '=') {
-            ts.emplaceBack(TK_GREATERGREATEREQUAL, curLoc);
-            next(); // Consume the ">=".
-            next();
-        } else if (peekc == '>') {
-            ts.emplaceBack(TK_GREATERGREATER, curLoc);
-            next(); // Consume the '>'.
+        break;
+    case '>':
+        c = *curCursor;
+        if (c == '=') {
+            kind = TokenKind::TK_GREATEREQUAL;
+            ++curCursor;
+        } else if (c == '>' && *(curCursor + 1) == '=') {
+            kind = TokenKind::TK_GREATERGREATEREQUAL;
+            ++(++curCursor);
+        } else if (c == '>') {
+            kind = TokenKind::TK_GREATERGREATER;
+            ++curCursor;
         } else {
-            ts.emplaceBack(TK_GREATER, curLoc);
+            kind = TokenKind::TK_GREATER;
         }
-    } break;
-    case '^': {
-        if (lookAhead() == '=') {
-            ts.emplaceBack(TK_CARETEQUAL, curLoc);
-            next(); // Consume the '='.
+        break;
+    case '^':
+        if (*curCursor == '=') {
+            kind = TokenKind::TK_CARETEQUAL;
+            ++curCursor;
         } else {
-            ts.emplaceBack(TK_CARET, curLoc);
+            kind = TokenKind::TK_CARET;
         }
-    } break;
-    case '|': {
-        char peekc = lookAhead();
-        if (peekc == '=') {
-            ts.emplaceBack(TK_PIPEEQUAL, curLoc);
-            next(); // Consume the '='.
-        } else if (peekc == '|') {
-            ts.emplaceBack(TK_PIPEPIPE, curLoc);
-            next(); // Consume the '|'.
+        break;
+    case '|':
+        c = *curCursor;
+        if (c == '=') {
+            kind = TokenKind::TK_PIPEEQUAL;
+            ++curCursor;
+        } else if (c == '|') {
+            kind = TokenKind::TK_PIPEPIPE;
+            ++curCursor;
         } else {
-            ts.emplaceBack(TK_PIPE, curLoc);
+            kind = TokenKind::TK_PIPE;
         }
-    } break;
-    case '#': {
-        if (lookAhead() == '#') {
-            ts.emplaceBack(TK_HASHHASH, curLoc);
-            next(); // Consume the '#'.
+        break;
+    case '#':
+        if (*curCursor == '#') {
+            kind = TokenKind::TK_HASHHASH;
+            ++curCursor;
         } else {
-            ts.emplaceBack(TK_HASH, curLoc);
+            kind = TokenKind::TK_HASH;
         }
-    } break;
-    case '\'': {
-        Token tk = lexCharConstant();
-        ts.pushBack(tk);
-    } break;
-    case '\"': {
-        Token tk = lexStringLiteral();
-        ts.pushBack(tk);
-    } break;
+        break;
+    case '\'':
+        return lexCharConstant(tok, curCursor);
+    case '\"':
+        return lexStringLiteral(tok, curCursor);
     case ' ':
     case '\t':
     case '\v':
+    case '\r':
     case '\n':
     case '\f':
-        break; // Skip the whitespace.
+        goto lexNextToken; // Skip the whitespace.
     case 'A' ... 'Z':
     case 'a' ... 'z':
-    case '_': {
-        Token tk = lexIdentifier();
-        ts.pushBack(tk);
-    } break;
-    case '0' ... '9': {
-        Token tk = lexNumericConstant();
-        ts.pushBack(tk);
-    } break;
+    case '_':
+        return lexIdentifier(tok, curCursor);
+    case '0' ... '9':
+        return lexNumericConstant(tok, curCursor);
     default:
         std::cout << c << std::endl;
     }
 
-    ts.emplaceBack(TK_EOF, curLoc);
+    // Update the location of token as well as bufferCursor.
+    formTokenWithChars(tok, curCursor, kind);
 }
 
-char Lexer::lookAhead(std::size_t n) {
-    if (bufferPtr + n >= buffer.size())
-        return 0;
-    return buffer[bufferPtr + n];
-}
-
-bool Lexer::nextIs(char c) {
-    return lookAhead(1) == c;
-}
-
-bool Lexer::tryNext(char c) {
-    if (lookAhead() == c) {
-        next();
-        return true;
-    } else {
-        return false;
+// skipBCPLComment - We have just read the // characters. Skip
+// until we find the newline character thats terminate the comment.
+void Lexer::skipBCPLComment(Cursor curCursor) {
+    char c = *curCursor;
+    while (c != '\n' && c != 0) {
+        ++curCursor;
+        c = *curCursor;
     }
+    if (c == '\n')
+        ++curCursor;
+    bufferCursor = curCursor;
 }
 
-void Lexer::skipComment() {
-    char c = '/';
-    SourceLocation loc = curLoc;
-    if (tryNext('/')) {
-        while (!nextIs(0) && c != '\n') {
-            c = next();
+// skipBlockComment - We have just read the /* characters. Skip
+// until we find the */ characters that terminate the comment.
+void Lexer::skipBlockComment(Cursor curCursor) {
+    char c = *curCursor;
+    char prevCh = 0;
+    while (true) {
+        while (c != '/' && c != 0) {
+            ++curCursor;
+            prevCh = c;
+            c = *curCursor;
         }
-    } else if (tryNext('*')) {
-        while (!nextIs(0)) {
-            c = next();
-            if (c == '*' && nextIs('/')) {
-                next();
-                return;
-            }
+        // Found slash or EOF.
+        if (c == '/' && prevCh == '*') {
+            ++curCursor;
+            break;
+        } else if (c == 0) {
+            error(bufferCursor.getLoc(), "unterminated block comment");
+            break;
         }
-        error(loc, "unterminated block comment");
+        prevCh = c;
+        c = *(++curCursor);
     }
+    bufferCursor = curCursor;
 }
 
+// lexNumericConstant - Lex the remainder of a integer or floating point
+// constant. The first character, which is pointed by bufferCursor, has been lexed.
 void Lexer::lexNumericConstant(Token &tok, Cursor curCursor) {
     char c = *curCursor;
     char prevCh = 0;
@@ -318,63 +339,33 @@ void Lexer::lexNumericConstant(Token &tok, Cursor curCursor) {
     tok.setLiteralPtr(tokStart.base());
 }
 
-Token Lexer::lexCharConstant() {
-    std::size_t begin = bufferPtr;
-    SourceLocation loc = curLoc;
-    if (tryNext('\'')) {
-        error(loc, "empty character constant");
-        return Token(TK_UNKNOWN, loc);
-    }
-    char c = next();
-    while (c != '\'' && c != '\n' && c != 0) {
-        // Skip escaped characters.
-        if (c == '\\') {
-            next();
-        }
-        c = next();
-    }
-    if (c != '\'') {
-        error(loc, "unterminated character constant");
-        return Token(TK_UNKNOWN, loc);
-    }
-    std::string tkStr(buffer.begin() + begin, buffer.begin() + bufferPtr + 1);
-    return Token(TK_CHAR_CONSTANT, loc, tkStr);
+// lexCharConstant - Lex the remainder of a character constant, after having lexed '.
+void Lexer::lexCharConstant(Token &tok, Cursor curCursor) {
+    
 }
 
-Token Lexer::lexStringLiteral() {
-    std::size_t begin = bufferPtr;
-    SourceLocation loc = curLoc;
-    char c = next();
-    while (c != '\"') {
+// lexStringLiteral - Lex the remainder of a string literal, after having lexed ".
+void Lexer::lexStringLiteral(Token &tok, Cursor curCursor) {
+    char c = *curCursor;
+    while (c != '"') {
         // Skip escaped characters.
         if (c == '\\') {
-            next();
-        } else if (c == '\n' || c == 0) {
-            error(loc, "unterminated string literal");
-            return Token(TK_UNKNOWN, loc);
+            ++curCursor;
+        } else if (c == '\n' || c == '\r' || c == 0) {
+            error(bufferCursor.getLoc(), "unterminated string literal");
+            formTokenWithChars(tok, curCursor, TokenKind::TK_UNKNOWN);
+            return;
         }
-        c = next();
+        c = *(++curCursor);
     }
-    std::string tkStr(buffer.begin() + begin, buffer.begin() + bufferPtr + 1);
-    return Token(TK_STRING_LITERAL, loc, tkStr);
+
+    Cursor tokStart = bufferCursor;
+    formTokenWithChars(tok, ++curCursor, TokenKind::TK_STRING_LITERAL);
+    tok.setLiteralPtr(tokStart.base());
 }
 
-Token Lexer::lexIdentifier() {
-    std::size_t begin = bufferPtr;
-    SourceLocation loc = curLoc;
-    char c = lookAhead();
-    while (c != 0) {
-        if (!std::isalpha(c) && !std::isdigit(c) && c != '_')
-            break;
-        next();
-        c = lookAhead();
-    }
-    std::string tkStr(buffer.begin() + begin, buffer.begin() + bufferPtr + 1);
-    auto iter = keyword2TokenKind.find(tkStr);
-    if (iter != keyword2TokenKind.cend()) {
-        return Token(iter->second, loc);
-    }
-    return Token(TK_IDENTIFIER, loc, tkStr);
+void Lexer::lexIdentifier(Token &tok, Cursor curCursor) {
+    
 }
 
 std::vector<char> readFile(std::string &filename) {

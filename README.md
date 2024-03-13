@@ -9,6 +9,8 @@ C language compiler
 
 + Refactor Token and Lexer.
 
++ Support UTF-8.
+
 ## Notice
 
 + It strictly follows the ISO C99 standard, like clang with "-pedantic".

@@ -32,6 +32,13 @@ public:
         return *iter;
     }
 
+    Cursor operator+(int distance) const {
+        Cursor result = *this;
+        for (int i = 0; i < distance; ++i)
+            ++result;
+        return result;
+    }
+
     unsigned operator-(const Cursor &other) const {
         return iter - other.iter;
     }
@@ -55,8 +62,6 @@ public:
     void lex(Token &tok);
 
 private:
-    inline char getAndAdvance(Cursor &cursor) { return *cursor++; }
-
     void formTokenWithChars(Token &tok, Cursor tokEnd, TokenKind kind) {
         unsigned tokLen = tokEnd - bufferCursor;
         tok.setLength(tokLen);
@@ -65,16 +70,13 @@ private:
         bufferCursor = tokEnd;
     }
 
-    char lookAhead(std::size_t n = 1);
-    bool nextIs(char c);
-    bool tryNext(char c);
+    void skipBCPLComment(Cursor curCursor);
+    void skipBlockComment(Cursor curCursor);
 
-    void skipComment();
     void lexNumericConstant(Token &tok, Cursor curCursor);
-    void lexCharConstant(Token &tok);
-    void lexStringLiteral(Token &tok);
-    // lexIdentifier - Lex identifier and C keyword.
-    void lexIdentifier(Token &tok);
+    void lexCharConstant(Token &tok, Cursor curCursor);
+    void lexStringLiteral(Token &tok, Cursor curCursor);
+    void lexIdentifier(Token &tok, Cursor curCursor);
 
     std::vector<char> &buffer;
     Cursor bufferCursor;

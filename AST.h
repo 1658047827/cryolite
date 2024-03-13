@@ -89,6 +89,7 @@ public:
     // for "sizeof ( type-name )"
     SizeofExpr(SourceLocation loc, QualType resultTy, QualType type);
 
+private:
     union SizeofArg {
         Expr *expr;
         QualType type;
@@ -96,8 +97,6 @@ public:
         SizeofArg() {}
     } arg;
     SizeofKind sizeofKind;
-
-private:
 };
 
 enum BinaryOpKind {
@@ -270,7 +269,7 @@ public:
 class VarDecl : public VisitableDecl<VarDecl> {
 public:
     QualType type;
-    IdentifierInfo* name;
+    IdentifierInfo *name;
 };
 
 /**
