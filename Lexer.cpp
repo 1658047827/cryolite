@@ -257,14 +257,30 @@ lexNextToken:
         return lexCharConstant(tok, curCursor);
     case '\"':
         return lexStringLiteral(tok, curCursor);
+    case '\r':
+        if (*curCursor == '\n')
+            ++curCursor;
+        // fall through
+    case '\n':
+        skipWhiteSpace(curCursor);
+        goto lexNextToken;
     case ' ':
     case '\t':
     case '\v':
-    case '\r':
-    case '\n':
     case '\f':
-        bufferCursor = curCursor;
-        goto lexNextToken; // Skip the whitespace.
+        skipWhiteSpace(curCursor);
+    skipIgnoredUnits:
+        curCursor = bufferCursor;
+        // If the next token is obviously a BCPL or block comment,
+        // skip it efficiently too (without going through the big switch stmt).
+        if (*curCursor == '/' && *(curCursor + 1) == '/') {
+            skipBCPLComment(curCursor + 2);
+            goto skipIgnoredUnits;
+        } else if (*curCursor == '/' && *(curCursor + 1) == '*') {
+            skipBlockComment(curCursor + 2);
+            goto skipIgnoredUnits;
+        }
+        goto lexNextToken;
     case 'A' ... 'Z':
     case 'a' ... 'z':
     case '_':
@@ -282,7 +298,11 @@ lexNextToken:
 // skipWhiteSpace - Efficiently skip over a series of whitespace characters.
 // Update bufferCursor to point to the next non-whitespace character and return.
 void Lexer::skipWhiteSpace(Cursor curCursor) {
-
+    char c = *curCursor;
+    while (std::isspace(c)) {
+        c = *(++curCursor);
+    }
+    bufferCursor = curCursor;
 }
 
 // skipBCPLComment - We have just read the // characters. Skip
