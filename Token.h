@@ -1,10 +1,12 @@
 #ifndef _CRYOLITE_TOKEN_H_
 #define _CRYOLITE_TOKEN_H_
 
+#include <cassert>
 #include <list>
 #include <set>
 #include <string>
-#include <unordered_map>
+
+// class IdentifierInfo;
 
 struct SourceLocation {
     const std::string *filename;
@@ -23,11 +25,7 @@ enum TokenKind {
     NUM_TOKENS
 };
 
-static const std::unordered_map<TokenKind, std::string> tokenKind2Str{
-#define PUNCTUATOR(X, Y) {TK_##X, Y},
-#define KEYWORD(X, Y) {TK_##X, Y},
-#include "TokenKind.def"
-};
+std::string_view getTokenSpelling(TokenKind kind);
 
 class Token {
 public:
@@ -43,12 +41,43 @@ public:
     void setKind(TokenKind k) { kind = k; }
     void setLoc(SourceLocation l) { loc = l; }
     void setLength(unsigned len) { length = len; }
-    void setLiteralPtr(const char *p) { ptr = (void *)p; }
 
-    void clear();
+    void setLiteralPtr(const char *p) {
+        assert(isLiteral() && "cannot set literal data of non-literal");
+        ptr = (void *)p;
+    }
+
+    // IdentifierInfo *getIdentifierInfo() const {
+    //     if (isLiteral())
+    //         return nullptr;
+    //     return (IdentifierInfo *)ptr;
+    // }
+
+    void clear() {
+        length = 0;
+        kind = TokenKind::TK_UNKNOWN;
+        ptr = nullptr;
+        loc = SourceLocation();
+    }
 
     bool is(TokenKind k) const { return kind == k; }
     bool isNot(TokenKind k) const { return kind != k; }
+
+    bool isLiteral() const {
+        return kind >= TokenKind::TK_NUMERIC_CONSTANT &&
+               kind <= TokenKind::TK_STRING_LITERAL;
+    }
+
+    std::string_view repr() {
+        if (kind == TokenKind::TK_IDENTIFIER) {
+
+        } else if (isLiteral()) {
+            return std::string_view((const char *)ptr, length);
+        } else {
+            return getTokenSpelling(kind);
+        }
+        return std::string_view();
+    }
 
 private:
     TokenKind kind;

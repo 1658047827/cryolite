@@ -83,7 +83,7 @@ bool DeclSpec::setTypeQual(TQ t, SourceLocation loc) {
         tqVolatileLoc = loc;
         break;
     default:
-        assert(0 && "Unknown type qualifier");
+        assert(0 && "unknown type qualifier");
     }
     return false;
 }
@@ -814,7 +814,7 @@ void Parser::parseRecordSpecifier(SourceLocation loc, DeclSpec &ds) {
     else if (k == TK_UNION)
         tagType = DeclSpec::TST_UNION;
     else
-        assert(0 && "Not a record specifier");
+        assert(0 && "not a record specifier");
 
     // Parse the (optional) record name.
     std::string name;

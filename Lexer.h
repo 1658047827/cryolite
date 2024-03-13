@@ -70,6 +70,7 @@ private:
         bufferCursor = tokEnd;
     }
 
+    void skipWhiteSpace(Cursor curCursor);
     void skipBCPLComment(Cursor curCursor);
     void skipBlockComment(Cursor curCursor);
 

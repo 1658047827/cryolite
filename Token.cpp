@@ -21,10 +21,19 @@ std::string srcLocToPos(const SourceLocation &loc) {
     return s;
 }
 
-void Token::clear() {
-    kind = TokenKind::TK_UNKNOWN;
-    ptr = nullptr;
-    loc = SourceLocation();
+std::string_view getTokenSpelling(TokenKind kind) {
+    switch (kind) {
+#define PUNCTUATOR(X, Y)    \
+    case TokenKind::TK_##X: \
+        return Y;
+#define KEYWORD(X, Y)       \
+    case TokenKind::TK_##X: \
+        return Y;
+#include "TokenKind.def"
+    default:
+        break;
+    }
+    return std::string_view();
 }
 
 /**

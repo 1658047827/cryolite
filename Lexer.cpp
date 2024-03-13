@@ -33,6 +33,9 @@ lexNextToken:
     TokenKind kind;
 
     switch (c) {
+    case 0:
+        tok.setKind(TokenKind::TK_EOF);
+        return;
     case '?':
         kind = TokenKind::TK_QUESTION;
         break;
@@ -260,6 +263,7 @@ lexNextToken:
     case '\r':
     case '\n':
     case '\f':
+        bufferCursor = curCursor;
         goto lexNextToken; // Skip the whitespace.
     case 'A' ... 'Z':
     case 'a' ... 'z':
@@ -273,6 +277,12 @@ lexNextToken:
 
     // Update the location of token as well as bufferCursor.
     formTokenWithChars(tok, curCursor, kind);
+}
+
+// skipWhiteSpace - Efficiently skip over a series of whitespace characters.
+// Update bufferCursor to point to the next non-whitespace character and return.
+void Lexer::skipWhiteSpace(Cursor curCursor) {
+
 }
 
 // skipBCPLComment - We have just read the // characters. Skip
@@ -341,7 +351,28 @@ void Lexer::lexNumericConstant(Token &tok, Cursor curCursor) {
 
 // lexCharConstant - Lex the remainder of a character constant, after having lexed '.
 void Lexer::lexCharConstant(Token &tok, Cursor curCursor) {
-    
+    char c = *curCursor;
+    if (c == '\'') {
+        error(bufferCursor.getLoc(), "empty character constant");
+        formTokenWithChars(tok, ++curCursor, TokenKind::TK_UNKNOWN);
+        return;
+    }
+
+    do {
+        // Skip escaped characters.
+        if (c == '\\') {
+            ++curCursor;
+        } else if (c == '\n' || c == '\r' || c == 0) {
+            error(bufferCursor.getLoc(), "unterminated character constant");
+            formTokenWithChars(tok, curCursor, TokenKind::TK_UNKNOWN);
+            return;
+        }
+        c = *(++curCursor);
+    } while (c != '\'');
+
+    Cursor tokStart = bufferCursor;
+    formTokenWithChars(tok, ++curCursor, TokenKind::TK_CHAR_CONSTANT);
+    tok.setLiteralPtr(tokStart.base());
 }
 
 // lexStringLiteral - Lex the remainder of a string literal, after having lexed ".
@@ -365,7 +396,6 @@ void Lexer::lexStringLiteral(Token &tok, Cursor curCursor) {
 }
 
 void Lexer::lexIdentifier(Token &tok, Cursor curCursor) {
-    
 }
 
 std::vector<char> readFile(std::string &filename) {

@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+class Decl;
+
 class IdentifierInfo {
 public:
     std::string getName() const { return name; }

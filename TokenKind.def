@@ -10,13 +10,8 @@
 #define KEYWORD(X, Y) TOK(X)
 #endif
 
-#ifndef PPKEYWORD
-#define PPKEYWORD(X)
-#endif
-
 TOK(UNKNOWN) // Not a token.
 TOK(EOF)     // End of file.
-TOK(EOM)     // End of macro (end of line inside a macro).
 
 // Identifier
 TOK(IDENTIFIER) // abcde123
@@ -114,7 +109,6 @@ KEYWORD(VOID,     "void")
 KEYWORD(VOLATILE, "volatile")
 KEYWORD(WHILE,    "while")
 
-#undef PPKEYWORD
 #undef KEYWORD
 #undef PUNCTUATOR
 #undef TOK

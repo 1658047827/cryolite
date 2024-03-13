@@ -24,7 +24,7 @@ std::pair<std::string, std::string> ArithType::repr() {
         break;
 #include "ArithType.def"
     default:
-        assert(0 && "Unknown builtin type");
+        assert(0 && "unknown builtin type");
     }
     return std::make_pair(s, "");
 }
@@ -116,5 +116,5 @@ std::pair<std::string, std::string> ConstantArrayType::repr() {
 }
 
 std::pair<std::string, std::string> RecordType::repr() {
-    assert(0 && "Not implemented yet");
+    assert(0 && "not implemented yet");
 }
