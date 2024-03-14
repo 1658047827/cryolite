@@ -14,11 +14,8 @@ public:
 
     Cursor &operator++();
     Cursor operator++(int);
-
     const char &operator*();
-
     Cursor operator+(int distance) const;
-
     unsigned operator-(const Cursor &other) const;
 
 private:

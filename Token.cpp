@@ -1,5 +1,6 @@
 #include "Token.h"
 #include "Diagnostic.h"
+#include "Identifier.h"
 #include <algorithm>
 #include <iostream>
 
@@ -19,6 +20,70 @@ std::string srcLocToPos(const SourceLocation &loc) {
     s += ", col:";
     s += std::to_string(loc.column);
     return s;
+}
+
+Token::Token() : kind(TokenKind::TK_UNKNOWN) {}
+
+Token::Token(const TokenKind &kind, SourceLocation &loc) : kind(kind), loc(loc) {}
+
+TokenKind Token::getKind() const { return kind; }
+
+SourceLocation Token::getLoc() const { return loc; }
+
+unsigned Token::getLength() const { return length; }
+
+IdentifierInfo *Token::getIdentifierInfo() const {
+    if (isLiteral())
+        return nullptr;
+    return (IdentifierInfo *)ptr;
+}
+
+void Token::setKind(TokenKind k) { kind = k; }
+
+void Token::setLoc(SourceLocation l) { loc = l; }
+
+void Token::setLength(unsigned len) { length = len; }
+
+void Token::setLiteralPtr(const char *p) {
+    assert(isLiteral() && "cannot set literal data of non-literal");
+    ptr = (void *)p;
+}
+
+void Token::setIdentifierInfo(IdentifierInfo *p) {
+    assert(kind == TokenKind::TK_IDENTIFIER || isKeyword());
+    ptr = (void *)p;
+}
+
+void Token::clear() {
+    length = 0;
+    kind = TokenKind::TK_UNKNOWN;
+    ptr = nullptr;
+    loc = SourceLocation();
+}
+
+bool Token::is(TokenKind k) const { return kind == k; }
+
+bool Token::isNot(TokenKind k) const { return kind != k; }
+
+bool Token::isLiteral() const {
+    return kind >= TokenKind::TK_NUMERIC_CONSTANT &&
+           kind <= TokenKind::TK_STRING_LITERAL;
+}
+
+bool Token::isKeyword() const {
+    return kind >= TokenKind::TK_AUTO &&
+           kind <= TokenKind::TK_WHILE;
+}
+
+std::string_view Token::repr() const {
+    if (kind == TokenKind::TK_IDENTIFIER) {
+        return getIdentifierInfo()->getName();
+    } else if (isLiteral()) {
+        return std::string_view((const char *)ptr, length);
+    } else {
+        return getTokenSpelling(kind);
+    }
+    return std::string_view();
 }
 
 /**
@@ -253,7 +318,7 @@ void NumericLiteralParser::parseNumberStartingWithZero(SourceLocation loc) {
         ++s;
         radix = 2;
         digitsBegin = s;
-        s = SkipBinaryDigits(s);
+        s = skipBinaryDigits(s);
         if (s == thisTokEnd) {
             // Done.
         } else if (isxdigit(*s)) {
@@ -312,4 +377,50 @@ void NumericLiteralParser::parseNumberStartingWithZero(SourceLocation loc) {
             return;
         }
     }
+}
+
+bool NumericLiteralParser::isIntegerLiteral() const {
+    return !sawPeriod && !sawExponent;
+}
+
+bool NumericLiteralParser::isFloatingLiteral() const {
+    return sawPeriod || sawExponent;
+}
+
+bool NumericLiteralParser::hasSuffix() const {
+    return suffixBegin != thisTokEnd;
+}
+
+unsigned NumericLiteralParser::getRadix() const { return radix; }
+
+// skipHexDigits - Read and skip over any hex digits, up to End.
+// Return a pointer to the first non-hex digit or End.
+const char *NumericLiteralParser::skipHexDigits(const char *ptr) {
+    while (ptr != thisTokEnd && std::isxdigit(*ptr))
+        ++ptr;
+    return ptr;
+}
+
+// skipOctalDigits - Read and skip over any octal digits, up to End.
+// Return a pointer to the first non-hex digit or End.
+const char *NumericLiteralParser::skipOctalDigits(const char *ptr) {
+    while (ptr != thisTokEnd && ((*ptr >= '0') && (*ptr <= '7')))
+        ++ptr;
+    return ptr;
+}
+
+// skipDigits - Read and skip over any digits, up to End.
+// Return a pointer to the first non-hex digit or End.
+const char *NumericLiteralParser::skipDigits(const char *ptr) {
+    while (ptr != thisTokEnd && std::isdigit(*ptr))
+        ++ptr;
+    return ptr;
+}
+
+// skipBinaryDigits - Read and skip over any binary digits, up to End.
+// Return a pointer to the first non-binary digit or End.
+const char *NumericLiteralParser::skipBinaryDigits(const char *ptr) {
+    while (ptr != thisTokEnd && (*ptr == '0' || *ptr == '1'))
+        ++ptr;
+    return ptr;
 }

@@ -22,65 +22,30 @@ std::string srcLocToPos(const SourceLocation &loc);
 
 class Token {
 public:
-    Token() : kind(TokenKind::TK_UNKNOWN) {}
-    Token(const TokenKind &kind, SourceLocation &loc) : kind(kind), loc(loc) {}
+    Token();
+    Token(const TokenKind &kind, SourceLocation &loc);
 
     ~Token() = default;
 
-    TokenKind getKind() const { return kind; }
-    SourceLocation getLoc() const { return loc; }
-    unsigned getLength() const { return length; }
+    TokenKind getKind() const;
+    SourceLocation getLoc() const;
+    unsigned getLength() const;
+    IdentifierInfo *getIdentifierInfo() const;
 
-    void setKind(TokenKind k) { kind = k; }
-    void setLoc(SourceLocation l) { loc = l; }
-    void setLength(unsigned len) { length = len; }
+    void setKind(TokenKind k);
+    void setLoc(SourceLocation l);
+    void setLength(unsigned len);
+    void setLiteralPtr(const char *p);
+    void setIdentifierInfo(IdentifierInfo *p);
 
-    void setLiteralPtr(const char *p) {
-        assert(isLiteral() && "cannot set literal data of non-literal");
-        ptr = (void *)p;
-    }
+    void clear();
 
-    void setIdentifierInfo(IdentifierInfo *p) {
-        assert(kind == TokenKind::TK_IDENTIFIER || isKeyword());
-        ptr = (void *)p;
-    }
+    bool is(TokenKind k) const;
+    bool isNot(TokenKind k) const;
+    bool isLiteral() const;
+    bool isKeyword() const;
 
-    IdentifierInfo *getIdentifierInfo() const {
-        if (isLiteral())
-            return nullptr;
-        return (IdentifierInfo *)ptr;
-    }
-
-    void clear() {
-        length = 0;
-        kind = TokenKind::TK_UNKNOWN;
-        ptr = nullptr;
-        loc = SourceLocation();
-    }
-
-    bool is(TokenKind k) const { return kind == k; }
-    bool isNot(TokenKind k) const { return kind != k; }
-
-    bool isLiteral() const {
-        return kind >= TokenKind::TK_NUMERIC_CONSTANT &&
-               kind <= TokenKind::TK_STRING_LITERAL;
-    }
-
-    bool isKeyword() const {
-        return kind >= TokenKind::TK_AUTO &&
-               kind <= TokenKind::TK_WHILE;
-    }
-
-    std::string_view repr() {
-        if (kind == TokenKind::TK_IDENTIFIER) {
-
-        } else if (isLiteral()) {
-            return std::string_view((const char *)ptr, length);
-        } else {
-            return getTokenSpelling(kind);
-        }
-        return std::string_view();
-    }
+    std::string_view repr() const;
 
 private:
     TokenKind kind;
@@ -111,17 +76,11 @@ public:
     bool isLongLong; // Set for ll suffix.
     bool isFloat;    // Set for f suffix.
 
-    bool isIntegerLiteral() const {
-        return !sawPeriod && !sawExponent;
-    }
-    bool isFloatingLiteral() const {
-        return sawPeriod || sawExponent;
-    }
-    bool hasSuffix() const {
-        return suffixBegin != thisTokEnd;
-    }
+    bool isIntegerLiteral() const;
+    bool isFloatingLiteral() const;
+    bool hasSuffix() const;
 
-    unsigned getRadix() const { return radix; }
+    unsigned getRadix() const;
 
 private:
     const char *const thisTokBegin;
@@ -135,37 +94,10 @@ private:
 
     void parseNumberStartingWithZero(SourceLocation TokLoc);
 
-    // skipHexDigits - Read and skip over any hex digits, up to End.
-    // Return a pointer to the first non-hex digit or End.
-    const char *skipHexDigits(const char *ptr) {
-        while (ptr != thisTokEnd && std::isxdigit(*ptr))
-            ++ptr;
-        return ptr;
-    }
-
-    // skipOctalDigits - Read and skip over any octal digits, up to End.
-    // Return a pointer to the first non-hex digit or End.
-    const char *skipOctalDigits(const char *ptr) {
-        while (ptr != thisTokEnd && ((*ptr >= '0') && (*ptr <= '7')))
-            ++ptr;
-        return ptr;
-    }
-
-    // skipDigits - Read and skip over any digits, up to End.
-    // Return a pointer to the first non-hex digit or End.
-    const char *skipDigits(const char *ptr) {
-        while (ptr != thisTokEnd && std::isdigit(*ptr))
-            ++ptr;
-        return ptr;
-    }
-
-    // skipBinaryDigits - Read and skip over any binary digits, up to End.
-    // Return a pointer to the first non-binary digit or End.
-    const char *SkipBinaryDigits(const char *ptr) {
-        while (ptr != thisTokEnd && (*ptr == '0' || *ptr == '1'))
-            ++ptr;
-        return ptr;
-    }
+    const char *skipHexDigits(const char *ptr);
+    const char *skipOctalDigits(const char *ptr);
+    const char *skipDigits(const char *ptr);
+    const char *skipBinaryDigits(const char *ptr);
 };
 
 #endif
