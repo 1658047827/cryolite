@@ -339,7 +339,12 @@ void ASTDumper::visit(SizeofExpr *sizeofExpr) {
 void ASTDumper::visit(BinaryExpr *binary) {
     auto reprPair = binary->getQualType().repr();
     out << "BinaryExpr <" << srcLocToPos(binary->getSrcLoc()) << "> '";
-    out << reprPair.first << reprPair.second << "' '";
+    out << reprPair.first << reprPair.second << "' ";
+    if (binary->op == POSINC || binary->op == POSDEC) {
+        out << "postfix '";
+    } else {
+        out << "prefix '";
+    }
     switch (binary->op) {
 #define BINARY(NAME, REPR) \
     case NAME:             \

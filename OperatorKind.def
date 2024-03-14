@@ -6,10 +6,10 @@
 #define BINARY(NAME, REPR)
 #endif
 
-UNARY(PREINC, "++")
-UNARY(PREDEC, "--")
 UNARY(POSINC, "++")
 UNARY(POSDEC, "--")
+UNARY(PREINC, "++")
+UNARY(PREDEC, "--")
 UNARY(PLUS, "+")
 UNARY(MINUS, "-")
 UNARY(BITNOT, "~")

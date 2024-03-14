@@ -51,16 +51,8 @@ public:
 };
 
 enum UnaryOpKind {
-    PREINC,   // ++i
-    PREDEC,   // --i
-    POSINC,   // i++
-    POSDEC,   // i--
-    PLUS,     // +
-    MINUS,    // -
-    BITNOT,   // ~
-    LOGICNOT, // !
-    ADDR,     // &
-    DEREF,    // *
+#define UNARY(NAME, REPR) NAME,
+#include "OperatorKind.def"
     // sizeof will be handled in SizeofExpr.
 };
 
