@@ -1,74 +1,41 @@
 #ifndef _CRYOLITE_LEXER_H_
 #define _CRYOLITE_LEXER_H_
 
+#include "Identifier.h"
 #include "Token.h"
 #include <vector>
 
 class Cursor {
 public:
-    Cursor(std::string *filename, std::vector<char> &buf)
-        : loc{filename, 1, 1}, iter(buf.cbegin()) {}
+    Cursor(std::string *filename, std::vector<char> &buf);
 
-    SourceLocation getLoc() const { return loc; }
+    SourceLocation getLoc() const;
+    const char *getPtr() const;
 
-    Cursor &operator++() {
-        if (*iter == '\n') {
-            loc.line += 1;
-            loc.column = 1;
-        } else {
-            loc.column += 1;
-        }
-        ++iter;
-        return *this;
-    }
+    Cursor &operator++();
+    Cursor operator++(int);
 
-    Cursor operator++(int) {
-        Cursor tmp = *this;
-        ++(*this);
-        return tmp;
-    }
+    const char &operator*();
 
-    const char &operator*() {
-        return *iter;
-    }
+    Cursor operator+(int distance) const;
 
-    Cursor operator+(int distance) const {
-        Cursor result = *this;
-        for (int i = 0; i < distance; ++i)
-            ++result;
-        return result;
-    }
-
-    unsigned operator-(const Cursor &other) const {
-        return iter - other.iter;
-    }
-
-    const char *base() const {
-        return &(*iter);
-    }
+    unsigned operator-(const Cursor &other) const;
 
 private:
     SourceLocation loc;
-    std::vector<char>::const_iterator iter;
+    const char *ptr;
 };
 
 class Lexer {
 public:
-    Lexer(std::string *filename, std::vector<char> &buf)
-        : buffer(buf), bufferCursor(filename, buf) {}
+    Lexer(std::string *filename, std::vector<char> &buf, IdentifierTable &idTable);
 
     ~Lexer() = default;
 
     void lex(Token &tok);
 
 private:
-    void formTokenWithChars(Token &tok, Cursor tokEnd, TokenKind kind) {
-        unsigned tokLen = tokEnd - bufferCursor;
-        tok.setLength(tokLen);
-        tok.setLoc(bufferCursor.getLoc());
-        tok.setKind(kind);
-        bufferCursor = tokEnd;
-    }
+    void formTokenWithChars(Token &tok, Cursor tokEnd, TokenKind kind);
 
     void skipWhiteSpace(Cursor curCursor);
     void skipBCPLComment(Cursor curCursor);
@@ -79,6 +46,9 @@ private:
     void lexStringLiteral(Token &tok, Cursor curCursor);
     void lexIdentifier(Token &tok, Cursor curCursor);
 
+    IdentifierInfo *lookUpIdentifierInfo(Token &tok, const char *bufStart);
+
+    IdentifierTable &identifierTable;
     std::vector<char> &buffer;
     Cursor bufferCursor;
 };

@@ -5,10 +5,42 @@
 #include <unordered_map>
 #include <vector>
 
-static const std::unordered_map<std::string, TokenKind> keyword2TokenKind{
-#define KEYWORD(X, Y) {Y, TK_##X},
-#include "TokenKind.def"
-};
+Cursor::Cursor(std::string *filename, std::vector<char> &buf)
+    : loc{filename, 1, 1}, ptr(buf.data()) {}
+
+SourceLocation Cursor::getLoc() const { return loc; }
+
+const char *Cursor::getPtr() const { return ptr; }
+
+Cursor &Cursor::operator++() {
+    if (*ptr == '\n') {
+        loc.line += 1;
+        loc.column = 1;
+    } else {
+        loc.column += 1;
+    }
+    ++ptr;
+    return *this;
+}
+
+Cursor Cursor::operator++(int) {
+    Cursor tmp = *this;
+    ++(*this);
+    return tmp;
+}
+
+const char &Cursor::operator*() { return *ptr; }
+
+Cursor Cursor::operator+(int distance) const {
+    Cursor result = *this;
+    for (int i = 0; i < distance; ++i)
+        ++result;
+    return result;
+}
+
+unsigned Cursor::operator-(const Cursor &other) const {
+    return ptr - other.ptr;
+}
 
 static inline bool isNumberBody(char c) {
     return std::isdigit(c) || std::isalpha(c) || c == '.';
@@ -17,6 +49,11 @@ static inline bool isNumberBody(char c) {
 static inline bool isIdentifierBody(char c) {
     return std::isdigit(c) || std::isalpha(c) || c == '_';
 }
+
+Lexer::Lexer(std::string *filename, std::vector<char> &buf, IdentifierTable &idTable)
+    : buffer(buf),
+      bufferCursor(filename, buf),
+      identifierTable(idTable) {}
 
 void Lexer::lex(Token &tok) {
     tok.clear();
@@ -299,6 +336,14 @@ lexNextToken:
     formTokenWithChars(tok, curCursor, kind);
 }
 
+void Lexer::formTokenWithChars(Token &tok, Cursor tokEnd, TokenKind kind) {
+    unsigned tokLen = tokEnd - bufferCursor;
+    tok.setLength(tokLen);
+    tok.setLoc(bufferCursor.getLoc());
+    tok.setKind(kind);
+    bufferCursor = tokEnd;
+}
+
 // skipWhiteSpace - Efficiently skip over a series of whitespace characters.
 // Update bufferCursor to point to the next non-whitespace character and return.
 void Lexer::skipWhiteSpace(Cursor curCursor) {
@@ -370,7 +415,7 @@ void Lexer::lexNumericConstant(Token &tok, Cursor curCursor) {
 
     Cursor tokStart = bufferCursor;
     formTokenWithChars(tok, curCursor, TokenKind::TK_NUMERIC_CONSTANT);
-    tok.setLiteralPtr(tokStart.base());
+    tok.setLiteralPtr(tokStart.getPtr());
 }
 
 // lexCharConstant - Lex the remainder of a character constant, after having lexed '.
@@ -396,7 +441,7 @@ void Lexer::lexCharConstant(Token &tok, Cursor curCursor) {
 
     Cursor tokStart = bufferCursor;
     formTokenWithChars(tok, ++curCursor, TokenKind::TK_CHAR_CONSTANT);
-    tok.setLiteralPtr(tokStart.base());
+    tok.setLiteralPtr(tokStart.getPtr());
 }
 
 // lexStringLiteral - Lex the remainder of a string literal, after having lexed ".
@@ -416,7 +461,7 @@ void Lexer::lexStringLiteral(Token &tok, Cursor curCursor) {
 
     Cursor tokStart = bufferCursor;
     formTokenWithChars(tok, ++curCursor, TokenKind::TK_STRING_LITERAL);
-    tok.setLiteralPtr(tokStart.base());
+    tok.setLiteralPtr(tokStart.getPtr());
 }
 
 void Lexer::lexIdentifier(Token &tok, Cursor curCursor) {
@@ -427,8 +472,19 @@ void Lexer::lexIdentifier(Token &tok, Cursor curCursor) {
     Cursor IdStart = bufferCursor;
     formTokenWithChars(tok, curCursor, TokenKind::TK_IDENTIFIER);
 
-    // Fill in tok.IdentifierInfo and update the token kind,
-    // looking up the identifier in the identifier table.
+    // Fill tok.ptr with IdentifierInfo* retrieved from the identifier table.
+    IdentifierInfo *info = lookUpIdentifierInfo(tok, IdStart.getPtr());
+}
+
+// lookUpIdentifierInfo - Given a TokenKind::TK_IDENTIFIER token, look up the
+// identifier information for the token and install it into the token.
+IdentifierInfo *Lexer::lookUpIdentifierInfo(Token &tok, const char *bufStart) {
+    assert(tok.is(TokenKind::TK_IDENTIFIER) && "not an identifier");
+    assert(tok.getIdentifierInfo() == nullptr && "exist IdentifierInfo");
+
+    IdentifierInfo *info = identifierTable.get(bufStart, bufStart + tok.getLength());
+    tok.setIdentifierInfo(info);
+    return info;
 }
 
 std::vector<char> readFile(std::string &filename) {

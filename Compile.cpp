@@ -8,7 +8,8 @@ int main(int argc, char *argv[]) {
     std::string filename("foo.c");
     std::vector<char> buffer = readFile(filename);
 
-    Lexer lexer(&filename, buffer);
+    IdentifierTable identifiers;
+    Lexer lexer(&filename, buffer, identifiers);
     Token tok;
     do {
         lexer.lex(tok);

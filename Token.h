@@ -1,12 +1,13 @@
 #ifndef _CRYOLITE_TOKEN_H_
 #define _CRYOLITE_TOKEN_H_
 
+#include "TokenKind.h"
 #include <cassert>
 #include <list>
 #include <set>
 #include <string>
 
-// class IdentifierInfo;
+class IdentifierInfo;
 
 struct SourceLocation {
     const std::string *filename;
@@ -18,14 +19,6 @@ struct SourceLocation {
 
 std::string srcLocToStr(const SourceLocation &loc);
 std::string srcLocToPos(const SourceLocation &loc);
-
-enum TokenKind {
-#define TOK(X) TK_##X,
-#include "TokenKind.def"
-    NUM_TOKENS
-};
-
-std::string_view getTokenSpelling(TokenKind kind);
 
 class Token {
 public:
@@ -47,11 +40,16 @@ public:
         ptr = (void *)p;
     }
 
-    // IdentifierInfo *getIdentifierInfo() const {
-    //     if (isLiteral())
-    //         return nullptr;
-    //     return (IdentifierInfo *)ptr;
-    // }
+    void setIdentifierInfo(IdentifierInfo *p) {
+        assert(kind == TokenKind::TK_IDENTIFIER || isKeyword());
+        ptr = (void *)p;
+    }
+
+    IdentifierInfo *getIdentifierInfo() const {
+        if (isLiteral())
+            return nullptr;
+        return (IdentifierInfo *)ptr;
+    }
 
     void clear() {
         length = 0;
@@ -66,6 +64,11 @@ public:
     bool isLiteral() const {
         return kind >= TokenKind::TK_NUMERIC_CONSTANT &&
                kind <= TokenKind::TK_STRING_LITERAL;
+    }
+
+    bool isKeyword() const {
+        return kind >= TokenKind::TK_AUTO &&
+               kind <= TokenKind::TK_WHILE;
     }
 
     std::string_view repr() {
