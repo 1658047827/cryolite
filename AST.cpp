@@ -307,41 +307,19 @@ void ASTContext::initBuiltinTypes() {
  * AST dumper
  */
 void ASTDumper::visit(UnaryExpr *unary) {
-    out << "UnaryExpr <" << srcLocToPos(unary->getSrcLoc()) << "> ";
+    auto reprPair = unary->getQualType().repr();
+    out << "UnaryExpr <" << srcLocToPos(unary->getSrcLoc()) << "> '";
+    out << reprPair.first << reprPair.second << "' '";
     switch (unary->getOp()) {
-    case PREINC:
-        out << "prefix '++'\n";
+#define UNARY(NAME, REPR) \
+    case NAME:            \
+        out << REPR;      \
         break;
-    case PREDEC:
-        out << "prefix '--'\n";
-        break;
-    case POSINC:
-        out << "postfix '++'\n";
-        break;
-    case POSDEC:
-        out << "postfix '--'\n";
-        break;
-    case PLUS:
-        out << "prefix '+'\n";
-        break;
-    case MINUS:
-        out << "prefix '-'\n";
-        break;
-    case BITNOT:
-        out << "prefix '~'\n";
-        break;
-    case LOGICNOT:
-        out << "prefix '!'\n";
-        break;
-    case ADDR:
-        out << "prefix '&'\n";
-        break;
-    case DEREF:
-        out << "prefix '*'\n";
-        break;
+#include "OperatorKind.def"
     default:
         break;
     }
+    out << "'\n";
     dumpLastChild(unary->getOperand());
 }
 
@@ -361,71 +339,17 @@ void ASTDumper::visit(SizeofExpr *sizeofExpr) {
 void ASTDumper::visit(BinaryExpr *binary) {
     auto reprPair = binary->getQualType().repr();
     out << "BinaryExpr <" << srcLocToPos(binary->getSrcLoc()) << "> '";
-    out << reprPair.first << reprPair.second << "' ";
+    out << reprPair.first << reprPair.second << "' '";
     switch (binary->op) {
-    case ADD:
-        out << "'+'\n";
+#define BINARY(NAME, REPR) \
+    case NAME:             \
+        out << REPR;       \
         break;
-    case SUB:
-        out << "'-'\n";
-        break;
-    case MUL:
-        out << "'*'\n";
-        break;
-    case DIV:
-        out << "'/'\n";
-        break;
-    case MOD:
-        out << "'%'\n";
-        break;
-    case SHL:
-        out << "'<<'\n";
-        break;
-    case SHR:
-        out << "'>>'\n";
-        break;
-    case LESS:
-        out << "'<'\n";
-        break;
-    case LEQ:
-        out << "'<='\n";
-        break;
-    case GREATER:
-        out << "'>'\n";
-        break;
-    case GEQ:
-        out << "'>='\n";
-        break;
-    case EQUAL:
-        out << "'=='\n";
-        break;
-    case NEQ:
-        out << "'!='\n";
-        break;
-    case BITAND:
-        out << "'&'\n";
-        break;
-    case BITXOR:
-        out << "'^'\n";
-        break;
-    case BITOR:
-        out << "'|'\n";
-        break;
-    case LOGICAND:
-        out << "'&&'\n";
-        break;
-    case LOGICOR:
-        out << "'||'\n";
-        break;
-    case ASSIGN:
-        out << "'='\n";
-        break;
-    case COMMA:
-        out << "','\n";
-        break;
+#include "OperatorKind.def"
     default:
         break;
     }
+    out << "'\n";
     dumpChild(binary->lhs);
     dumpLastChild(binary->rhs);
 }
@@ -513,19 +437,3 @@ void ASTDumper::visit(FieldDecl *fieldDecl) {}
 void ASTDumper::visit(RecordDecl *recordDecl) {}
 
 void ASTDumper::visit(BreakStmt *breakStmt) {}
-
-template <typename ASTNode>
-void ASTDumper::dumpChild(ASTNode *node) {
-    out << prefix << "|--";
-    prefix.append("|  ");
-    node->accept(this);
-    prefix.erase(prefix.size() - 3);
-}
-
-template <typename ASTNode>
-void ASTDumper::dumpLastChild(ASTNode *node) {
-    out << prefix << "`--";
-    prefix.append("   ");
-    node->accept(this);
-    prefix.erase(prefix.size() - 3);
-}

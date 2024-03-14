@@ -5,6 +5,7 @@
 #include "Type.h"
 #include "Visitor.h"
 #include <ostream>
+#include <unordered_map>
 #include <vector>
 
 class Decl;
@@ -298,7 +299,7 @@ class FieldDecl : public VisitableDecl<FieldDecl> {
 public:
     FieldDecl(SourceLocation loc, QualType qt, const std::string &name = "", Expr *bitWidth = nullptr);
 
-    void accept(Visitor *v) { v->visitFieldDecl(this); }
+    void accept(DeclVisitor *v) { v->visit(this); }
 
     QualType getType() const { return type; }
     // TODO: Bit-field width should be a const integer.
@@ -329,7 +330,7 @@ public:
 
     RecordDecl(SourceLocation loc, RecordKind k, bool isDef = true, std::string name = "");
 
-    void accept(Visitor *v) { v->visitRecordDecl(this); }
+    void accept(DeclVisitor *v) { v->visit(this); }
 
 private:
     RecordKind recordDeclKind;
@@ -458,10 +459,20 @@ public:
 
     // Helper functions.
     template <typename ASTNode>
-    void dumpChild(ASTNode *node);
+    void dumpChild(ASTNode *node) {
+        out << prefix << "|--";
+        prefix.append("|  ");
+        node->accept(this);
+        prefix.erase(prefix.size() - 3);
+    }
 
     template <typename ASTNode>
-    void dumpLastChild(ASTNode *node);
+    void dumpLastChild(ASTNode *node) {
+        out << prefix << "`--";
+        prefix.append("   ");
+        node->accept(this);
+        prefix.erase(prefix.size() - 3);
+    }
 
 private:
     // prefix - Indentation of every line.

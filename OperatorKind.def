@@ -1,6 +1,21 @@
+#ifndef UNARY
+#define UNARY(NAME, REPR)
+#endif
+
 #ifndef BINARY
 #define BINARY(NAME, REPR)
 #endif
+
+UNARY(PREINC, "++")
+UNARY(PREDEC, "--")
+UNARY(POSINC, "++")
+UNARY(POSDEC, "--")
+UNARY(PLUS, "+")
+UNARY(MINUS, "-")
+UNARY(BITNOT, "~")
+UNARY(LOGICNOT, "!")
+UNARY(ADDR, "&")
+UNARY(DEREF, "*")
 
 BINARY(ADD, "+")
 BINARY(SUB, "-")
@@ -24,3 +39,4 @@ BINARY(ASSIGN, "=")
 BINARY(COMMA, ",")
 
 #undef BINARY
+#undef UNARY
