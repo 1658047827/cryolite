@@ -14,6 +14,10 @@ static inline bool isNumberBody(char c) {
     return std::isdigit(c) || std::isalpha(c) || c == '.';
 }
 
+static inline bool isIdentifierBody(char c) {
+    return std::isdigit(c) || std::isalpha(c) || c == '_';
+}
+
 void Lexer::lex(Token &tok) {
     tok.clear();
 lexNextToken:
@@ -416,6 +420,15 @@ void Lexer::lexStringLiteral(Token &tok, Cursor curCursor) {
 }
 
 void Lexer::lexIdentifier(Token &tok, Cursor curCursor) {
+    char c = *curCursor;
+    while (isIdentifierBody(c)) {
+        c = *(++curCursor);
+    }
+    Cursor IdStart = bufferCursor;
+    formTokenWithChars(tok, curCursor, TokenKind::TK_IDENTIFIER);
+
+    // Fill in tok.IdentifierInfo and update the token kind,
+    // looking up the identifier in the identifier table.
 }
 
 std::vector<char> readFile(std::string &filename) {

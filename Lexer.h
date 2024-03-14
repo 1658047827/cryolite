@@ -44,7 +44,7 @@ public:
     }
 
     const char *base() const {
-        return iter.base();
+        return &(*iter);
     }
 
 private:

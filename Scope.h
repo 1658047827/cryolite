@@ -1,33 +1,9 @@
 #ifndef _CRYOLITE_SCOPE_H_
 #define _CRYOLITE_SCOPE_H_
 
-#include <cassert>
-#include <string>
-#include <unordered_map>
 #include <unordered_set>
 
 class Decl;
-
-class IdentifierInfo {
-public:
-    std::string getName() const { return name; }
-
-    template <typename T>
-    T *getInfo() const { return static_cast<T *>(info); }
-    void setInfo(void *T) { info = T; }
-
-private:
-    std::string name;
-    void *info; // Managed by the frontend.
-};
-
-class IdentifierTable {
-public:
-    IdentifierInfo get() {}
-
-private:
-    std::unordered_map<std::string, IdentifierInfo *> hashTable;
-};
 
 class Scope {
 public:
