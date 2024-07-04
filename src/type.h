@@ -4,9 +4,9 @@
 struct Type;
 
 typedef enum Qualifier {
-    CONST = 1 << 0,
-    RESTRICT = 1 << 1,
-    VOLATILE = 1 << 2,
+    QUAL_CONST = 1 << 0,
+    QUAL_RESTRICT = 1 << 1,
+    QUAL_VOLATILE = 1 << 2,
 } Qualifier;
 
 typedef struct QualType {
@@ -14,8 +14,24 @@ typedef struct QualType {
     struct Type *t;
 } QualType;
 
-typedef struct VoidType {
+typedef enum TypeKind {
+    TYPE_VOID,
+    TYPE_ARITH,
+    TYPE_POINTER,
+    TYPE_ARRAY,
+    TYPE_FUNCTION,
+    TYPE_RECORD,
+    TYPE_ENUM,
+    TYPE_TYPEDEF
+} TypeKind;
 
+typedef struct Type {
+    TypeKind kind;
+    QualType canonicalType;
+} Type;
+
+typedef struct VoidType {
+    Type type;
 } VoidType;
 
 typedef enum ArithKind {
@@ -40,20 +56,14 @@ typedef enum ArithKind {
 } ArithKind;
 
 typedef struct ArithType {
+    Type type;
     ArithKind arithKind;
 } ArithType;
 
 typedef struct PointerType {
+    Type type;
     QualType pointee;
 } PointerType;
-
-typedef struct ConstantArrayType {
-
-} ConstantArrayType;
-
-typedef struct VariableArrayType {
-
-} VariableArrayType;
 
 typedef enum ArrayKind {
     ARRAY_CONSTANT,
@@ -61,54 +71,44 @@ typedef enum ArrayKind {
 } ArrayKind;
 
 typedef struct ArrayType {
+    Type type;
     ArrayKind arrKind;
     QualType elemType;
-    union {
-        ConstantArrayType cArrayTy;
-        VariableArrayType vArrayTy;
-    } as;
 } ArrayType;
 
-typedef struct FunctionType {
+typedef struct ConstantArrayType {
+    ArrayType arrayType;
+} ConstantArrayType;
 
+typedef struct VariableArrayType {
+    ArrayType arrayType;
+} VariableArrayType;
+
+typedef struct FunctionType {
+    Type type;
+    QualType retType;
 } FunctionType;
 
 typedef struct RecordType {
-
+    Type type;
 } RecordType;
 
 typedef struct EnumType {
-
+    Type type;
 } EnumType;
 
 typedef struct TypedefType {
-
+    Type type;
 } TypedefType;
 
-typedef enum TypeKind {
-    TYPE_VOID,
-    TYPE_ARITH,
-    TYPE_POINTER,
-    TYPE_ARRAY,
-    TYPE_FUNCTION,
-    TYPE_RECORD,
-    TYPE_ENUM,
-    TYPE_TYPEDEF
-} TypeKind;
+extern QualType voidTy;
+extern QualType boolTy;
+extern QualType charTy;
+extern QualType signedCharTy, shortTy, intTy, longTy, longLongTy;
+extern QualType unsignedCharTy, unsignedShortTy, unsignedIntTy, unsignedLongTy, unsignedLongLongTy;
+extern QualType floatTy, doubleTy, longDoubleTy;
 
-typedef struct Type {
-    QualType canonicalType;
-    TypeKind kind;
-    union {
-        VoidType voidTy;
-        ArithType arithTy;
-        PointerType pointerTy;
-        ArrayType arrayTy;
-        FunctionType functionTy;
-        RecordType recordTy;
-        EnumType enumTy;
-        TypedefType typedefTy;
-    } as;
-} Type;
+VoidType *newVoidType();
+ArithType *newArithType(ArithKind k);
 
 #endif
