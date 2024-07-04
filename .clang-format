@@ -1,13 +1,37 @@
 ---
+# .clang-format
+# Clang Format configuration file based on the LLVM style.
+
+# Base style on LLVM.
 BasedOnStyle: LLVM
+
+# Use spaces instead of tabs.
 UseTab: Never
+
+# The number of columns to use for indentation.
 IndentWidth: 4
+
+# The number of columns to use for a tab character.
 TabWidth: 4
+
+# Brace breaking style. Attach keeps the opening brace on the same line.
 BreakBeforeBraces: Attach
+
+# Allow short if statements to stay on a single line.
 AllowShortIfStatementsOnASingleLine: true
+
+# Indentation level for case labels in switch statements.
 IndentCaseLabels: false
+
+# The column limit for wrapping lines. 0 means no limit.
 ColumnLimit: 0
+
+# Offset for access specifiers (public, protected, private) in C++ classes.
 AccessModifierOffset: -4
+
+# Indent all lines of a namespace. Options: None, Inner, All.
 NamespaceIndentation: All
+
+# Whether to add comments after closing braces of namespaces.
 FixNamespaceComments: false
 ...
