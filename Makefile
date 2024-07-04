@@ -1,6 +1,6 @@
 CC = clang
 
-CFLAGS = -Wall -std=c99
+CFLAGS = -Wall -Wextra -std=c99
 
 TARGET = cryolite
 
