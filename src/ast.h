@@ -30,12 +30,19 @@ typedef enum UnaryOpKind {
 
 typedef struct UnaryExpr {
     Expr expr;
+    UnaryOpKind opKind;
 } UnaryExpr;
+
+typedef enum SizeofKind {
+    SIZEOF_EXPR,
+    SIZEOF_TYPE
+} SizeofKind;
 
 // SizeofExpr - The 'sizeof' keyword is quite unique.
 // It is semantically closer to a unary expression, but functionally it operates on type trait.
 typedef struct SizeofExpr {
-
+    Expr expr;
+    SizeofKind sizeofKind;
 } SizeofExpr;
 
 typedef enum BinaryOpKind {
@@ -69,11 +76,29 @@ typedef struct BinaryExpr {
 } BinaryExpr;
 
 typedef struct TernaryExpr {
-    Expr *expr;
+    Expr expr;
     Expr *condExpr;
     Expr *trueExpr;
     Expr *falseExpr;
 } TernaryExpr;
+
+typedef struct IntegerConstant {
+    Expr expr;
+    long long value;
+} IntegerConstant;
+
+typedef struct FloatingConstant {
+    Expr expr;
+    long double value;
+} FloatingConstant;
+
+typedef struct CharacterConstant {
+    Expr expr;
+} CharacterConstant;
+
+typedef struct StringLiteral {
+    Expr expr;
+} StringLiteral;
 
 typedef enum StmtKind {
     STMT_NULL,
@@ -91,7 +116,12 @@ typedef struct Stmt {
     StmtKind kind;
 } Stmt;
 
+typedef struct DeclStmt {
+    Stmt stmt;
+} DeclStmt;
+
 typedef struct ExprStmt {
+    Stmt stmt;
     Expr *expr;
 } ExprStmt;
 
