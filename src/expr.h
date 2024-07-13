@@ -47,8 +47,10 @@ void initCharacterConstant(CharacterConstant *obj, unsigned value, _Bool isWide,
 typedef struct FloatingConstant {
     Expr expr;
     long double value;
-    _Bool IsExact
+    _Bool isExact
 } FloatingConstant;
+
+void initFloatingConstant(FloatingConstant *obj, long double value, _Bool isExact, QualType type);
 
 typedef struct StringLiteral {
     Expr expr;
@@ -56,7 +58,7 @@ typedef struct StringLiteral {
     unsigned byteLength;
 } StringLiteral;
 
-void initStringLiteral();
+// void initStringLiteral();
 
 typedef enum UnaryOpKind {
     UNARY_POSINC,
@@ -73,8 +75,11 @@ typedef enum UnaryOpKind {
 
 typedef struct UnaryExpr {
     Expr expr;
+    Expr *operand;
     UnaryOpKind opKind;
 } UnaryExpr;
+
+void initUnaryExpr(UnaryExpr *obj, Expr *input, UnaryOpKind op, QualType type);
 
 typedef enum SizeofKind {
     SIZEOF_EXPR,
@@ -86,6 +91,10 @@ typedef enum SizeofKind {
 typedef struct SizeofExpr {
     Expr expr;
     SizeofKind sizeofKind;
+    union {
+
+    } arg;
+
 } SizeofExpr;
 
 typedef enum BinaryOpKind {
