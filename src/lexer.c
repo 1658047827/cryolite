@@ -76,6 +76,14 @@ static const unsigned char charInfo[256] = {
    0           , 0           , 0           , 0
 };
 
+static inline _Bool isIdentifierBody(unsigned char c) {
+    return (charInfo[c] & (CHAR_LETTER | CHAR_NUMBER | CHAR_UNDER)) ? 1 : 0;
+}
+
+static inline _Bool isWhitespace(unsigned char c) {
+    return (charInfo[c] & (CHAR_HORZ_WS | CHAR_VERT_WS)) ? 1 : 0;
+}
+
 static inline _Bool isNumberBody(unsigned char c) {
     return (charInfo[c] & (CHAR_LETTER | CHAR_NUMBER | CHAR_UNDER | CHAR_PERIOD)) ? 1 : 0;
 }
@@ -100,7 +108,7 @@ void lexTokenInternal(Lexer *lexer, Token *result) {
         lexer->bufferPtr = curPtr;
     }
 
-    char ch = getAndAdvanceChar(curPtr, result);
+    char ch = getAndAdvanceChar(&curPtr, result);
     TokenKind kind = TK_UNKNOWN;
 
     switch (ch) {
@@ -133,17 +141,17 @@ void lexTokenInternal(Lexer *lexer, Token *result) {
 }
 
 char getCharAndSize(const char *ptr, unsigned *size) {
-    char ch = *ptr;
-    if ((ch != '?') && (ch != '\\')) {
+    // If this is not a UCN or escaped newline, return quickly.
+    if (ptr[0] != '\\') {
         *size = 1;
-        return ch;
+        return *ptr;
     }
 
     *size = 0;
     return getCharAndSizeSlow(ptr, size, 0);
 }
 
-char getCharAndSizeSlow(const char* ptr, unsigned *size, Token *tok) {
+char getCharAndSizeSlow(const char *ptr, unsigned *size, Token *tok) {
     return 0;
 }
 
@@ -156,23 +164,46 @@ const char *consumeChar(const char *ptr, unsigned int size, Token *tok) {
     return ptr + size;
 }
 
-char getAndAdvanceChar(const char **ptr, Token *tok) {
-    char ch = **ptr;
-    if ((ch != '?') && (ch != '\\')) {
-        *ptr += 1;
+char getAndAdvanceChar(const char **pptr, Token *tok) {
+    char ch = **pptr;
+    // If this is not a UCN or escaped newline, return quickly.
+    if (ch != '\\') {
+        *pptr += 1;
         return ch;
     }
     
     unsigned size = 0;
-    ch = getCharAndSizeSlow(ptr, &size, tok);
-    *ptr += size;
+    ch = getCharAndSizeSlow(*pptr, &size, tok);
+    *pptr += size;
     return ch;
 }
 
+// skipWhitespace - Efficiently skip over a series of whitespace characters.
+// Update bufferPtr to point to the next non-whitespace character and return.
 void skipWhitespace(Lexer *lexer, const char *curPtr) {
     unsigned char ch = *curPtr;
-
+    while (isWhitespace(ch))
+        ch = *++curPtr;
     lexer->bufferPtr = curPtr;
+}
+
+// skipLineComment - We have just read the // characters from input. Skip until
+// we find the newline character that terminates the comment. Then update
+// bufferPtr and return.
+void skipLineComment(Lexer *lexer, const char *curPtr) {
+    char ch = *curPtr;
+    while (ch != 0 &&                 // Potentially EOF.
+           ch != '\n' && ch != '\r')  // Newline or DOS-style newline.
+        ch = *++curPtr;
+    // If this is a newline, we're done.
+    if (ch == '\n' || ch == '\r')
+        ++curPtr;
+    // Otherwise it is EOF.
+    lexer->bufferPtr = curPtr;
+}
+
+void skipBlockComment(Lexer *lexer, const char *curPtr) {
+    
 }
 
 // lexNumericConstant - Lex the remainder of a integer or floating point

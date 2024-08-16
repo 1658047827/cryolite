@@ -15,14 +15,15 @@ void lexTokenInternal(Lexer *lexer, Token *result);
 char getCharAndSize(const char *ptr, unsigned *size);
 char getCharAndSizeSlow(const char* ptr, unsigned *size, Token *tok);
 const char *consumeChar(const char *ptr, unsigned int size, Token *tok);
-char getAndAdvanceChar(const char **ptr, Token *tok);
+char getAndAdvanceChar(const char **pptr, Token *tok);
 void formTokenWithChars(Lexer *lexer, Token *result, const char *tokEnd, TokenKind kind);
 
 void lexIdentifier(Token *result, const char *curPtr);
 void lexNumericConstant(Lexer *lexer, Token *result, const char *curPtr);
+void lexStringLiteral(Token *result, const char *curPtr, _Bool wide);
 
 void skipWhitespace(Lexer *lexer, const char *curPtr);
-void skipBCPLComment();
-void skipBlockComment();
+void skipLineComment(Lexer *lexer, const char *curPtr);
+void skipBlockComment(Lexer *lexer, const char *curPtr);
 
 #endif
