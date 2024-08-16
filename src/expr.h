@@ -20,7 +20,7 @@ typedef struct Expr {
     QualType tr;
 } Expr;
 
-void initExpr(Expr *obj, ExprKind kind, QualType t);
+void initExpr(Expr *e, ExprKind kind, QualType t);
 
 // DeclRefExpr - A reference to a declared variable, function, enum, etc.
 // [C99 6.5.1p2] An identifier is a primary expression, provided it has been declared as designating an
@@ -34,7 +34,7 @@ typedef struct IntegerConstant {
     long long value;
 } IntegerConstant;
 
-void initIntegerConstant(IntegerConstant *obj, long long value, QualType type);
+void initIntegerConstant(IntegerConstant *ic, long long value, QualType type);
 
 typedef struct CharacterConstant {
     Expr expr;
@@ -42,7 +42,7 @@ typedef struct CharacterConstant {
     _Bool isWide;
 } CharacterConstant;
 
-void initCharacterConstant(CharacterConstant *obj, unsigned value, _Bool isWide, QualType type);
+void initCharacterConstant(CharacterConstant *cc, unsigned value, _Bool isWide, QualType type);
 
 typedef struct FloatingConstant {
     Expr expr;
@@ -50,7 +50,7 @@ typedef struct FloatingConstant {
     _Bool isExact
 } FloatingConstant;
 
-void initFloatingConstant(FloatingConstant *obj, long double value, _Bool isExact, QualType type);
+void initFloatingConstant(FloatingConstant *fc, long double value, _Bool isExact, QualType type);
 
 typedef struct StringLiteral {
     Expr expr;
@@ -79,7 +79,7 @@ typedef struct UnaryExpr {
     UnaryOpKind opKind;
 } UnaryExpr;
 
-void initUnaryExpr(UnaryExpr *obj, Expr *input, UnaryOpKind op, QualType type);
+void initUnaryExpr(UnaryExpr *ue, Expr *input, UnaryOpKind op, QualType type);
 
 typedef enum SizeofKind {
     SIZEOF_EXPR,
@@ -127,7 +127,7 @@ typedef struct BinaryExpr {
     Expr *rhs;
 } BinaryExpr;
 
-void initBinaryExpr(BinaryExpr *obj, BinaryOpKind op, Expr *lhs, Expr *rhs, QualType ty);
+void initBinaryExpr(BinaryExpr *be, BinaryOpKind op, Expr *lhs, Expr *rhs, QualType ty);
 
 typedef struct TernaryExpr {
     Expr expr;
